@@ -1,8 +1,8 @@
 // Service worker mínimo: permite instalar la app y abre la interfaz aunque la
 // red falle un momento. Siempre intenta la red primero, así cada cambio del
 // servidor llega de inmediato. El tiempo real (Socket.io) nunca pasa por aquí.
-const CACHE = 'pictionary-v13';
-const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/avatar.js', '/basta.js', '/parchis.js', '/app-info.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon.svg'];
+const CACHE = 'pictionary-v14';
+const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/avatar.js', '/basta.js', '/parchis.js', '/trivia.js', '/app-info.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -219,6 +219,26 @@
             </div>
           </div>
 
+          <!-- ❓ Trivia -->
+          <div class="card" id="trivia-settings" hidden>
+            <h3>❓ Trivia</h3>
+            <p class="rule-info small">Preguntas de opción múltiple de temas variados. Todos responden al mismo tiempo desde su celular. Respuesta correcta: <strong>10 puntos</strong>, y quien acierte más rápido gana <strong>+5</strong> extra. En <strong>🚩 Banderas</strong> hay que reconocer la bandera del país y en <strong>🍿 Películas con emojis</strong>, adivinar la película.</p>
+            <div class="field">
+              <span class="field-label">Temas <small id="trivia-cat-count"></small></span>
+              <div class="chip-grid" id="trivia-cats"></div>
+            </div>
+            <div class="settings-row">
+              <label class="field">
+                <span class="field-label">Preguntas</span>
+                <select id="trivia-count"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Tiempo por pregunta</span>
+                <select id="trivia-time" aria-label="Tiempo por pregunta"></select>
+              </label>
+            </div>
+          </div>
+
           <!-- 🎲 Parchís -->
           <div class="card" id="parchis-settings" hidden>
             <h3>🎲 Parchís</h3>
@@ -256,6 +276,27 @@
         <div class="mg-body" id="basta-body"></div>
       </div>
       <div class="overlay hidden" id="basta-overlay"></div>
+    </section>
+
+    <!-- ═══════════════ 6. TRIVIA ═══════════════ -->
+    <section id="screen-trivia" class="screen" aria-label="Trivia">
+      <div class="mini-game" id="trivia">
+        <header class="mg-head card">
+          <div class="mg-info">
+            <strong id="trivia-progress">Pregunta 1</strong>
+            <span class="muted small" id="trivia-cat">❓ Trivia</span>
+          </div>
+          <div class="mg-actions">
+            <button class="btn btn-ghost voice-btn sound-toggle" type="button"></button>
+            <div class="voice-controls"></div>
+            <button class="btn btn-ghost voice-btn" data-action="leave" type="button" aria-label="Salir" title="Salir">🚪</button>
+          </div>
+        </header>
+        <div class="time-bar active" id="trivia-bar" role="timer"><span id="trivia-bar-fill"></span><b id="trivia-bar-text"></b></div>
+        <ul class="scoreboard" id="trivia-players" aria-label="Puntuación"></ul>
+        <div class="mg-body" id="trivia-body"></div>
+      </div>
+      <div class="overlay hidden" id="trivia-overlay"></div>
     </section>
 
     <!-- ═══════════════ 5. PARCHÍS ═══════════════ -->
@@ -435,6 +476,7 @@
   <script src="avatar.js"></script>
   <script src="basta.js"></script>
   <script src="parchis.js"></script>
+  <script src="trivia.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

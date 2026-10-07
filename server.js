@@ -158,13 +158,15 @@ const gameHelpers = {
 };
 const basta = require('./games/basta')(gameHelpers);
 const parchis = require('./games/parchis')(gameHelpers);
+const trivia = require('./games/trivia')(gameHelpers);
 const GAMES = [
   { id: 'garabato', label: 'Adivina el Garabato', short: 'Garabato', emoji: '🎨', colors: null },
   { id: 'basta', label: 'Basta', short: 'Basta', emoji: '✋', colors: ['#e8590c', '#d6336c'] },
-  { id: 'parchis', label: 'Parchís', short: 'Parchís', emoji: '🎲', colors: ['#2f9e44', '#1971c2'] }
+  { id: 'parchis', label: 'Parchís', short: 'Parchís', emoji: '🎲', colors: ['#2f9e44', '#1971c2'] },
+  { id: 'trivia', label: 'Trivia', short: 'Trivia', emoji: '❓', colors: ['#7048e8', '#1c7ed6'] }
 ];
 const GAME_IDS = new Set(GAMES.map((g) => g.id));
-const IN_GAME = ['spinning', 'drawing', 'reveal', 'basta', 'parchis'];
+const IN_GAME = ['spinning', 'drawing', 'reveal', 'basta', 'parchis', 'trivia'];
 
 // ─── Salas ────────────────────────────────────────────────────────────────────
 // Cada jugador se identifica con una clave estable que genera su navegador
@@ -177,7 +179,7 @@ function createRoom(code) {
     order: [],                  // orden de turnos (orden de llegada)
     hostId: null,
     phase: 'lobby',             // lobby | spinning | drawing | reveal | gameOver
-    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults() },
+    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults(), ...trivia.defaults() },
     round: 0,
     drawnThisRound: new Set(),
     drawerId: null,
@@ -196,6 +198,7 @@ function createRoom(code) {
     gameTimer: null,            // temporizador de Basta y Parchís
     basta: null,
     parchis: null,
+    trivia: null,
     resultTitle: null
   };
   rooms.set(code, room);
@@ -275,7 +278,8 @@ function snapshotFor(room, playerId) {
     ranking: room.phase === 'gameOver' ? ranking(room) : null,
     resultTitle: room.phase === 'gameOver' ? room.resultTitle : null,
     basta: room.phase === 'basta' ? basta.view(room, playerId) : null,
-    parchis: room.phase === 'parchis' ? parchis.view(room) : null
+    parchis: room.phase === 'parchis' ? parchis.view(room) : null,
+    trivia: room.phase === 'trivia' ? trivia.view(room, playerId) : null
   };
 }
 
@@ -346,6 +350,7 @@ function startGame(room) {
   room.resultTitle = null;
   if (room.settings.game === 'basta') return basta.start(room);
   if (room.settings.game === 'parchis') return parchis.start(room);
+  if (room.settings.game === 'trivia') return trivia.start(room);
   room.round = 1;
   room.drawnThisRound.clear();
   room.usedWords.clear();
@@ -487,6 +492,7 @@ function backToLobby(room, message) {
   room.segments = [];
   room.basta = null;
   room.parchis = null;
+  room.trivia = null;
   room.resultTitle = null;
   for (const p of room.players.values()) p.guessed = false;
   io.to(room.code).emit('canvas:clear');
@@ -567,6 +573,7 @@ function removePlayer(room, playerId) {
   syncRoom(room);
   checkAllGuessed(room);
   if (room.phase === 'basta') basta.checkReady(room);
+  if (room.phase === 'trivia') trivia.checkAll(room);
 }
 
 // ─── Socket.io ────────────────────────────────────────────────────────────────
@@ -650,7 +657,8 @@ io.on('connection', (socket) => {
       ok: true, id: key, room: code, themes: THEME_LIST, roundOptions: ROUND_OPTIONS, turnSeconds: TURN_SECONDS, timeOptions: TIME_OPTIONS,
       games: GAMES,
       basta: { categories: basta.CATEGORIES, roundOptions: basta.ROUND_OPTIONS, timeOptions: basta.TIME_OPTIONS, minCats: basta.MIN_CATS, maxCats: basta.MAX_CATS },
-      parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS }
+      parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS },
+      trivia: { categories: trivia.CATEGORIES, countOptions: trivia.COUNT_OPTIONS, timeOptions: trivia.TIME_OPTIONS }
     });
     if (room.phase === 'drawing') socket.emit('canvas:history', room.segments);
     syncRoom(room);
@@ -674,6 +682,7 @@ io.on('connection', (socket) => {
     if (!isHost(room, player) || room.phase !== 'lobby' || !s) return;
     if (typeof s.game === 'string' && GAME_IDS.has(s.game)) room.settings.game = s.game;
     basta.applySettings(room, s);
+    trivia.applySettings(room, s);
     if (typeof s.theme === 'string' && THEMES[s.theme]) room.settings.theme = s.theme;
     if (s && ROUND_OPTIONS.includes(Number(s.rounds))) room.settings.rounds = Number(s.rounds);
     if (s && TIME_OPTIONS.includes(Number(s.drawTime))) room.settings.drawTime = Number(s.drawTime);
@@ -738,6 +747,12 @@ io.on('connection', (socket) => {
   socket.on('basta:ready', () => {
     const { room, player } = getCtx();
     if (player && room.phase === 'basta') basta.onReady(room, player);
+  });
+
+  // ─── ❓ Trivia ───
+  socket.on('trivia:answer', (choice) => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'trivia') trivia.onAnswer(room, player, choice);
   });
 
   // ─── 🎲 Parchís ───
@@ -850,6 +865,7 @@ io.on('connection', (socket) => {
     syncRoom(room);
     checkAllGuessed(room);
     if (room.phase === 'basta') basta.checkReady(room);
+    if (room.phase === 'trivia') trivia.checkAll(room);
   });
 });
 

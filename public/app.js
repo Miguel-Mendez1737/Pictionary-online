@@ -16,6 +16,7 @@
     games: [],          // juegos disponibles (Garabato, Basta, Parchís)
     bastaInfo: null,    // categorías y opciones de Basta
     parchisInfo: null,  // colores y asientos del Parchís
+    triviaInfo: null,   // temas y opciones de la Trivia
     avatar: null,       // avatar personalizado (ver avatar.js)
     editorTab: 'base',
     account: null,      // perfil de la cuenta si inició sesión
@@ -757,6 +758,7 @@
       state.games = res.games || [];
       state.bastaInfo = res.basta || null;
       state.parchisInfo = res.parchis || null;
+      state.triviaInfo = res.trivia || null;
       state.joinData.room = res.room;
       delete state.joinData.createPrivate; // al reconectar vuelve a ESTA sala
       saveSession();
@@ -928,6 +930,48 @@
       bastaRounds.innerHTML = state.bastaInfo.roundOptions.map((n) => `<option value="${n}">${n} rondas</option>`).join('');
       bastaTime.innerHTML = state.bastaInfo.timeOptions.map((n) => `<option value="${n}">⏱️ ${clockText(n)} min</option>`).join('');
     }
+    if (state.triviaInfo) {
+      triviaCount.innerHTML = state.triviaInfo.countOptions.map((n) => `<option value="${n}">${n} preguntas</option>`).join('');
+      triviaTime.innerHTML = state.triviaInfo.timeOptions.map((n) => `<option value="${n}">⏱️ ${n} segundos</option>`).join('');
+    }
+  }
+
+  // ─── Ajustes de Trivia ───
+  const triviaCount = $('#trivia-count');
+  const triviaTime = $('#trivia-time');
+  triviaCount.addEventListener('change', () => sendSettings({ triviaCount: Number(triviaCount.value) }));
+  triviaTime.addEventListener('change', () => sendSettings({ triviaTime: Number(triviaTime.value) }));
+
+  function renderTriviaSettings(room, host) {
+    const info = state.triviaInfo;
+    if (!info) return;
+    const chosen = room.settings.triviaCats || [];
+    const box = $('#trivia-cats');
+    box.innerHTML = '';
+    const all = el('button', `chip${chosen.length === info.categories.length ? ' on' : ''}`, '✨ Todos');
+    all.type = 'button';
+    all.disabled = !host;
+    all.addEventListener('click', () => { vibrate(8); sendSettings({ triviaCats: info.categories.map((c) => c.id) }); });
+    box.append(all);
+    info.categories.forEach((c) => {
+      const on = chosen.includes(c.id);
+      const chip = el('button', `chip${on ? ' on' : ''}`, `${c.emoji} ${c.label}`);
+      chip.type = 'button';
+      chip.setAttribute('aria-pressed', String(on));
+      chip.disabled = !host;
+      chip.addEventListener('click', () => {
+        const next = on ? chosen.filter((id) => id !== c.id) : [...chosen, c.id];
+        if (!next.length) return toast('Deja al menos un tema.', 'warn');
+        vibrate(8);
+        sendSettings({ triviaCats: info.categories.map((x) => x.id).filter((id) => next.includes(id)) });
+      });
+      box.append(chip);
+    });
+    $('#trivia-cat-count').textContent = `(${chosen.length} de ${info.categories.length})`;
+    triviaCount.value = room.settings.triviaCount;
+    triviaTime.value = room.settings.triviaTime;
+    triviaCount.disabled = !host;
+    triviaTime.disabled = !host;
   }
 
   // ─── Selección del juego y ajustes de Basta / Parchís ───
@@ -1092,6 +1136,8 @@
     $('#garabato-settings').hidden = game !== 'garabato';
     $('#basta-settings').hidden = game !== 'basta';
     $('#parchis-settings').hidden = game !== 'parchis';
+    $('#trivia-settings').hidden = game !== 'trivia';
+    if (game === 'trivia') renderTriviaSettings(room, host);
     if (game === 'basta') renderBastaSettings(room, host);
     if (game === 'parchis') renderParchisSeats(room);
 
@@ -1546,6 +1592,7 @@
   const gameCtx = { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, isHost, renderPlayerList, gameOverCard, clockText };
   const bastaUI = window.BastaGame(gameCtx);
   const parchisUI = window.ParchisGame(gameCtx);
+  const triviaUI = window.TriviaGame(gameCtx);
 
   function renderGame(room) {
     const theme = state.themes.find((t) => t.id === room.settings.theme);
@@ -1575,7 +1622,7 @@
     if (!room) return;
     // ¿Qué juego se muestra? En el podio final, el que se estaba jugando.
     const game = room.phase === 'lobby' || room.phase === 'gameOver' ? (room.settings.game || 'garabato')
-      : room.phase === 'basta' || room.phase === 'parchis' ? room.phase : 'garabato';
+      : ['basta', 'parchis', 'trivia'].includes(room.phase) ? room.phase : 'garabato';
     const theme = state.themes.find((t) => t.id === room.settings.theme);
     const g = gameInfo(game);
     applyThemeColors(game === 'garabato' ? theme && theme.colors : g && g.colors);
@@ -1588,6 +1635,9 @@
     } else if (game === 'parchis') {
       showScreen('screen-parchis');
       parchisUI.render(room);
+    } else if (game === 'trivia') {
+      showScreen('screen-trivia');
+      triviaUI.render(room);
     } else {
       showScreen('screen-game');
       renderGame(room);

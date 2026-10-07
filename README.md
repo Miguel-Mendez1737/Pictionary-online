@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.13.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.14.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -249,3 +249,11 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.13.1: en Garabato solo gana el primero
 - **Primer acierto:** el primero que escribe la palabra gana 10 puntos y el turno termina en ese momento. El reloj se va a 0 y, tras mostrar la palabra, sigue el siguiente turno.
 - **Aciertos tardíos:** quien escribe la palabra después ya no suma puntos.
+
+## v1.14.0: ❓ Trivia (`games/trivia.js`, `games/trivia-data.js`, `public/trivia.js`)
+- **Contenido:** 12 temas. Hay 193 preguntas escritas en 10 temas (Geografía, Historia, Ciencia, Deportes, Cine y TV, Música, Cultura general, Animales, Comida y Tecnología), más dos temas con imágenes y emojis:
+  - 🚩 **Banderas:** 88 países, con imágenes en `public/flags`, del proyecto flag-icons (licencia MIT). Unas veces se ve la bandera y se elige el país; otras se da el país y se elige entre 4 banderas.
+  - 🍿 **Películas con emojis:** 32 películas.
+- **Ajustes del anfitrión:** temas (o "Todos"), cantidad de preguntas (10, 15, 20 o 30) y segundos por pregunta (10, 15, 20 o 30).
+- **Cómo se juega:** todos responden a la vez y la respuesta correcta solo se envía al revelarla. Correcta: 10 puntos; la más rápida: +5.
+- **Agregar preguntas:** se añaden líneas en `games/trivia-data.js`, con el formato `[pregunta, correcta, incorrecta, incorrecta, incorrecta]`.
