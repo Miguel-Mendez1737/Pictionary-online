@@ -15,5 +15,5 @@ services:
         value: "22"
       - key: DATABASE_URL    # dirección de la base de datos de Neon (ver DESPLIEGUE.md, paso 1)
         sync: false
-      - key: ICE_SERVERS     # servidor TURN para la voz con datos móviles (opcional, paso 4)
+      - key: ICE_SERVERS     # TURN para la voz con datos móviles (opcional). Si no lo tienes aún, escribe []
         sync: false

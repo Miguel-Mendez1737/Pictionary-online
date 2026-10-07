@@ -39,7 +39,7 @@ El plan gratis de Render borra sus archivos cada vez que se duerme. Por eso las 
 3. Elige el repositorio **`pictionary-online`**. Render lee el archivo `render.yaml`, que ya está configurado con el **plan Free**.
 4. Te pedirá dos valores:
    - **`DATABASE_URL`:** pega la dirección de Neon del paso 1.
-   - **`ICE_SERVERS`:** déjalo **vacío** por ahora; se llena en el paso 4.
+   - **`ICE_SERVERS`:** escribe **`[]`** por ahora (Render no acepta el campo vacío); se cambia en el paso 4.
 5. Toca **Apply** y espera de 3 a 5 minutos, hasta que diga **Live** en verde.
 6. Arriba aparece tu dirección, por ejemplo `https://pictionary-online.onrender.com`. **¡Esa es la que compartes!**
 

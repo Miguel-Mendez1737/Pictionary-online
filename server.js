@@ -45,9 +45,14 @@ const TURN_SECONDS = 90;         // 1:30 para adivinar cada dibujo
 // Servidores ICE para el chat de voz (WebRTC). STUN basta en la mayoría de
 // redes; para redes estrictas se puede añadir un TURN con la variable
 // ICE_SERVERS='[{"urls":"turn:mi-servidor:3478","username":"u","credential":"p"}]'
+// Si ICE_SERVERS está vacío, es "[]" o no es válido, se usan los STUN públicos.
+const DEFAULT_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
 const ICE_SERVERS = (() => {
-  try { if (process.env.ICE_SERVERS) return JSON.parse(process.env.ICE_SERVERS); } catch { /* valor inválido */ }
-  return [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+  try {
+    const list = JSON.parse(process.env.ICE_SERVERS || '[]');
+    if (Array.isArray(list) && list.length) return list;
+  } catch { /* valor inválido */ }
+  return DEFAULT_ICE;
 })();
 
 // El micrófono solo funciona en contextos seguros (https o localhost). Si se
