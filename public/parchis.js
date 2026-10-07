@@ -322,11 +322,15 @@ window.ParchisGame = function ParchisGame(ctx) {
       if (p.stage === 'crown') return `👑 ${name} sacó tres seguidos y elige qué ficha coronar…`;
       if (p.stage === 'bonus') return `${name} usa su premio de ${p.bonusAmount} casillas…`;
       if (p.stage === 'wait') return `${name} sacó ${shown}.`;
+      if (p.legal.some((m) => m.kind === 'back')) return `🐾 ¡Pata de perro! ${name} retrocede 3…`;
       return `${name} está moviendo (${shown})…`;
     }
     if (p.stage === 'roll') return `👉 ¡Te toca! Toca ${two ? 'los dados' : 'el dado'} para tirar.`;
     if (p.stage === 'crown') return '👑 ¡Tres seguidos! Toca la ficha que quieres coronar.';
     if (p.stage === 'bonus') return moves.length > 1 ? `🎁 Premio: elige una ficha para avanzar ${p.bonusAmount}.` : `🎁 Premio: avanzas ${p.bonusAmount}…`;
+    if (p.stage === 'move' && p.legal.some((m) => m.kind === 'back')) {
+      return p.legal.length > 1 ? '🐾 ¡Pata de perro! (2 y 1): toca la ficha que retrocede 3 casillas.' : '🐾 ¡Pata de perro! Tu ficha retrocede 3…';
+    }
     if (p.stage === 'move') {
       const steal = moves.some((m) => m.kind === 'steal') ? ' 🌩️ ¡Puedes robar el cielo!' : '';
       if (p.legal.some((m) => m.kind === 'release') && p.pending.length === 2) {

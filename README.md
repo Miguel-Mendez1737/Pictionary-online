@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.16.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.16.2 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -293,3 +293,8 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.16.1: dos temas nuevos en Garabato
 - **🏢 Cosas de la oficina:** 70 palabras, como engrapadora, reloj checador, recibo de nómina o sala de juntas.
 - **🎵 Instrumentos musicales:** 70 palabras, como guitarrón, marimba, charango o güiro.
+
+## v1.16.2: regla "Pata de perro" 🐾
+- **Qué hace:** con 2 dados, si sale **2 y 1**, en lugar de avanzar una ficha retrocede 3 casillas (el jugador elige cuál).
+- **Detalles:** solo retroceden las fichas que están en el circuito y que no quedan antes de su salida. Si al retroceder cae sobre un rival fuera de un seguro, se lo come. Si ninguna ficha puede retroceder, se pierde el turno.
+- **Cómo activarla:** está en el menú de reglas y viene activada.

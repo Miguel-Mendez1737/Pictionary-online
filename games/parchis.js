@@ -47,6 +47,7 @@ const RULES = [
   { id: 'exact', label: 'Llegada exacta al cielo', desc: 'Para coronar necesitas el número exacto.', def: true },
   { id: 'threePenalty', label: 'Tres seguidos: a la cárcel', desc: 'Con tres 6 o tres pares seguidos, la última ficha que moviste vuelve a la cárcel.', def: true },
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
+  { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas con una de tus fichas.', def: true },
   { id: 'soplar', label: 'Soplar', desc: 'Comer es obligatorio: si pudiste comer y no lo hiciste, la ficha que moviste se va a la cárcel.', def: false },
   { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo.', def: false }
 ];
@@ -337,6 +338,19 @@ module.exports = function createParchis(h) {
     const pairWithJail = p.dice === 2 && p.roll[0] === p.roll[1] && seat.pieces.includes(-1);
     if (pairWithJail && allInJail(seat, goal)) return releasePair(room, seat);
 
+    // 🐾 Pata de perro: con 2 y 1 una ficha retrocede 3 casillas.
+    if (p.dice === 2 && has(room, 'pataPerro') && [...p.roll].sort().join() === '1,2') {
+      p.pending = [3];
+      p.legal = backMoves(room, seat, 3);
+      if (!p.legal.length) {
+        log(room, `🐾 ${name} sacó pata de perro (2 y 1), pero no tiene fichas para retroceder.`);
+        p.pending = [];
+        return waitThen(room, () => nextSeat(room));
+      }
+      log(room, `🐾 ¡Pata de perro! ${name} sacó 2 y 1: retrocede 3 casillas.`);
+      return stageMove(room, 'move');
+    }
+
     p.pending = [...p.roll];
     p.legal = legalAll(room, seat);
     if (pairWithJail) {
@@ -369,6 +383,25 @@ module.exports = function createParchis(h) {
     p.legal = [];
     log(room, `🔓 ${nameOf(room, seat)} sacó pares (${p.roll.join(' y ')}) y saca ${out.length === 1 ? 'una ficha' : `${out.length} fichas`} de la cárcel.`);
     return afterMoves(room);
+  }
+
+  // Fichas que pueden retroceder (solo en el circuito, sin pasar antes de su salida).
+  function backMoves(room, seat, amount) {
+    const { lastTrack, absOf, safe } = B(room);
+    const moves = [];
+    const seen = new Set();
+    seat.pieces.forEach((from, i) => {
+      if (from < amount || from > lastTrack || seat.lanes[i] !== null || seen.has(from)) return;
+      const to = from - amount;
+      const abs = absOf(seat.arm, to);
+      const occ = occupantsAt(room, abs);
+      if (occ.length >= 2) return;
+      const rivals = occ.filter((o) => o.seat !== seat);
+      const capture = rivals.length && !(has(room, 'safes') && safe.has(abs)) ? rivals.map((o) => ref(room, o)) : [];
+      seen.add(from);
+      moves.push({ piece: i, from, to, lane: null, capture, kind: 'back', die: 0 });
+    });
+    return moves;
   }
 
   function waitThen(room, fn) {
@@ -450,7 +483,8 @@ module.exports = function createParchis(h) {
     seat.pieces[m.piece] = m.to;
     seat.lanes[m.piece] = m.lane === null || m.lane === seat.arm ? null : m.lane;
     p.lastMoved = { seat, i: m.piece };
-    if (dieIdx >= 0) p.pending.splice(dieIdx, 1);
+    if (m.kind === 'back') p.pending = [];
+    else if (dieIdx >= 0) p.pending.splice(dieIdx, 1);
     p.legal = [];
 
     if (m.kind === 'steal') {
