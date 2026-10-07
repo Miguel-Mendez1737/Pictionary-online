@@ -239,11 +239,31 @@
             </div>
           </div>
 
-          <!-- 🎲 Parchís -->
+          <!-- 🎲 Parchís / Parqués -->
           <div class="card" id="parchis-settings" hidden>
-            <h3>🎲 Parchís</h3>
-            <p class="rule-info small">Juegan de <strong>2 a 6</strong> personas (las primeras de la lista; las demás miran). Con 5 o 6 se usa un tablero de 6 colores. Cada quien saca sus 4 fichas con un <strong>5</strong>, da la vuelta al tablero y las mete en la meta. Con un <strong>6</strong> tiras otra vez. Si caes sobre una ficha rival fuera de un seguro ⭐ te la comes y avanzas 20. Dos fichas juntas forman una barrera que nadie puede pasar. Gana quien meta primero sus 4 fichas.</p>
-            <p class="rule-info small">Puntos: comer <strong>+5</strong>, ficha en la meta <strong>+10</strong>, ganar <strong>+30</strong>.</p>
+            <h3>🎲 Parchís / Parqués</h3>
+            <p class="rule-info small">De <strong>2 a 10</strong> personas. Cada quien saca sus fichas de la cárcel, da la vuelta al tablero y las corona en el cielo. Con <strong>1 dado</strong> (Parchís) se sale con un 5; con <strong>2 dados</strong> (Parqués) se sale con pares y cada dado mueve una ficha. Gana quien corone primero todas sus fichas. Puntos: comer <strong>+5</strong>, coronar <strong>+10</strong>, ganar <strong>+30</strong>.</p>
+            <div class="settings-row three">
+              <label class="field span-all">
+                <span class="field-label">Jugadores</span>
+                <select id="parchis-players"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Fichas</span>
+                <select id="parchis-pieces"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Dados</span>
+                <select id="parchis-dice">
+                  <option value="1">1 dado</option>
+                  <option value="2">2 dados</option>
+                </select>
+              </label>
+            </div>
+            <details class="rules-menu" id="parchis-rules-menu">
+              <summary>📋 Reglas de la partida <span class="pill" id="parchis-rules-count"></span></summary>
+              <div class="rules-list" id="parchis-rules"></div>
+            </details>
             <ul class="seat-list" id="parchis-seats"></ul>
           </div>
           </div>
@@ -304,7 +324,7 @@
       <div class="mini-game" id="parchis">
         <header class="mg-head card">
           <div class="mg-info">
-            <strong>🎲 Parchís</strong>
+            <strong id="parchis-title">🎲 Parchís</strong>
             <span class="muted small" id="parchis-sub"></span>
           </div>
           <div class="mg-actions">
@@ -318,9 +338,10 @@
         </div>
         <div class="parchis-panel card">
           <div class="parchis-turn" id="parchis-turn"></div>
-          <button class="die" id="parchis-die" type="button" aria-label="Tirar el dado" disabled></button>
+          <div class="dice-box" id="parchis-die"></div>
         </div>
         <ul class="parchis-log" id="parchis-log" aria-live="polite"></ul>
+        <details class="rules-menu game-rules" id="parchis-game-rules"><summary>📋 Reglas de esta partida</summary><ul class="rules-summary"></ul></details>
         <ul class="seat-list" id="parchis-players"></ul>
       </div>
       <div class="overlay hidden" id="parchis-overlay"></div>

@@ -179,7 +179,7 @@ function createRoom(code) {
     order: [],                  // orden de turnos (orden de llegada)
     hostId: null,
     phase: 'lobby',             // lobby | spinning | drawing | reveal | gameOver
-    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults(), ...trivia.defaults() },
+    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults(), ...trivia.defaults(), ...parchis.defaults() },
     round: 0,
     drawnThisRound: new Set(),
     drawerId: null,
@@ -657,7 +657,7 @@ io.on('connection', (socket) => {
       ok: true, id: key, room: code, themes: THEME_LIST, roundOptions: ROUND_OPTIONS, turnSeconds: TURN_SECONDS, timeOptions: TIME_OPTIONS,
       games: GAMES,
       basta: { categories: basta.CATEGORIES, roundOptions: basta.ROUND_OPTIONS, timeOptions: basta.TIME_OPTIONS, minCats: basta.MIN_CATS, maxCats: basta.MAX_CATS },
-      parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS },
+      parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS, rules: parchis.RULES, pieceOptions: parchis.PIECE_OPTIONS },
       trivia: { categories: trivia.CATEGORIES, countOptions: trivia.COUNT_OPTIONS, timeOptions: trivia.TIME_OPTIONS }
     });
     if (room.phase === 'drawing') socket.emit('canvas:history', room.segments);
@@ -683,6 +683,7 @@ io.on('connection', (socket) => {
     if (typeof s.game === 'string' && GAME_IDS.has(s.game)) room.settings.game = s.game;
     basta.applySettings(room, s);
     trivia.applySettings(room, s);
+    parchis.applySettings(room, s);
     if (typeof s.theme === 'string' && THEMES[s.theme]) room.settings.theme = s.theme;
     if (s && ROUND_OPTIONS.includes(Number(s.rounds))) room.settings.rounds = Number(s.rounds);
     if (s && TIME_OPTIONS.includes(Number(s.drawTime))) room.settings.drawTime = Number(s.drawTime);
@@ -760,9 +761,9 @@ io.on('connection', (socket) => {
     const { room, player } = getCtx();
     if (player && room.phase === 'parchis') parchis.onRoll(room, player);
   });
-  socket.on('parchis:move', (piece) => {
+  socket.on('parchis:move', (data) => {
     const { room, player } = getCtx();
-    if (player && room.phase === 'parchis') parchis.onMove(room, player, piece);
+    if (player && room.phase === 'parchis') parchis.onMove(room, player, data);
   });
 
   socket.on('wheel:spin', () => {

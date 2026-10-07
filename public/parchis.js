@@ -1,17 +1,18 @@
-// ─── 🎲 Parchís: tablero SVG, dado y fichas ──────────────────────────────────
-// Hasta 4 jugadores: tablero clásico (4 brazos de 3×8 alrededor de la meta).
-// 5 o 6 jugadores: tablero hexagonal de 6 brazos. Las posiciones se calculan
-// igual para los dos: cada brazo sale del centro en su propio ángulo.
+// ─── 🎲 Parchís / Parqués: tablero SVG, dados y fichas ──────────────────────
+// Hasta 4 jugadores: tablero clásico (4 brazos de 3×8 alrededor del cielo).
+// De 5 a 10: un brazo por jugador alrededor de un cielo con tantos lados como
+// jugadores. Las posiciones se calculan igual para todos: cada brazo sale del
+// centro en su propio ángulo.
 window.ParchisGame = function ParchisGame(ctx) {
   'use strict';
   const { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, gameOverCard } = ctx;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const ARM_COLORS = ['#f5b700', '#2f6fdf', '#e03131', '#2f9e44', '#f76707', '#7048e8'];
+  const ARM_COLORS = ['#f5b700', '#2f6fdf', '#e03131', '#2f9e44', '#f76707', '#7048e8', '#e64980', '#0c8599', '#8d5524', '#495057'];
   const ARM = 17;
   const board = $('#parchis-board');
-  const dieBtn = $('#parchis-die');
-  const ui = { builtFor: 0, pieces: new Map(), rollId: 0, rolling: false, rollTimer: 0, clock: 0, deadline: 0, lastTurnKey: null };
+  const diceBox = $('#parchis-die');
+  const ui = { builtFor: 0, pieces: new Map(), rollId: 0, rolling: false, rollTimer: 0, clock: 0, deadline: 0, lastTurnKey: null, selDie: 0, layer: null };
   let G = null; // geometría del tablero actual
 
   const svg = (tag, attrs = {}) => {
@@ -28,16 +29,20 @@ window.ParchisGame = function ParchisGame(ctx) {
   const mul = (v, k) => [v[0] * k, v[1] * k];
   const pts = (list) => list.map((p) => p.map((n) => n.toFixed(3)).join(',')).join(' ');
 
-  // ─── Geometría (4 o 6 brazos) ───
+  // ─── Geometría (4 a 10 brazos) ───
   function geometry(arms) {
     const track = arms * ARM;
-    const ap = 1.5 / Math.tan(Math.PI / arms);        // distancia del centro al borde de la meta
-    const size = arms === 4 ? 19 : 22;
+    const ap = 1.5 / Math.tan(Math.PI / arms);        // distancia del centro al borde del cielo
+    const half = Math.PI / arms;
+    const homeDist = ap + 6.2;
+    const homeR = Math.min(2.4, homeDist * Math.sin(half) - 1.75);
+    const reach = Math.max(Math.hypot(ap + 8, 1.5), homeDist + homeR + 0.3) + 0.3;
+    const size = arms === 4 ? 19 : Math.ceil(reach * 2 * 10) / 10;
     const C = [size / 2, size / 2];
     const angle = (a) => -Math.PI / 2 + (a * 2 * Math.PI) / arms;
     const u = (a) => [Math.cos(angle(a)), Math.sin(angle(a))];   // hacia afuera del brazo
     const v = (a) => [-Math.sin(angle(a)), Math.cos(angle(a))];  // a lo ancho del brazo
-    // Casilla del brazo a: k = 0 (junto a la meta) … 7 (punta); s = -1, 0, 1 (columna)
+    // Casilla del brazo a: k = 0 (junto al cielo) … 7 (punta); s = -1, 0, 1 (columna)
     const cell = (a, k, s) => add(C, mul(u(a), ap + 0.5 + k), mul(v(a), s));
     const exitOf = (arm) => (arm * ARM + 13) % track;
     const entryOf = (arm) => arm * ARM + 8;
@@ -49,7 +54,7 @@ window.ParchisGame = function ParchisGame(ctx) {
       const j = abs % ARM;
       return j < 8 ? cell(a, j, -1) : j === 8 ? cell(a, 7, 0) : cell(a, 16 - j, 1);
     }
-    // Casa del brazo a: entre su brazo y el siguiente.
+    // Casa (cárcel) del brazo a: entre su brazo y el siguiente.
     function home(a) {
       const b = (a + 1) % arms;
       const corner = add(C, mul(u(a), ap), mul(v(a), 1.5));
@@ -57,8 +62,8 @@ window.ParchisGame = function ParchisGame(ctx) {
         const center = add(corner, mul(u(a), 4), mul(u(b), 4));
         return { center, poly: [corner, add(corner, mul(u(a), 8)), add(corner, mul(u(a), 8), mul(u(b), 8)), add(corner, mul(u(b), 8))], r: 2.9, spot: 1.2, ua: u(a), ub: u(b) };
       }
-      const w = [Math.cos(angle(a) + Math.PI / arms), Math.sin(angle(a) + Math.PI / arms)];
-      return { center: add(C, mul(w, 8.2)), r: 2.35, spot: 0.95, ua: u(a), ub: u(b) };
+      const w = [Math.cos(angle(a) + half), Math.sin(angle(a) + half)];
+      return { center: add(C, mul(w, homeDist)), r: homeR, spot: Math.min(1.05, homeR * 0.5), angle: angle(a) + half };
     }
     const homes = Array.from({ length: arms }, (_, a) => home(a));
     return {
@@ -69,18 +74,22 @@ window.ParchisGame = function ParchisGame(ctx) {
       goalSpot: (a, i) => add(C, mul(u(a), ap * 0.55), mul(v(a), (i - 1.5) * 0.42)),
       homeSpot: (a, i) => {
         const h = homes[a];
-        const da = i % 2 ? h.spot : -h.spot;
-        const db = i < 2 ? -h.spot : h.spot;
-        const f = arms === 4 ? 1 : 0.8;
-        return add(h.center, mul(h.ua, -db * f), mul(h.ub, da * f));
+        if (h.poly) {
+          const da = i % 2 ? h.spot : -h.spot;
+          const db = i < 2 ? -h.spot : h.spot;
+          return add(h.center, mul(h.ua, -db), mul(h.ub, da));
+        }
+        const phi = h.angle + Math.PI / 4 + (i * Math.PI) / 2;
+        return add(h.center, [Math.cos(phi) * h.spot, Math.sin(phi) * h.spot]);
       }
     };
   }
 
-  function pieceCenter(arm, steps, i) {
+  // Posición de una ficha. lane = pasillo por el que sube (el propio o uno robado).
+  function pieceCenter(arm, steps, i, lane) {
     if (steps < 0) return G.homeSpot(arm, i);
-    if (steps >= G.goal) return G.goalSpot(arm, i);
-    if (steps > G.lastTrack) return G.corridorCenter(arm, steps - G.lastTrack);
+    if (steps >= G.goal) return G.goalSpot(lane === null || lane === undefined ? arm : lane, i);
+    if (steps > G.lastTrack) return G.corridorCenter(lane === null || lane === undefined ? arm : lane, steps - G.lastTrack);
     return G.trackCenter((G.exitOf(arm) + steps) % G.track);
   }
 
@@ -103,16 +112,16 @@ window.ParchisGame = function ParchisGame(ctx) {
     board.append(defs);
     board.append(svg('rect', { x: 0, y: 0, width: G.size, height: G.size, rx: 0.6, fill: '#fffaf0' }));
 
-    // Casas
+    // Cárceles
     G.homes.forEach((h, a) => {
       if (h.poly) {
-        // tablero clásico: cuadrado de color en la esquina (un poco más chico que el hueco)
         const shrink = h.poly.map((p) => add(h.center, mul(add(p, mul(h.center, -1)), 0.86)));
         board.append(svg('polygon', { points: pts(shrink), fill: ARM_COLORS[a], 'stroke-linejoin': 'round', stroke: ARM_COLORS[a], 'stroke-width': 0.6 }));
+        board.append(svg('circle', { cx: h.center[0], cy: h.center[1], r: h.r, fill: '#fff', opacity: 0.92 }));
       } else {
         board.append(svg('circle', { cx: h.center[0], cy: h.center[1], r: h.r + 0.25, fill: ARM_COLORS[a] }));
+        board.append(svg('circle', { cx: h.center[0], cy: h.center[1], r: h.r - 0.3, fill: '#fff', opacity: 0.92 }));
       }
-      board.append(svg('circle', { cx: h.center[0], cy: h.center[1], r: h.poly ? h.r : h.r - 0.35, fill: '#fff', opacity: 0.92 }));
     });
 
     // Circuito
@@ -129,18 +138,18 @@ window.ParchisGame = function ParchisGame(ctx) {
       }
     }
 
-    // Pasillos
+    // Pasillos hacia el cielo
     for (let a = 0; a < arms; a++) {
       for (let k = 1; k <= 7; k++) board.append(square(G.corridorCenter(a, k), a, mix(ARM_COLORS[a], 0.25)));
     }
 
-    // Meta: un triángulo por color
+    // Cielo: un triángulo por color
     for (let a = 0; a < arms; a++) {
       const tri = [G.C, add(G.C, mul(G.u(a), G.ap), mul(G.v(a), -1.5)), add(G.C, mul(G.u(a), G.ap), mul(G.v(a), 1.5))];
       board.append(svg('polygon', { points: pts(tri), fill: ARM_COLORS[a], stroke: '#fff', 'stroke-width': 0.06 }));
     }
     const goal = svg('text', { x: G.C[0], y: G.C[1] + 0.35, 'font-size': 0.9, 'text-anchor': 'middle' });
-    goal.textContent = '🏁';
+    goal.textContent = '☁️';
     board.append(goal);
 
     ui.layer = svg('g', { class: 'pc-layer' });
@@ -149,102 +158,144 @@ window.ParchisGame = function ParchisGame(ctx) {
     ui.builtFor = arms;
   }
 
+  // ─── Jugadas del dado elegido ───
+  // Con 2 dados se elige primero el dado (tocándolo) y después la ficha.
+  function movesFor(p) {
+    if (p.stage === 'crown') return p.legal;
+    if (p.stage === 'bonus') return p.legal;
+    const dice = [...new Set(p.legal.map((m) => m.die))];
+    if (!dice.includes(ui.selDie)) ui.selDie = dice.length ? dice[0] : 0;
+    return p.legal.filter((m) => m.die === ui.selDie);
+  }
+
   // ─── Fichas ───
   function renderPieces(p, myTurn) {
     const seen = new Set();
-    const legalFrom = new Map(); // posición -> ficha que el servidor acepta
-    if (myTurn && (p.stage === 'move' || p.stage === 'bonus')) p.legal.forEach((m) => legalFrom.set(m.from, m.piece));
+    // posición -> jugada que acepta el servidor (se prefiere robar cielo si se puede)
+    const legalAt = new Map();
+    if (myTurn && ['move', 'bonus', 'crown'].includes(p.stage)) {
+      movesFor(p).forEach((m) => {
+        const seat = p.seats.find((s) => s.id === state.me);
+        const lane = seat ? seat.lanes[m.piece] : null;
+        const key = `${m.from}|${lane}`;
+        const prev = legalAt.get(key);
+        if (!prev || m.kind === 'steal') legalAt.set(key, m);
+      });
+    }
 
-    // Fichas apiladas en la misma casilla del circuito se separan un poco.
+    // Fichas apiladas en la misma casilla se separan un poco.
     const stacks = new Map();
+    const posOf = new Map();
     p.seats.forEach((seat, si) => {
       if (seat.gone) return;
       seat.pieces.forEach((steps, i) => {
+        const [x, y] = pieceCenter(seat.arm, steps, i, seat.lanes[i]);
+        posOf.set(`${si}-${i}`, [x, y]);
         if (steps < 0 || steps >= G.goal) return;
-        const [x, y] = pieceCenter(seat.arm, steps, i);
-        const key = `${x},${y}`;
+        const key = `${x.toFixed(2)},${y.toFixed(2)}`;
         if (!stacks.has(key)) stacks.set(key, []);
         stacks.get(key).push(`${si}-${i}`);
       });
     });
 
     p.seats.forEach((seat, si) => {
+      if (seat.gone) return;
       seat.pieces.forEach((steps, i) => {
         const id = `${si}-${i}`;
-        if (seat.gone) return;
         seen.add(id);
-        let [x, y] = pieceCenter(seat.arm, steps, i);
-        const stack = stacks.get(`${x},${y}`);
-        if (stack && stack.length > 1) x += stack.indexOf(id) === 0 ? -0.2 : 0.2;
+        let [x, y] = posOf.get(id);
+        const stack = stacks.get(`${x.toFixed(2)},${y.toFixed(2)}`);
+        if (stack && stack.length > 1) {
+          const k = stack.indexOf(id);
+          if (stack.length === 2) x += k ? 0.2 : -0.2;
+          else { x += (k % 2 ? 0.22 : -0.22); y += (k < 2 ? -0.22 : 0.22) + (k >= 4 ? 0.2 : 0); }
+        }
         let g = ui.pieces.get(id);
         if (!g) {
           g = svg('g', { class: 'pc' });
-          const small = steps >= G.goal;
           g.append(
             svg('circle', { class: 'pc-ring', r: 0.62 }),
             svg('circle', { class: 'pc-body', r: 0.38, fill: seat.color.hex, filter: 'url(#pc-shadow)' }),
             svg('circle', { class: 'pc-shine', r: 0.17, cy: -0.06, fill: 'rgba(255,255,255,.45)' }),
             svg('circle', { class: 'pc-hit', r: 0.6, fill: 'transparent' })
           );
-          if (small) g.classList.add('small');
           g.addEventListener('click', () => {
-            const piece = Number(g.dataset.move);
-            if (!g.classList.contains('can-move') || Number.isNaN(piece)) return;
+            if (!g.classList.contains('can-move') || !g._move) return;
+            const m = g._move;
             vibrate(12);
             sfx.beep(660, 0.06, 'triangle', 0.05);
-            socket.emit('parchis:move', piece);
+            socket.emit('parchis:move', { piece: m.piece, die: m.die, kind: m.kind });
           });
           ui.layer.append(g);
           ui.pieces.set(id, g);
         }
         g.style.transform = `translate(${x}px, ${y}px)`;
         g.classList.toggle('small', steps >= G.goal);
-        const can = legalFrom.has(steps);
-        g.classList.toggle('can-move', can);
-        if (can) g.dataset.move = String(legalFrom.get(steps)); else delete g.dataset.move;
+        const mine = seat.id === state.me;
+        const m = mine ? legalAt.get(`${steps}|${seat.lanes[i]}`) : null;
+        g.classList.toggle('can-move', Boolean(m));
+        g.classList.toggle('steal', Boolean(m && m.kind === 'steal'));
+        g._move = m || null;
       });
     });
     for (const [id, g] of ui.pieces) {
       if (!seen.has(id)) { g.remove(); ui.pieces.delete(id); }
     }
-    // Las fichas que se pueden mover quedan encima de las demás.
     ui.layer.querySelectorAll('.pc.can-move').forEach((g) => ui.layer.append(g));
   }
 
-  // ─── Dado ───
+  // ─── Dados ───
   const PIPS = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
-  function drawDie(n) {
-    dieBtn.innerHTML = '';
-    const face = el('span', 'die-face');
-    for (let cell = 1; cell <= 9; cell++) {
+  function face(n) {
+    const f = el('span', 'die-face');
+    for (let c = 1; c <= 9; c++) {
       const dot = el('i');
-      if (n && PIPS[n].includes(cell)) dot.className = 'on';
-      face.append(dot);
+      if (n && PIPS[n].includes(c)) dot.className = 'on';
+      f.append(dot);
     }
-    if (!n) face.append(el('b', 'die-q', '🎲'));
-    dieBtn.append(face);
+    if (!n) f.append(el('b', 'die-q', '🎲'));
+    return f;
   }
-  dieBtn.addEventListener('click', () => {
-    if (dieBtn.disabled) return;
-    dieBtn.disabled = true;
-    vibrate(15);
-    socket.emit('parchis:roll');
-  });
+
+  // values: lo que muestra cada dado; opts.canRoll / opts.pick (índices elegibles)
+  function drawDice(values, opts = {}) {
+    diceBox.innerHTML = '';
+    values.forEach((n, i) => {
+      const b = el('button', 'die');
+      b.type = 'button';
+      b.append(face(n));
+      if (opts.canRoll) {
+        b.classList.add('ready');
+        b.setAttribute('aria-label', 'Tirar los dados');
+        b.addEventListener('click', () => {
+          diceBox.querySelectorAll('.die').forEach((d) => { d.disabled = true; d.classList.remove('ready'); });
+          vibrate(15);
+          socket.emit('parchis:roll');
+        });
+      } else if (opts.pick && opts.pick.has(i)) {
+        b.classList.add('pickable');
+        if (opts.selected === i) b.classList.add('selected');
+        b.setAttribute('aria-label', `Usar el dado de ${n}`);
+      } else {
+        b.disabled = true;
+        if (opts.used && opts.used.has(i)) b.classList.add('used');
+      }
+      diceBox.append(b);
+    });
+  }
 
   function animateRoll(final, done) {
     ui.rolling = true;
-    dieBtn.classList.add('rolling');
     let n = 0;
     clearInterval(ui.rollTimer);
     ui.rollTimer = setInterval(() => {
-      drawDie(1 + Math.floor(Math.random() * 6));
+      drawDice(final.map(() => 1 + Math.floor(Math.random() * 6)));
+      diceBox.querySelectorAll('.die').forEach((d) => d.classList.add('rolling'));
       sfx.tick();
       if (++n >= 7) {
         clearInterval(ui.rollTimer);
         ui.rolling = false;
-        dieBtn.classList.remove('rolling');
-        drawDie(final);
-        if (final === 6) sfx.beep(990, 0.12, 'triangle', 0.06);
+        if (final.length === 2 ? final[0] === final[1] : final[0] === 6) sfx.beep(990, 0.12, 'triangle', 0.06);
         done();
       }
     }, 70);
@@ -253,27 +304,53 @@ window.ParchisGame = function ParchisGame(ctx) {
   // ─── Eventos ───
   socket.on('parchis:event', (e) => {
     if (e.kind === 'capture') { vibrate([60, 40, 60]); sfx.beep(220, 0.2, 'sawtooth', 0.05); toast(`🍽️ ${e.text}`, 'warn'); }
-    if (e.kind === 'goal') { sfx.beep(880, 0.12, 'triangle', 0.06); toast(`🏁 ${e.text}`, 'success'); }
+    if (e.kind === 'goal') { sfx.beep(880, 0.12, 'triangle', 0.06); toast(`👑 ${e.text}`, 'success'); }
     if (e.kind === 'win') {
-      const p = state.room && state.room.players.find((x) => x.id === e.id);
-      announce(p ? p.avatar : null, e.id === state.me ? '🏆 ¡Ganaste el Parchís!' : `🏆 ${e.text}`);
+      const pl = state.room && state.room.players.find((x) => x.id === e.id);
+      announce(pl ? pl.avatar : null, e.id === state.me ? '🏆 ¡Ganaste!' : `🏆 ${e.text}`);
       sfx.win();
-      speech.say(e.id === state.me ? '¡Ganaste el parchís!' : e.text);
+      speech.say(e.id === state.me ? '¡Ganaste!' : e.text);
     }
   });
 
-  function stageText(p, seat, me) {
-    const name = seat && seat.name;
+  function stageText(p, name, me, moves) {
+    const two = p.dice === 2;
+    const shown = (p.roll || []).join(' y ');
     if (p.stage === 'over') return '🏆 ¡Partida terminada!';
     if (!me) {
-      if (p.stage === 'roll') return `Turno de ${name}: va a tirar el dado…`;
+      if (p.stage === 'roll') return `Turno de ${name}: va a tirar ${two ? 'los dados' : 'el dado'}…`;
+      if (p.stage === 'crown') return `👑 ${name} sacó tres seguidos y elige qué ficha coronar…`;
       if (p.stage === 'bonus') return `${name} usa su premio de ${p.bonusAmount} casillas…`;
-      return `${name} está moviendo…`;
+      if (p.stage === 'wait') return `${name} sacó ${shown}.`;
+      return `${name} está moviendo (${shown})…`;
     }
-    if (p.stage === 'roll') return '👉 ¡Te toca! Toca el dado para tirar.';
-    if (p.stage === 'move') return p.legal.length > 1 ? `👉 Sacaste ${p.die}: toca la ficha que quieres mover.` : `Sacaste ${p.die}: moviendo tu ficha…`;
-    if (p.stage === 'bonus') return p.legal.length > 1 ? `🎁 Premio: elige una ficha para avanzar ${p.bonusAmount}.` : `🎁 Premio: avanzas ${p.bonusAmount}…`;
-    return `Sacaste ${p.die}.`;
+    if (p.stage === 'roll') return `👉 ¡Te toca! Toca ${two ? 'los dados' : 'el dado'} para tirar.`;
+    if (p.stage === 'crown') return '👑 ¡Tres seguidos! Toca la ficha que quieres coronar.';
+    if (p.stage === 'bonus') return moves.length > 1 ? `🎁 Premio: elige una ficha para avanzar ${p.bonusAmount}.` : `🎁 Premio: avanzas ${p.bonusAmount}…`;
+    if (p.stage === 'move') {
+      const steal = moves.some((m) => m.kind === 'steal') ? ' 🌩️ ¡Puedes robar el cielo!' : '';
+      if (two && p.pending.length === 2 && p.pending[0] !== p.pending[1]) return `👉 Sacaste ${shown}: toca un dado y luego la ficha.${steal}`;
+      const amount = p.pending[ui.selDie] ?? p.pending[0];
+      return p.legal.length > 1 ? `👉 Mueve ${amount}: toca la ficha.${steal}` : `Moviendo ${amount}…`;
+    }
+    return `Sacaste ${shown}.`;
+  }
+
+  function renderRules(p) {
+    const box = $('#parchis-game-rules');
+    const info = state.parchisInfo;
+    if (!box || !info) return;
+    const key = p.rules.join(',');
+    if (box.dataset.key === key) return;
+    box.dataset.key = key;
+    const list = box.querySelector('ul');
+    list.innerHTML = '';
+    info.rules.filter((r) => p.rules.includes(r.id)).forEach((r) => {
+      const li = el('li');
+      li.append(el('strong', null, r.label), el('span', 'muted small', ` · ${r.desc}`));
+      list.append(li);
+    });
+    box.querySelector('summary').textContent = `📋 Reglas de esta partida (${p.dice === 2 ? '2 dados' : '1 dado'} · ${p.pieceCount} fichas)`;
   }
 
   function render(room) {
@@ -294,7 +371,9 @@ window.ParchisGame = function ParchisGame(ctx) {
     const curPlayer = cur && playerOf(cur.id);
     const myTurn = cur && cur.id === state.me && p.stage !== 'over';
     const mySeat = p.seats.find((s) => s.id === state.me);
+    $('#parchis-title').textContent = p.dice === 2 ? '🎲🎲 Parqués' : '🎲 Parchís';
     $('#parchis-sub').textContent = mySeat ? `Juegas con ${mySeat.color.name.toLowerCase()}` : '👀 Estás mirando la partida';
+    const moves = myTurn ? movesFor(p) : [];
 
     // Turno actual
     const turn = $('#parchis-turn');
@@ -302,9 +381,10 @@ window.ParchisGame = function ParchisGame(ctx) {
     turn.parentElement.style.setProperty('--seat', cur ? cur.color.hex : '#999');
     if (curPlayer) turn.append(avatarEl(curPlayer.avatar, 'sm'));
     const txt = el('div', 'parchis-turn-text');
+    const name = curPlayer ? curPlayer.name : 'Jugador';
     txt.append(
-      el('strong', null, cur ? (myTurn ? 'Tu turno' : `${curPlayer ? curPlayer.name : 'Jugador'} · ${cur.color.name}`) : ''),
-      el('span', 'small', stageText(p, { name: curPlayer ? curPlayer.name : 'Jugador' }, myTurn))
+      el('strong', null, cur ? (myTurn ? 'Tu turno' : `${name} · ${cur.color.name}`) : ''),
+      el('span', 'small', stageText(p, name, myTurn, moves))
     );
     turn.append(txt);
     ui.clockEl = el('span', 'parchis-clock');
@@ -313,27 +393,55 @@ window.ParchisGame = function ParchisGame(ctx) {
     clearInterval(ui.clock);
     const tickClock = () => {
       const s = Math.ceil(Math.max(0, ui.deadline - Date.now()) / 1000);
-      ui.clockEl.textContent = p.stage === 'roll' || ((p.stage === 'move' || p.stage === 'bonus') && p.legal.length > 1) ? `⏱️ ${s}` : '';
+      const waiting = p.stage === 'roll' || p.stage === 'crown' || ((p.stage === 'move' || p.stage === 'bonus') && p.legal.length > 1);
+      ui.clockEl.textContent = waiting ? `⏱️ ${s}` : '';
     };
     tickClock();
     ui.clock = setInterval(tickClock, 500);
 
-    // Aviso al empezar mi turno
     const turnKey = `${p.turn}-${p.rollId}-${p.stage}`;
     if (myTurn && p.stage === 'roll' && ui.lastTurnKey !== turnKey) { vibrate([50, 40, 50]); sfx.beep(784, 0.1, 'triangle', 0.05); }
     ui.lastTurnKey = turnKey;
 
-    // Dado: se anima cuando llega una tirada nueva y después se mueven las fichas.
-    dieBtn.style.setProperty('--seat', cur ? cur.color.hex : '#999');
-    dieBtn.disabled = !(myTurn && p.stage === 'roll');
-    dieBtn.classList.toggle('ready', !dieBtn.disabled);
+    // Dados: se animan con cada tirada nueva; después se eligen y se mueven las fichas.
+    diceBox.style.setProperty('--seat', cur ? cur.color.hex : '#999');
+    const count = p.dice || 1;
+    const showDice = () => {
+      if (p.stage === 'roll') return drawDice(Array(count).fill(null), { canRoll: myTurn });
+      const values = p.roll && p.roll.length ? p.roll : Array(count).fill(null);
+      // Qué dados quedan sin usar (índices de la tirada que siguen en "pending").
+      const left = [...p.pending];
+      const unused = new Map();
+      values.forEach((v, i) => {
+        const k = left.indexOf(v);
+        if (k !== -1) { unused.set(i, k); left.splice(k, 1); }
+      });
+      const used = new Set(values.map((_v, i) => i).filter((i) => !unused.has(i)));
+      const pick = new Set();
+      let selected = null;
+      if (myTurn && p.stage === 'move') {
+        const usable = new Set(p.legal.map((m) => m.die));
+        for (const [i, k] of unused) {
+          if (usable.has(k)) pick.add(i);
+          if (k === ui.selDie && selected === null) selected = i;
+        }
+        // Si los dos dados tienen el mismo valor no hace falta elegir.
+        if (pick.size === 2 && p.pending[0] === p.pending[1]) pick.clear();
+      }
+      // Un clic en el dado elige su índice en "pending".
+      drawDice(values, { pick, selected, used });
+      diceBox.querySelectorAll('.die.pickable').forEach((b, n) => {
+        const i = [...pick][n];
+        b.onclick = () => { ui.selDie = unused.get(i); vibrate(8); render(state.room); };
+      });
+    };
     const piecesNow = () => renderPieces(p, myTurn);
-    if (p.rollId !== ui.rollId && p.die) {
+    if (p.rollId !== ui.rollId && p.roll && p.roll.length) {
       ui.rollId = p.rollId;
-      animateRoll(p.die, piecesNow);
-      if (myTurn) dieBtn.disabled = true;
+      ui.selDie = 0;
+      animateRoll(p.roll, () => { showDice(); piecesNow(); });
     } else {
-      if (!ui.rolling) drawDie(p.stage === 'roll' ? null : p.die);
+      if (!ui.rolling) showDice();
       piecesNow();
     }
     ui.rollId = p.rollId;
@@ -342,18 +450,19 @@ window.ParchisGame = function ParchisGame(ctx) {
     const log = $('#parchis-log');
     log.innerHTML = '';
     p.log.slice(-4).reverse().forEach((t, i) => log.append(el('li', i === 0 ? 'latest' : null, t)));
+    renderRules(p);
 
-    // Jugadores: color, fichas en meta y puntos
+    // Jugadores: color, fichas coronadas y puntos
     const list = $('#parchis-players');
     list.innerHTML = '';
     p.seats.forEach((s, i) => {
       const pl = playerOf(s.id);
       const li = el('li', `seat${i === p.turn && p.stage !== 'over' ? ' active' : ''}${s.gone ? ' gone' : ''}${pl && !pl.connected ? ' offline' : ''}`);
       li.style.setProperty('--seat', s.color.hex);
-      const home = s.pieces.filter((x) => x >= G.goal).length;
+      const done = s.pieces.filter((x) => x >= G.goal).length;
       li.append(el('span', 'seat-dot'), avatarEl(pl ? pl.avatar : null, 'xs'),
         el('span', 'seat-name', `${pl ? pl.name : 'Salió'}${s.id === state.me ? ' (tú)' : ''}`),
-        el('span', 'seat-goal', `🏁 ${home}/4`),
+        el('span', 'seat-goal', `👑 ${done}/${s.pieces.length}`),
         el('span', 'seat-pts', `${pl ? pl.score : 0} pts`));
       list.append(li);
     });
@@ -361,6 +470,5 @@ window.ParchisGame = function ParchisGame(ctx) {
     if (watchers.length) list.append(el('li', 'muted small', `👀 Mirando: ${watchers.map((w) => w.name).join(', ')}`));
   }
 
-  drawDie(null);
   return { render };
 };

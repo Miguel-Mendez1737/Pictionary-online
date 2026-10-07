@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.14.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.15.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -257,3 +257,23 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Ajustes del anfitrión:** temas (o "Todos"), cantidad de preguntas (10, 15, 20 o 30) y segundos por pregunta (10, 15, 20 o 30).
 - **Cómo se juega:** todos responden a la vez y la respuesta correcta solo se envía al revelarla. Correcta: 10 puntos; la más rápida: +5.
 - **Agregar preguntas:** se añaden líneas en `games/trivia-data.js`, con el formato `[pregunta, correcta, incorrecta, incorrecta, incorrecta]`.
+
+## v1.15.0: Parchís / Parqués configurable (hasta 10 jugadores)
+- **Tablero:** de 2 a 10 jugadores. Hasta 4 se usa el tablero clásico; de 5 a 10, un tablero con un brazo por color (10 colores).
+- **Ajustes del anfitrión:**
+  - cuántos juegan: todos los de la sala o un número fijo; el resto mira;
+  - fichas por jugador: 2, 3 o 4;
+  - dados: 1 (Parchís, se sale con 5) o 2 (Parqués, se sale con pares y cada dado mueve una ficha).
+- **Menú de reglas (selección múltiple):**
+  - repetir con 6 o pares;
+  - tres intentos para salir;
+  - cualquier par saca todas;
+  - seguros;
+  - comer en la salida;
+  - barreras;
+  - premio por comer (+20) y por coronar (+10);
+  - llegada exacta;
+  - tres seguidos: a la cárcel;
+  - tres pares sacan (coronan) una ficha;
+  - soplar;
+  - robar cielo: con el número exacto desde la entrada de un rival se cae sobre su ficha en su pasillo, se la come y se corona por ese cielo.

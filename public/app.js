@@ -1024,22 +1024,66 @@
     bastaTime.disabled = !host;
   }
 
-  function renderParchisSeats(room) {
+  // ─── Ajustes de Parchís / Parqués ───
+  const parchisPlayers = $('#parchis-players');
+  const parchisPieces = $('#parchis-pieces');
+  const parchisDice = $('#parchis-dice');
+  parchisPlayers.addEventListener('change', () => sendSettings({ parchisPlayers: Number(parchisPlayers.value) }));
+  parchisPieces.addEventListener('change', () => sendSettings({ parchisPieces: Number(parchisPieces.value) }));
+  parchisDice.addEventListener('change', () => { vibrate(10); sendSettings({ parchisDice: Number(parchisDice.value) }); });
+
+  function renderParchisSettings(room, host) {
     const info = state.parchisInfo;
-    const box = $('#parchis-seats');
-    box.innerHTML = '';
     if (!info) return;
-    const playing = room.players.filter((p) => p.connected).slice(0, info.maxSeats);
-    const arms = { 1: [0], 2: [0, 2], 3: [0, 1, 2], 4: [0, 1, 2, 3], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] }[playing.length] || [];
+    const st = room.settings;
+    if (!parchisPlayers.options.length) {
+      parchisPlayers.innerHTML = `<option value="0">Todos los de la sala (hasta ${info.maxSeats})</option>`
+        + Array.from({ length: info.maxSeats - 1 }, (_, i) => `<option value="${i + 2}">${i + 2} jugadores</option>`).join('');
+      parchisPieces.innerHTML = info.pieceOptions.map((n) => `<option value="${n}">${n} fichas</option>`).join('');
+    }
+    parchisPlayers.value = String(st.parchisPlayers || 0);
+    parchisPieces.value = String(st.parchisPieces);
+    parchisDice.value = String(st.parchisDice);
+    [parchisPlayers, parchisPieces, parchisDice].forEach((x) => { x.disabled = !host; });
+
+    // Reglas: lista de casillas (selección múltiple) dentro de un menú desplegable.
+    const rules = st.parchisRules || [];
+    const box = $('#parchis-rules');
+    box.innerHTML = '';
+    info.rules.forEach((r) => {
+      const label = el('label', 'rule-check');
+      const input = el('input');
+      input.type = 'checkbox';
+      input.checked = rules.includes(r.id);
+      input.disabled = !host;
+      input.addEventListener('change', () => {
+        vibrate(8);
+        const next = input.checked ? [...rules, r.id] : rules.filter((x) => x !== r.id);
+        sendSettings({ parchisRules: next });
+      });
+      const text = el('span', 'rule-text');
+      text.append(el('strong', null, r.label), el('small', null, r.desc));
+      label.append(input, text);
+      box.append(label);
+    });
+    $('#parchis-rules-count').textContent = `${rules.length} activas`;
+
+    // Quiénes juegan (y con qué color)
+    const seatsBox = $('#parchis-seats');
+    seatsBox.innerHTML = '';
+    const connected = room.players.filter((p) => p.connected);
+    const playing = connected.slice(0, Math.min(st.parchisPlayers || info.maxSeats, info.maxSeats));
+    const arms = playing.length <= 4 ? ({ 1: [0], 2: [0, 2], 3: [0, 1, 2], 4: [0, 1, 2, 3] }[playing.length] || []) : playing.map((_p, i) => i);
     playing.forEach((p, i) => {
       const color = info.colors[arms[i]];
       const li = el('li', 'seat');
       li.style.setProperty('--seat', color.hex);
       li.append(el('span', 'seat-dot'), avatarEl(p.avatar, 'xs'), el('span', 'seat-name', p.name), el('span', 'muted small', color.name));
-      box.append(li);
+      seatsBox.append(li);
     });
-    const watchers = room.players.filter((p) => p.connected).length - playing.length;
-    if (watchers > 0) box.append(el('li', 'muted small', `👀 ${watchers} ${watchers === 1 ? 'persona mira' : 'personas miran'} la partida.`));
+    const watchers = connected.length - playing.length;
+    if (watchers > 0) seatsBox.append(el('li', 'muted small', `👀 ${watchers} ${watchers === 1 ? 'persona mira' : 'personas miran'} la partida.`));
+    if (st.parchisPlayers && connected.length < st.parchisPlayers) seatsBox.append(el('li', 'muted small', `⏳ Elegiste ${st.parchisPlayers} jugadores: por ahora hay ${connected.length} en la sala. Se juega con los que estén al empezar.`));
   }
 
   const isHost = () => state.room && state.room.hostId === state.me;
@@ -1139,7 +1183,7 @@
     $('#trivia-settings').hidden = game !== 'trivia';
     if (game === 'trivia') renderTriviaSettings(room, host);
     if (game === 'basta') renderBastaSettings(room, host);
-    if (game === 'parchis') renderParchisSeats(room);
+    if (game === 'parchis') renderParchisSettings(room, host);
 
     $('#lobby-role-hint').textContent = host
       ? 'Eres el anfitrión: elige el tema y configura la partida.'
