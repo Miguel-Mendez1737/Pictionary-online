@@ -36,6 +36,14 @@ function cleanDatabaseUrl(raw) {
   return match ? match[0] : text;
 }
 const DATABASE_URL = cleanDatabaseUrl(process.env.DATABASE_URL);
+
+// Versión segura para los Logs: muestra la dirección SIN la contraseña.
+function describeDatabaseUrl(url) {
+  if (!url) return '(vacía)';
+  if (!/^postgres(?:ql)?:\/\//.test(url)) return `(no empieza con postgresql://; empieza con "${url.slice(0, 12)}…")`;
+  if (!url.includes('@')) return `${url.replace(/:[^:/@]*$/, ':****')}  ← INCOMPLETA: falta la contraseña, la @ y el servidor`;
+  return url.replace(/^(postgres(?:ql)?:\/\/[^:@/]*:)[^@]*@/, '$1****@');
+}
 const RETRY_BASE_MS = Number(process.env.ACCOUNTS_RETRY_MS) || 10000;
 const USER_RE = /^[a-z0-9_.-]{3,20}$/;
 const MAX_TOKENS = 5; // sesiones abiertas por cuenta (celular, PC, etc.)
@@ -62,6 +70,7 @@ function pgConfig(connectionString) {
 
 async function load() {
   if (DATABASE_URL) {
+    console.log(`   Base de datos: ${describeDatabaseUrl(DATABASE_URL)}`);
     const { Pool } = require('pg');
     if (pool) { const old = pool; pool = null; old.end().catch(() => {}); }
     pool = new Pool(pgConfig(DATABASE_URL));

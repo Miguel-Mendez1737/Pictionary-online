@@ -1,6 +1,6 @@
 {
   "name": "pictionary-online",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "description": "Pictionary multijugador en tiempo real con Node.js, Express y Socket.io",
   "author": "Miguel Mendez",
   "main": "server.js",
