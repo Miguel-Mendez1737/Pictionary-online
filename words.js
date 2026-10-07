@@ -244,5 +244,47 @@ module.exports = {
       'Una princesa', 'El Chavo del 8', 'La Chilindrina', 'El Chapulín Colorado', 'Goku',
       'Naruto', 'Harry Potter', 'Darth Vader', 'Yoda', 'El Grinch'
     ]
+  },
+  oficina: {
+    label: 'Cosas de la oficina',
+    emoji: '🏢',
+    colors: ['#495057', '#1c7ed6'], // colores de la interfaz con este tema
+    words: [
+      'Computadora', 'Teclado', 'Mouse', 'Monitor', 'Impresora',
+      'Fotocopiadora', 'Escáner', 'Engrapadora', 'Grapas', 'Clip',
+      'Perforadora', 'Tijeras', 'Pegamento', 'Cinta adhesiva', 'Post-it',
+      'Pluma', 'Lápiz', 'Marcatextos', 'Corrector', 'Borrador',
+      'Sacapuntas', 'Regla', 'Calculadora', 'Agenda', 'Calendario',
+      'Cuaderno', 'Carpeta', 'Folder', 'Archivero', 'Sobre',
+      'Sello', 'Gafete', 'Credencial', 'Escritorio', 'Silla de oficina',
+      'Cajón', 'Teléfono', 'Audífonos', 'Proyector', 'Pizarrón',
+      'Plumón', 'Rotafolio', 'Cafetera', 'Taza de café', 'Garrafón de agua',
+      'Reloj checador', 'Recibo de nómina', 'Cheque', 'Factura', 'Contrato',
+      'Junta', 'Videollamada', 'Correo electrónico', 'Contraseña', 'Memoria USB',
+      'Laptop', 'Cargador', 'Extensión eléctrica', 'Basurero', 'Trituradora de papel',
+      'Elevador', 'Recepción', 'Sala de juntas', 'Cubículo', 'Jefe',
+      'Corbata', 'Maletín', 'Planta de oficina', 'Ventilador', 'Aire acondicionado'
+    ]
+  },
+  instrumentos: {
+    label: 'Instrumentos musicales',
+    emoji: '🎵',
+    colors: ['#7048e8', '#e8590c'], // colores de la interfaz con este tema
+    words: [
+      'Guitarra', 'Guitarra eléctrica', 'Bajo', 'Violín', 'Viola',
+      'Violonchelo', 'Contrabajo', 'Arpa', 'Piano', 'Teclado',
+      'Órgano', 'Acordeón', 'Armónica', 'Flauta', 'Flauta dulce',
+      'Clarinete', 'Oboe', 'Fagot', 'Saxofón', 'Trompeta',
+      'Trombón', 'Tuba', 'Corno francés', 'Gaita', 'Batería',
+      'Tambor', 'Bombo', 'Platillos', 'Bongós', 'Congas',
+      'Timbales', 'Pandero', 'Maracas', 'Güiro', 'Claves',
+      'Castañuelas', 'Triángulo', 'Xilófono', 'Marimba', 'Campana',
+      'Cascabeles', 'Cajón peruano', 'Ukulele', 'Mandolina', 'Banjo',
+      'Charango', 'Cuatro venezolano', 'Requinto', 'Guitarrón', 'Vihuela',
+      'Arpa jarocha', 'Quena', 'Zampoña', 'Ocarina', 'Silbato',
+      'Kazoo', 'Sitar', 'Didgeridoo', 'Gong', 'Cencerro',
+      'Sintetizador', 'Micrófono', 'Bocina', 'Atril', 'Batuta',
+      'Metrónomo', 'Partitura', 'Púa', 'Baquetas', 'Arco de violín'
+    ]
   }
 };

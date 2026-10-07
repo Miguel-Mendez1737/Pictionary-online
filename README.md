@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.16.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.16.1 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -289,3 +289,7 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   - 5 temas nuevos: 🐾 Animales, 🍔 Comida, 👷 Profesiones, 🗺️ Lugares y 🦸 Personajes.
   - En total hay 848 palabras.
 - **🎲 Parqués:** con pares y fichas ya en juego, el jugador elige entre tocar la cárcel para sacar fichas o mover cada dado con una ficha distinta. Sin pares, cada dado mueve una ficha distinta, como antes.
+
+## v1.16.1: dos temas nuevos en Garabato
+- **🏢 Cosas de la oficina:** 70 palabras, como engrapadora, reloj checador, recibo de nómina o sala de juntas.
+- **🎵 Instrumentos musicales:** 70 palabras, como guitarrón, marimba, charango o güiro.
