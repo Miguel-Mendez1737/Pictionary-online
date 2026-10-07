@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.8.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.9.0 (la versión se toma de `package.json`)
 
 Pictionary multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -143,7 +143,7 @@ Cada turno empieza con una ruleta de 8 palabras del tema que eligió el anfitri�
   - sesiones con token;
   - límite de intentos por minuto.
 - **Dónde se guardan:** en `data/users.json`, o en la carpeta indicada por la variable `DATA_DIR`.
-  - ⚠️ Al publicar en Render, Railway, etc., `DATA_DIR` debe apuntar a un **disco persistente**. Si no, las cuentas se borran con cada actualización.
+  - Al publicar gratis en Render, usa una base de datos PostgreSQL gratuita (variable `DATABASE_URL`, ver v1.9.0 y `DESPLIEGUE.md`).
   - Para muchos usuarios conviene migrar a una base de datos.
 
 ## Novedades v1.6
@@ -197,3 +197,10 @@ Para la instalación completa en Android, y para el micrófono, la app debe abri
 - **Solo ganan los que adivinan:** 10 puntos cada uno.
 - **El dibujante no suma puntos.**
 - **Si se acaba el tiempo (1:30) y nadie adivinó,** nadie suma puntos en ese turno.
+
+## v1.9.0: publicar gratis
+- **`render.yaml`** ahora usa el **plan Free** de Render.
+- **Cuentas en base de datos:** si existe la variable `DATABASE_URL`, las cuentas se guardan en **PostgreSQL**, por ejemplo **Neon**, que es gratis. Así no se pierden cuando Render se duerme.
+  - Sin `DATABASE_URL`, se guardan en `data/users.json`, como antes.
+  - Si la base de datos no responde, el juego sigue funcionando y solo se pausan las cuentas.
+- **Guía:** `DESPLIEGUE.md` explica el camino 100% gratuito: Render Free + Neon + Metered.

@@ -2,8 +2,11 @@
 
 // ─── Cuentas de jugador ───────────────────────────────────────────────────────
 // Permite registrarse con usuario y contraseña para no volver a crear el
-// jugador (nombre y avatar) cada vez que se entra. Los datos se guardan en
-// data/users.json (o en la carpeta indicada por DATA_DIR).
+// jugador (nombre y avatar) cada vez que se entra. Dónde se guardan:
+//  - Si existe DATABASE_URL: en una base de datos PostgreSQL (p. ej. Neon o
+//    Supabase, que tienen plan gratuito). Recomendado al publicar gratis en
+//    Render, porque su plan Free borra los archivos cada vez que se duerme.
+//  - Si no: en data/users.json (o en la carpeta indicada por DATA_DIR).
 //  - Contraseñas: nunca se guardan en texto; se usa scrypt con "sal" aleatoria.
 //  - Sesiones: token aleatorio; en el archivo solo se guarda su huella SHA-256.
 //
@@ -21,33 +24,91 @@ const express = require('express');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'users.json');
+const DATABASE_URL = process.env.DATABASE_URL || '';
 const USER_RE = /^[a-z0-9_.-]{3,20}$/;
 const MAX_TOKENS = 5; // sesiones abiertas por cuenta (celular, PC, etc.)
 
 let db = { users: {} };
+let pool = null;          // conexión a PostgreSQL (si hay DATABASE_URL)
+let available = true;     // false si la base de datos no respondió al arrancar
+let storageLabel = 'archivo';
 
-function load() {
+// Configuración de conexión: SSL para servidores en internet (Neon, Supabase…).
+function pgConfig(connectionString) {
+  const url = new URL(connectionString);
+  const local = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+  ['sslmode', 'channel_binding'].forEach((k) => url.searchParams.delete(k));
+  return {
+    connectionString: url.toString(),
+    ssl: local ? false : { rejectUnauthorized: process.env.DATABASE_SSL_VERIFY !== 'false' },
+    max: 3,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 15000
+  };
+}
+
+async function load() {
+  if (DATABASE_URL) {
+    const { Pool } = require('pg');
+    pool = new Pool(pgConfig(DATABASE_URL));
+    // Las bases gratuitas cierran conexiones inactivas: no debe tumbar la app.
+    pool.on('error', (err) => console.warn('PostgreSQL (conexión inactiva):', err.message));
+    await pool.query(`CREATE TABLE IF NOT EXISTS pictionary_store (
+      key TEXT PRIMARY KEY,
+      value JSONB NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`);
+    const res = await pool.query("SELECT value FROM pictionary_store WHERE key = 'users'");
+    if (res.rows[0] && res.rows[0].value && res.rows[0].value.users) db = res.rows[0].value;
+    storageLabel = 'base de datos PostgreSQL';
+    return;
+  }
   try {
     const parsed = JSON.parse(fs.readFileSync(FILE, 'utf8'));
     if (parsed && parsed.users) db = parsed;
   } catch { /* primer arranque: aún no hay archivo */ }
+  storageLabel = `archivo ${FILE}`;
 }
 
-// Escritura atómica (archivo temporal + rename) para no corromper datos.
+// Guardado: en PostgreSQL (una fila con todas las cuentas) o en archivo con
+// escritura atómica (archivo temporal + rename) para no corromper datos.
 let saveTimer = null;
+let writing = Promise.resolve();
 function flush() {
   clearTimeout(saveTimer);
   saveTimer = null;
+  if (!available) return writing; // nunca sobrescribir con datos vacíos
+  const snapshot = JSON.stringify(db);
+  if (pool) {
+    writing = writing
+      .then(() => pool.query(
+        `INSERT INTO pictionary_store (key, value, updated_at) VALUES ('users', $1::jsonb, now())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, [snapshot]))
+      .catch((err) => console.error('No se pudieron guardar las cuentas:', err.message));
+    return writing;
+  }
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const tmp = `${FILE}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(db, null, 1));
+  fs.writeFileSync(tmp, snapshot);
   fs.renameSync(tmp, FILE);
+  return writing;
 }
 function save() {
   if (!saveTimer) saveTimer = setTimeout(flush, 200);
 }
-process.on('exit', () => { if (saveTimer) flush(); });
-['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, () => { if (saveTimer) flush(); process.exit(0); }));
+// Al apagar el servidor (Render lo hace al dormirse o actualizar) se guarda lo pendiente.
+let closing = false;
+['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, async () => {
+  if (closing) return;
+  closing = true;
+  try {
+    if (saveTimer) flush();
+    await Promise.race([writing, new Promise((r) => setTimeout(r, 5000))]);
+    if (pool) await pool.end();
+  } finally {
+    process.exit(0);
+  }
+}));
 
 const sha256 = (t) => crypto.createHash('sha256').update(t).digest('hex');
 const normUser = (u) => String(u ?? '').trim().toLowerCase();
@@ -90,10 +151,22 @@ const ERR = {
 };
 const validPassword = (p) => typeof p === 'string' && p.length >= 6 && p.length <= 100;
 
+// Devuelve una promesa que se cumple cuando las cuentas están cargadas.
 module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
-  load();
+  const ready = load()
+    .then(() => console.log(`   Cuentas: ${storageLabel} (${Object.keys(db.users).length} usuarios)`))
+    .catch((err) => {
+      // Si la base de datos falla, el juego sigue funcionando sin cuentas.
+      available = false;
+      console.error(`⚠️  Cuentas desactivadas: no se pudo conectar a la base de datos (${err.message})`);
+    });
+
   const router = express.Router();
   router.use(express.json({ limit: '10kb' }));
+  router.use((_req, res, next) => {
+    if (!available) return res.status(503).json({ error: 'Las cuentas no están disponibles en este momento. Puedes jugar como invitado.' });
+    next();
+  });
 
   // Límite simple de intentos por IP (evita adivinar contraseñas a la fuerza).
   const hits = new Map();
@@ -194,4 +267,5 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
   });
 
   app.use('/api', router);
+  return ready;
 };

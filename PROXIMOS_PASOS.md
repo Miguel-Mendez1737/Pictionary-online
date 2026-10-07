@@ -45,6 +45,9 @@
   - turno de 1:30 con cronómetro grande;
   - tema Deportes.
 - **v1.8.1:** solo ganan puntos quienes adivinan; ya no hay puntos para el dibujante.
+- **v1.9.0:**
+  - publicación 100% gratis (Render Free + cuentas en Neon PostgreSQL + TURN Metered);
+  - código en https://github.com/Miguel-Mendez1737/pictionary-online.
 - Las respuestas ignoran mayúsculas, acentos **y espacios**.
 - Probado con emulación de iPhone (390 px), Android pequeño (360 px), celular horizontal y escritorio, sin scroll ni desbordes.
 
@@ -55,7 +58,7 @@
    - teclado;
    - dibujo con el dedo;
    - voz.
-2. **Publicarlo con HTTPS** siguiendo `DESPLIEGUE.md` (Render + disco para las cuentas + TURN para la voz). en Render, Railway o Fly.io, para tener un enlace fijo, micrófono e instalación como app.
+2. **Publicarlo gratis** siguiendo `DESPLIEGUE.md` (Render Free + Neon + Metered). en Render, Railway o Fly.io, para tener un enlace fijo, micrófono e instalación como app.
 3. Temas personalizados escritos por el anfitrión.
 4. Elegir entre 3 palabras, deshacer el último trazo y sonidos.
 

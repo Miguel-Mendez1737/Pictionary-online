@@ -133,7 +133,7 @@ function cleanAvatar(a) {
 }
 const cleanName = (v) => clean(v, 16);
 
-mountAccounts(app, { cleanName, cleanAvatar });
+const accountsReady = mountAccounts(app, { cleanName, cleanAvatar });
 
 // ─── Salas ────────────────────────────────────────────────────────────────────
 // Cada jugador se identifica con una clave estable que genera su navegador
@@ -729,7 +729,8 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
+// Arranca cuando las cuentas están cargadas (desde archivo o base de datos).
+accountsReady.then(() => server.listen(PORT, () => {
   console.log(`🎨 ${APP_INFO.name} v${APP_INFO.version} · by ${APP_INFO.author}`);
   console.log(`   Listo en ${USE_HTTPS ? 'https' : 'http'}://localhost:${PORT}`);
-});
+}));
