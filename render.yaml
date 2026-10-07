@@ -1,0 +1,21 @@
+# Configuración para publicar en Render (https://render.com) con "Blueprint".
+# Crea el servicio web con HTTPS y un disco para guardar las cuentas.
+services:
+  - type: web
+    name: pictionary-online
+    runtime: node
+    plan: starter            # con disco persistente (las cuentas no se borran)
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: /var/data
+      - key: ICE_SERVERS     # servidor TURN para la voz con datos móviles (ver DESPLIEGUE.md)
+        sync: false
+    disk:
+      name: datos
+      mountPath: /var/data
+      sizeGB: 1

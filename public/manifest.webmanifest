@@ -1,0 +1,21 @@
+{
+  "name": "Pictionary Online",
+  "short_name": "Pictionary",
+  "description": "Dibuja, adivina y suma puntos con tus amigos en tiempo real.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f5fb",
+  "theme_color": "#8b5cf6",
+  "shortcuts": [
+    { "name": "Jugar en la sala pública", "short_name": "Jugar", "url": "/?sala=PUBLICA", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
