@@ -23,7 +23,7 @@ const AVATAR_LIMITS = { skin: 6, hair: 8, hairColor: 8, eyes: 6, eyeColor: 6, li
 // Puntaje: 10 puntos por adivinar la palabra del turno. Los puntos se acumulan
 // mientras el jugador siga conectado (aunque se jueguen varias partidas) y
 // vuelven a 0 si se desconecta.
-const POINTS_GUESS = 10;
+const POINTS_GUESS = 10;         // solo para el primero que adivina
 // Solo ganan puntos quienes adivinan: el dibujante no suma puntos.
 const POINTS_DRAWER = 0;
 const REVEAL_MS = 5000;          // pausa para mostrar la palabra al terminar un turno
@@ -456,6 +456,7 @@ function endTurn(room, reason) {
   room.lastTurn = { word: room.word, reason, gains };
   const reasons = {
     time: '⏰ ¡Se acabó el tiempo!',
+    first: `🏁 ¡${gains[0] ? gains[0].name : 'Alguien'} adivinó primero!`,
     all: '🎉 ¡Todos adivinaron!',
     drawerLeft: '📴 El dibujante perdió la conexión.'
   };
@@ -512,11 +513,13 @@ function handleGuess(room, player, text) {
 
     // El mensaje con la respuesta NO se muestra: se anuncia a todos quién
     // acertó y cuántos puntos ganó (la app también lo dice en voz alta).
-    systemMsg(room, `🎉 ${player.name} adivinó y ganó ${points} puntos.`, 'success');
+    // Solo gana el primero: el turno termina en ese momento y el reloj va a 0.
+    systemMsg(room, `🎉 ${player.name} adivinó primero y ganó ${points} puntos.`, 'success');
     io.to(room.code).emit('guess:announce', { id: player.id, name: player.name, avatar: player.avatar, points });
     emitTo(room, player.id, 'guess:correct', { word: room.word, points });
-    syncRoom(room);
-    checkAllGuessed(room);
+    room.timeLeft = 0;
+    io.to(room.code).emit('timer', 0);
+    endTurn(room, 'first');
     return;
   }
 

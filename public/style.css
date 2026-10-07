@@ -1271,3 +1271,4 @@ body.is-landscape .tool span { display: none; }
 /* El botón ¡BASTA! siempre a la vista, aunque haya muchas categorías */
 .btn-basta { position: sticky; bottom: calc(10px + var(--safe-bottom)); z-index: 3; }
 .basta-form { padding-bottom: 12px; }
+.first-guess { margin: 0; font-weight: 900; font-size: 1.05rem; color: var(--success); }

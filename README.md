@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.13.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.13.1 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -245,3 +245,7 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Reglas:** un dado; se sale con 5 (obligatorio); con 6 se tira otra vez y tres 6 seguidos regresan la última ficha a casa. Hay seguros ⭐ y barreras de dos fichas. Comer una ficha da +20 casillas y llegar a la meta +10. La meta requiere tirada exacta.
 - **Puntos para la tabla general:** comer +5, ficha en la meta +10, ganar +30.
 - **Turnos:** si alguien no juega en 25 s (o se desconecta), la app juega por él. Si solo hay una jugada posible, se mueve sola.
+
+## v1.13.1: en Garabato solo gana el primero
+- **Primer acierto:** el primero que escribe la palabra gana 10 puntos y el turno termina en ese momento. El reloj se va a 0 y, tras mostrar la palabra, sigue el siguiente turno.
+- **Aciertos tardíos:** quien escribe la palabra después ya no suma puntos.

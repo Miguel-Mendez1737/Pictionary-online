@@ -1477,6 +1477,10 @@
 
     if (room.phase === 'reveal' && room.lastTurn) {
       const box = el('div', 'overlay-card');
+      if (room.lastTurn.reason === 'first' && room.lastTurn.gains[0]) {
+        const w = room.lastTurn.gains[0];
+        box.append(el('p', 'first-guess', w.id === state.me ? '🏁 ¡Adivinaste primero!' : `🏁 ¡${w.name} adivinó primero!`));
+      }
       box.append(el('p', 'muted', 'La palabra era'), el('h2', 'reveal-word', room.lastTurn.word));
       if (room.lastTurn.gains.length) {
         const ul = el('ul', 'gains');
