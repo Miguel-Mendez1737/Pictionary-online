@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.12.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.13.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -230,3 +230,18 @@ Para la instalación completa en Android, y para el micrófono, la app debe abri
 ## v1.12.0: nuevo nombre "Adivina el Garabato"
 - **Qué cambia:** el nombre visible pasa a **"Adivina el Garabato"** en la bienvenida, la portada, la pestaña del navegador y el ícono instalado (que muestra "Garabato").
 - **Qué se mantiene:** la dirección web, las cuentas, los amigos y las sesiones guardadas no cambian.
+
+## v1.13.0: tres juegos en una app
+En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta o 🎲 Parchís. Los tres usan las mismas salas (también las privadas), cuentas, avatares, chat de voz y puntos acumulados.
+
+### ✋ Basta / Stop (`games/basta.js`, `public/basta.js`)
+- **Categorías:** el anfitrión elige de 3 a 8 entre 14 (Nombre, Apellido, País o ciudad, Animal, Fruta o verdura, Color, Cosa, Comida, Marca, Profesión, Película o serie, Artista, Deporte, Flor o planta). También elige las rondas (3, 5, 7 o 10) y el tiempo máximo por ronda (1 a 3 minutos).
+- **La letra:** sale al azar con una animación, sin K, Ñ, Q, W, X, Y ni Z, y no se repite en la partida.
+- **¡BASTA!:** quien llena todo puede tocarlo; los demás tienen 3 segundos para terminar. Mientras se escribe solo se ve cuántas categorías lleva cada uno, no las respuestas.
+- **Revisión:** todos ven las respuestas y pueden votar 👎 las que no valen; se anulan por mayoría de los demás. Puntos por categoría: 20 si fue el único con respuesta válida, 10 si nadie la repitió y 5 si se repitió. Se ignoran mayúsculas y acentos.
+
+### 🎲 Parchís (`games/parchis.js`, `public/parchis.js`)
+- **Jugadores:** de 2 a 6. Con 2 a 4 se usa el tablero clásico; con 5 o 6, un tablero hexagonal con 6 colores. Si hay más personas en la sala, miran la partida.
+- **Reglas:** un dado; se sale con 5 (obligatorio); con 6 se tira otra vez y tres 6 seguidos regresan la última ficha a casa. Hay seguros ⭐ y barreras de dos fichas. Comer una ficha da +20 casillas y llegar a la meta +10. La meta requiere tirada exacta.
+- **Puntos para la tabla general:** comer +5, ficha en la meta +10, ganar +30.
+- **Turnos:** si alguien no juega en 25 s (o se desconecta), la app juega por él. Si solo hay una jugada posible, se mueve sola.

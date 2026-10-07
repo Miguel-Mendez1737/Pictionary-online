@@ -166,8 +166,14 @@
             <ul class="player-list" id="lobby-players"></ul>
           </div>
 
-          <div class="card">
-            <h3>Tema de la partida</h3>
+          <div class="lobby-side">
+          <div class="card game-card">
+            <h3>¿A qué jugamos?</h3>
+            <div class="game-picker" id="game-picker" role="radiogroup" aria-label="Juego"></div>
+          </div>
+
+          <div class="card" id="garabato-settings">
+            <h3>🎨 Tema de la partida</h3>
             <p class="muted small" id="lobby-role-hint"></p>
             <label class="field theme-field">
               <span class="field-label">Tema</span>
@@ -192,6 +198,35 @@
               <span>🤫 Silenciar el micrófono de quien dibuja</span>
             </label>
           </div>
+
+          <!-- ✋ Basta -->
+          <div class="card" id="basta-settings" hidden>
+            <h3>✋ Basta</h3>
+            <p class="rule-info small">Sale una letra al azar y todos llenan las categorías con palabras que empiecen con esa letra. Quien llene todo primero toca <strong>¡BASTA!</strong> y en 3 segundos se cierran las respuestas. Después todos revisan y pueden anular las que no valen. Por categoría: <strong>20 puntos</strong> si fuiste el único con respuesta, <strong>10</strong> si nadie más la repitió y <strong>5</strong> si se repitió.</p>
+            <div class="field">
+              <span class="field-label">Categorías <small id="basta-cat-count"></small></span>
+              <div class="chip-grid" id="basta-cats"></div>
+            </div>
+            <div class="settings-row">
+              <label class="field">
+                <span class="field-label">Rondas</span>
+                <select id="basta-rounds"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Tiempo máximo</span>
+                <select id="basta-time" aria-label="Tiempo máximo por ronda"></select>
+              </label>
+            </div>
+          </div>
+
+          <!-- 🎲 Parchís -->
+          <div class="card" id="parchis-settings" hidden>
+            <h3>🎲 Parchís</h3>
+            <p class="rule-info small">Juegan de <strong>2 a 6</strong> personas (las primeras de la lista; las demás miran). Con 5 o 6 se usa un tablero de 6 colores. Cada quien saca sus 4 fichas con un <strong>5</strong>, da la vuelta al tablero y las mete en la meta. Con un <strong>6</strong> tiras otra vez. Si caes sobre una ficha rival fuera de un seguro ⭐ te la comes y avanzas 20. Dos fichas juntas forman una barrera que nadie puede pasar. Gana quien meta primero sus 4 fichas.</p>
+            <p class="rule-info small">Puntos: comer <strong>+5</strong>, ficha en la meta <strong>+10</strong>, ganar <strong>+30</strong>.</p>
+            <ul class="seat-list" id="parchis-seats"></ul>
+          </div>
+          </div>
         </div>
 
         <footer class="lobby-footer">
@@ -199,6 +234,55 @@
           <p class="muted center small" id="start-hint"></p>
         </footer>
       </div>
+    </section>
+
+    <!-- ═══════════════ 4. BASTA ═══════════════ -->
+    <section id="screen-basta" class="screen" aria-label="Basta">
+      <div class="mini-game" id="basta">
+        <header class="mg-head card">
+          <div class="mg-info">
+            <strong id="basta-round">Ronda 1</strong>
+            <span class="muted small">✋ Basta</span>
+          </div>
+          <div class="basta-letter" id="basta-letter" aria-live="polite">?</div>
+          <div class="mg-actions">
+            <button class="btn btn-ghost voice-btn sound-toggle" type="button"></button>
+            <div class="voice-controls"></div>
+            <button class="btn btn-ghost voice-btn" data-action="leave" type="button" aria-label="Salir" title="Salir">🚪</button>
+          </div>
+        </header>
+        <div class="time-bar active" id="basta-bar" role="timer"><span id="basta-bar-fill"></span><b id="basta-bar-text"></b></div>
+        <ul class="scoreboard" id="basta-players" aria-label="Puntuación"></ul>
+        <div class="mg-body" id="basta-body"></div>
+      </div>
+      <div class="overlay hidden" id="basta-overlay"></div>
+    </section>
+
+    <!-- ═══════════════ 5. PARCHÍS ═══════════════ -->
+    <section id="screen-parchis" class="screen" aria-label="Parchís">
+      <div class="mini-game" id="parchis">
+        <header class="mg-head card">
+          <div class="mg-info">
+            <strong>🎲 Parchís</strong>
+            <span class="muted small" id="parchis-sub"></span>
+          </div>
+          <div class="mg-actions">
+            <button class="btn btn-ghost voice-btn sound-toggle" type="button"></button>
+            <div class="voice-controls"></div>
+            <button class="btn btn-ghost voice-btn" data-action="leave" type="button" aria-label="Salir" title="Salir">🚪</button>
+          </div>
+        </header>
+        <div class="parchis-board-wrap">
+          <svg id="parchis-board" viewBox="0 0 19 19" role="img" aria-label="Tablero de parchís"></svg>
+        </div>
+        <div class="parchis-panel card">
+          <div class="parchis-turn" id="parchis-turn"></div>
+          <button class="die" id="parchis-die" type="button" aria-label="Tirar el dado" disabled></button>
+        </div>
+        <ul class="parchis-log" id="parchis-log" aria-live="polite"></ul>
+        <ul class="seat-list" id="parchis-players"></ul>
+      </div>
+      <div class="overlay hidden" id="parchis-overlay"></div>
     </section>
 
     <!-- ═══════════════ 3. JUEGO ═══════════════ -->
@@ -349,6 +433,8 @@
   <script src="/app-info.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="avatar.js"></script>
+  <script src="basta.js"></script>
+  <script src="parchis.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

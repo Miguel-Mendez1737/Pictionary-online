@@ -1,6 +1,6 @@
 {
   "name": "pictionary-online",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "Adivina el Garabato: juego de dibujar y adivinar multijugador en tiempo real con Node.js, Express y Socket.io",
   "author": "Miguel Mendez",
   "main": "server.js",

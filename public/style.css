@@ -1044,3 +1044,230 @@ body.is-landscape .tool span { display: none; }
 
   .game.is-drawer .chat-form { display: flex; }
 }
+
+/* ═════════════════════════ Selección de juego (lobby) ═════════════════════════ */
+.lobby-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.game-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.game-option {
+  font: inherit;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 82px;
+  padding: 8px 4px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.game-option:active:not(:disabled) { transform: scale(.96); }
+.game-option:disabled { cursor: default; }
+.game-option:disabled:not(.selected) { opacity: .5; }
+.game-option.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 4px 12px var(--accent-shadow); }
+.game-emoji { font-size: 1.9rem; line-height: 1; }
+.game-option.selected .game-emoji { animation: online-pop 2.6s ease-in-out infinite; }
+.game-name { font-weight: 900; font-size: .9rem; }
+
+.chip-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font: inherit; font-weight: 700; font-size: .85rem;
+  min-height: 38px; padding: 0 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
+.chip:disabled { cursor: default; }
+.chip:disabled:not(.on) { opacity: .5; }
+
+.seat-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.seat {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 2px solid transparent;
+}
+.seat-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--seat); box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--seat); flex: none; }
+.seat-name { font-weight: 800; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seat-goal, .seat-pts { font-size: .8rem; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.seat.active { border-color: var(--seat); background: var(--surface); box-shadow: 0 2px 10px rgba(0, 0, 0, .08); }
+.seat.gone, .seat.offline { opacity: .45; }
+
+/* ═════════════════════════ Basta y Parchís: estructura común ═════════════════════════ */
+.mini-game {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(8px + var(--safe-top)) 12px calc(24px + var(--safe-bottom));
+  display: flex; flex-direction: column; gap: 8px;
+}
+.mg-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px 8px 12px;
+  border-top: 4px solid var(--accent);
+  position: sticky; top: calc(4px + var(--safe-top)); z-index: 5;
+}
+.mg-info { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; flex: 1; }
+.mg-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.mg-body { display: flex; flex-direction: column; gap: 10px; }
+#basta-bar, .mini-game .time-bar { width: 100%; margin: 0; }
+#basta-players.scoreboard { flex-direction: row; overflow-x: auto; }
+
+/* ─── ✋ Basta ─── */
+.basta-letter {
+  flex: none;
+  width: 54px; height: 54px;
+  display: grid; place-items: center;
+  font-size: 2rem; font-weight: 900; color: #fff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 4px 0 rgba(35, 36, 58, .25);
+  animation: pop .3s ease;
+}
+.basta-letter.pending { opacity: .5; }
+.basta-progress {
+  position: absolute; top: 2px; right: 2px;
+  font-size: .62rem; font-weight: 900;
+  background: var(--surface-2); color: var(--muted);
+  padding: 0 4px; border-radius: 6px;
+}
+.basta-progress.full { background: var(--success); color: #fff; }
+
+.basta-spin { text-align: center; padding: 28px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.basta-spin-letter {
+  width: 120px; height: 120px;
+  display: grid; place-items: center;
+  font-size: 4.5rem; font-weight: 900; color: #fff;
+  border-radius: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 0 rgba(35, 36, 58, .25);
+  animation: beat .45s ease-in-out infinite;
+}
+.basta-spin-caption { font-weight: 800; }
+
+.basta-form { display: flex; flex-direction: column; gap: 10px; }
+.basta-row { display: grid; grid-template-columns: 1fr 24px; grid-template-areas: "cat cat" "input mark"; align-items: center; column-gap: 6px; row-gap: 4px; }
+.basta-cat { grid-area: cat; font-weight: 800; font-size: .9rem; display: flex; gap: 6px; align-items: center; }
+.basta-cat-emoji { font-size: 1.1rem; }
+.basta-row input { grid-area: input; font-weight: 700; }
+.basta-row input.bad { border-color: var(--warn); }
+.basta-mark { grid-area: mark; text-align: center; }
+.btn-basta {
+  margin-top: 6px;
+  min-height: 60px;
+  font-size: 1.35rem; letter-spacing: .04em;
+  color: #fff;
+  background: linear-gradient(135deg, #e03131, #f76707);
+  box-shadow: 0 6px 0 #a61e1e, 0 10px 20px rgba(224, 49, 49, .35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+.btn-basta:not(:disabled) { animation: online-pop 2.2s ease-in-out infinite; }
+.btn-basta:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 #a61e1e; }
+.basta-banner {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px; border-radius: var(--radius-sm);
+  background: var(--danger-soft); color: var(--danger);
+  font-weight: 900; text-align: center;
+}
+.basta-banner b { font-size: 1.5rem; animation: beat 1s ease-in-out infinite; }
+
+.basta-tip { text-align: center; padding: 0 8px; }
+.basta-review h3 { margin-bottom: 8px; }
+.basta-answers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.basta-answer {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1.5px solid transparent;
+}
+.basta-answer.mine { border-color: var(--accent-soft); }
+.basta-answer.ok { background: var(--success-soft); }
+.basta-answer.rejected .basta-answer-text, .basta-answer.letter .basta-answer-text { text-decoration: line-through; color: var(--muted); }
+.basta-answer-info { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.basta-answer-name { font-size: .72rem; font-weight: 800; color: var(--muted); }
+.basta-answer-text { font-weight: 800; overflow-wrap: anywhere; }
+.basta-answer-why { font-size: .72rem; font-weight: 700; color: var(--danger); }
+.basta-points { font-weight: 900; color: var(--success); min-width: 34px; text-align: right; }
+.basta-points.zero { color: var(--muted); }
+.vote-btn {
+  font: inherit; font-size: .78rem; font-weight: 800;
+  min-height: 36px; padding: 0 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer; flex: none;
+}
+.vote-btn.on { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+.basta-foot {
+  position: sticky; bottom: 0;
+  padding: 10px 0 calc(6px + var(--safe-bottom));
+  background: linear-gradient(transparent, var(--bg) 30%);
+}
+.basta-results h3 { justify-content: center; text-align: center; }
+
+/* ─── 🎲 Parchís ─── */
+.parchis-board-wrap { display: grid; place-items: center; }
+#parchis-board {
+  width: min(100%, 560px, calc(var(--app-h) - 250px));
+  min-width: 280px;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  box-shadow: 0 0 0 4px #fff, 0 0 0 6px rgba(35, 36, 58, .15), var(--shadow);
+  background: #fffaf0;
+  touch-action: manipulation;
+  -webkit-user-select: none; user-select: none;
+}
+.pc { transition: transform .45s cubic-bezier(.3, 1.4, .5, 1); cursor: default; }
+.pc .pc-body { stroke: #fff; stroke-width: .08; }
+.pc .pc-ring { fill: none; stroke: none; }
+.pc.small .pc-body, .pc.small .pc-shine, .pc.small .pc-ring { transform: scale(.6); }
+.pc.can-move { cursor: pointer; }
+.pc.can-move .pc-ring { stroke: #23243a; stroke-width: .09; stroke-dasharray: .25 .15; animation: pc-spin 1.2s linear infinite; }
+.pc.can-move .pc-body { animation: pc-bounce .7s ease-in-out infinite; }
+@keyframes pc-spin { to { stroke-dashoffset: -.8; } }
+@keyframes pc-bounce { 50% { transform: translateY(-.12px) scale(1.12); } }
+
+.parchis-panel { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-left: 6px solid var(--seat, var(--accent)); }
+.parchis-turn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.parchis-turn-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; flex: 1; }
+.parchis-clock { font-weight: 900; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.die {
+  --seat: var(--accent);
+  flex: none;
+  width: 68px; height: 68px;
+  border-radius: 16px;
+  border: 3px solid var(--seat);
+  background: #fff;
+  box-shadow: 0 5px 0 rgba(35, 36, 58, .25);
+  padding: 8px;
+  cursor: pointer;
+  transition: transform .1s;
+}
+.die:disabled { cursor: default; opacity: .75; }
+.die.ready { animation: online-pop 1.6s ease-in-out infinite; box-shadow: 0 5px 0 rgba(35, 36, 58, .25), 0 0 0 5px var(--accent-soft); }
+.die.ready:active { transform: translateY(3px); }
+.die.rolling { animation: die-roll .45s linear infinite; }
+@keyframes die-roll { 25% { transform: rotate(14deg) scale(1.05); } 75% { transform: rotate(-14deg) scale(.95); } }
+.die-face { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); place-items: center; }
+.die-face i { width: 10px; height: 10px; border-radius: 50%; }
+.die-face i.on { background: #23243a; }
+.die-q { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: grid; place-items: center; font-size: 2rem; }
+.parchis-log { list-style: none; margin: 0; padding: 0 4px; display: flex; flex-direction: column; gap: 2px; font-size: .82rem; color: var(--muted); }
+.parchis-log li.latest { color: var(--text); font-weight: 800; }
+
+@media (min-width: 900px) and (min-height: 600px) {
+  #parchis.mini-game { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: "head head" "board panel" "board log" "board players"; grid-template-rows: auto auto auto 1fr; align-content: start; align-items: start; }
+  #parchis .mg-head { grid-area: head; }
+  #parchis .parchis-board-wrap { grid-area: board; align-self: start; }
+  #parchis .parchis-panel { grid-area: panel; }
+  #parchis .parchis-log { grid-area: log; }
+  #parchis #parchis-players { grid-area: players; margin: 0; }
+  #parchis-board { width: min(100%, calc(var(--app-h) - 110px)); }
+}
+/* El botón ¡BASTA! siempre a la vista, aunque haya muchas categorías */
+.btn-basta { position: sticky; bottom: calc(10px + var(--safe-bottom)); z-index: 3; }
+.basta-form { padding-bottom: 12px; }

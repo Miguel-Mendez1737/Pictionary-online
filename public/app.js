@@ -13,6 +13,9 @@
     roundOptions: [],
     turnSeconds: 90,
     timeOptions: [30, 45, 60, 90, 120, 150, 180],
+    games: [],          // juegos disponibles (Garabato, Basta, Parchís)
+    bastaInfo: null,    // categorías y opciones de Basta
+    parchisInfo: null,  // colores y asientos del Parchís
     avatar: null,       // avatar personalizado (ver avatar.js)
     editorTab: 'base',
     account: null,      // perfil de la cuenta si inició sesión
@@ -751,6 +754,9 @@
       state.roundOptions = res.roundOptions;
       state.turnSeconds = res.turnSeconds || 90;
       if (Array.isArray(res.timeOptions) && res.timeOptions.length) state.timeOptions = res.timeOptions;
+      state.games = res.games || [];
+      state.bastaInfo = res.basta || null;
+      state.parchisInfo = res.parchis || null;
       state.joinData.room = res.room;
       delete state.joinData.createPrivate; // al reconectar vuelve a ESTA sala
       saveSession();
@@ -918,6 +924,78 @@
       + state.themes.map((t) => `<option value="${t.id}">${t.emoji} ${t.label}</option>`).join('');
     roundsSelect.innerHTML = state.roundOptions.map((n) => `<option value="${n}">${n} ${n === 1 ? 'ronda' : 'rondas'}</option>`).join('');
     timeSelect.innerHTML = state.timeOptions.map((n) => `<option value="${n}">⏱️ ${clockText(n)} min</option>`).join('');
+    if (state.bastaInfo) {
+      bastaRounds.innerHTML = state.bastaInfo.roundOptions.map((n) => `<option value="${n}">${n} rondas</option>`).join('');
+      bastaTime.innerHTML = state.bastaInfo.timeOptions.map((n) => `<option value="${n}">⏱️ ${clockText(n)} min</option>`).join('');
+    }
+  }
+
+  // ─── Selección del juego y ajustes de Basta / Parchís ───
+  const bastaRounds = $('#basta-rounds');
+  const bastaTime = $('#basta-time');
+  bastaRounds.addEventListener('change', () => sendSettings({ bastaRounds: Number(bastaRounds.value) }));
+  bastaTime.addEventListener('change', () => sendSettings({ bastaTime: Number(bastaTime.value) }));
+  const gameInfo = (id) => state.games.find((g) => g.id === id) || null;
+
+  function renderGamePicker(room, host) {
+    const box = $('#game-picker');
+    box.innerHTML = '';
+    state.games.forEach((g) => {
+      const b = el('button', `game-option${room.settings.game === g.id ? ' selected' : ''}`);
+      b.type = 'button';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(room.settings.game === g.id));
+      b.disabled = !host;
+      b.append(el('span', 'game-emoji', g.emoji), el('span', 'game-name', g.short));
+      b.addEventListener('click', () => { if (room.settings.game !== g.id) { vibrate(10); sendSettings({ game: g.id }); } });
+      box.append(b);
+    });
+  }
+
+  function renderBastaSettings(room, host) {
+    const info = state.bastaInfo;
+    if (!info) return;
+    const chosen = room.settings.bastaCats || [];
+    const box = $('#basta-cats');
+    box.innerHTML = '';
+    info.categories.forEach((c) => {
+      const on = chosen.includes(c.id);
+      const chip = el('button', `chip${on ? ' on' : ''}`, `${c.emoji} ${c.label}`);
+      chip.type = 'button';
+      chip.setAttribute('aria-pressed', String(on));
+      chip.disabled = !host;
+      chip.addEventListener('click', () => {
+        const next = on ? chosen.filter((id) => id !== c.id) : [...chosen, c.id];
+        if (next.length < info.minCats) return toast(`Deben quedar al menos ${info.minCats} categorías.`, 'warn');
+        if (next.length > info.maxCats) return toast(`Máximo ${info.maxCats} categorías.`, 'warn');
+        vibrate(8);
+        sendSettings({ bastaCats: info.categories.map((x) => x.id).filter((id) => next.includes(id)) });
+      });
+      box.append(chip);
+    });
+    $('#basta-cat-count').textContent = `(${chosen.length} de ${info.maxCats} máx.)`;
+    bastaRounds.value = room.settings.bastaRounds;
+    bastaTime.value = room.settings.bastaTime;
+    bastaRounds.disabled = !host;
+    bastaTime.disabled = !host;
+  }
+
+  function renderParchisSeats(room) {
+    const info = state.parchisInfo;
+    const box = $('#parchis-seats');
+    box.innerHTML = '';
+    if (!info) return;
+    const playing = room.players.filter((p) => p.connected).slice(0, info.maxSeats);
+    const arms = { 1: [0], 2: [0, 2], 3: [0, 1, 2], 4: [0, 1, 2, 3], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] }[playing.length] || [];
+    playing.forEach((p, i) => {
+      const color = info.colors[arms[i]];
+      const li = el('li', 'seat');
+      li.style.setProperty('--seat', color.hex);
+      li.append(el('span', 'seat-dot'), avatarEl(p.avatar, 'xs'), el('span', 'seat-name', p.name), el('span', 'muted small', color.name));
+      box.append(li);
+    });
+    const watchers = room.players.filter((p) => p.connected).length - playing.length;
+    if (watchers > 0) box.append(el('li', 'muted small', `👀 ${watchers} ${watchers === 1 ? 'persona mira' : 'personas miran'} la partida.`));
   }
 
   const isHost = () => state.room && state.room.hostId === state.me;
@@ -1009,6 +1087,14 @@
     renderPlayerList($('#lobby-players'), room, { scores: true });
 
     const hostName = (room.players.find((p) => p.id === room.hostId) || {}).name || '';
+    const game = room.settings.game || 'garabato';
+    renderGamePicker(room, host);
+    $('#garabato-settings').hidden = game !== 'garabato';
+    $('#basta-settings').hidden = game !== 'basta';
+    $('#parchis-settings').hidden = game !== 'parchis';
+    if (game === 'basta') renderBastaSettings(room, host);
+    if (game === 'parchis') renderParchisSeats(room);
+
     $('#lobby-role-hint').textContent = host
       ? 'Eres el anfitrión: elige el tema y configura la partida.'
       : `${hostName} (anfitrión) está eligiendo el tema.`;
@@ -1031,11 +1117,14 @@
 
     const startBtn = $('#start-btn');
     const enough = room.players.filter((p) => p.connected).length >= 2;
+    const needsTheme = game === 'garabato' && !room.settings.theme;
+    const g = gameInfo(game);
     startBtn.hidden = !host;
-    startBtn.disabled = !enough || !room.settings.theme;
+    startBtn.disabled = !enough || needsTheme;
+    startBtn.textContent = g ? `${g.emoji} Empezar ${g.short}` : 'Empezar partida';
     $('#start-hint').textContent = !host
-      ? '⏳ Esperando a que el anfitrión inicie la partida…'
-      : !room.settings.theme ? 'Selecciona un tema para empezar.'
+      ? `⏳ Esperando a que el anfitrión inicie ${g ? g.label : 'la partida'}…`
+      : needsTheme ? 'Selecciona un tema para empezar.'
       : !enough ? 'Se necesitan al menos 2 jugadores.' : '¡Todo listo!';
   }
 
@@ -1407,42 +1496,52 @@
     }
 
     if (room.phase === 'gameOver' && room.ranking) {
-      const box = el('div', 'overlay-card');
-      box.append(el('h2', null, '🏆 ¡Fin de la partida!'));
-      const podium = el('div', 'podium');
-      const medals = ['🥇', '🥈', '🥉'];
-      [1, 0, 2].forEach((pos) => {
-        const p = room.ranking[pos];
-        if (!p) return;
-        const col = el('div', `podium-col place-${pos + 1}`);
-        col.append(avatarEl(p.avatar, pos === 0 ? 'lg' : 'md'), el('span', 'podium-name', p.name), el('span', 'podium-score', `${p.score} pts`), el('div', 'podium-step', medals[pos]));
-        podium.append(col);
-      });
-      box.append(podium);
-      if (room.ranking.length > 3) {
-        const rest = el('ul', 'rest-list');
-        room.ranking.slice(3).forEach((p, i) => {
-          const li = el('li');
-          li.append(el('span', null, `#${i + 4} ${p.name}`), el('span', null, `${p.score} pts`));
-          rest.append(li);
-        });
-        box.append(rest);
-      }
-      if (isHost()) {
-        const btn = el('button', 'btn btn-primary btn-lg', 'Volver al lobby');
-        btn.type = 'button';
-        btn.addEventListener('click', () => socket.emit('game:lobby'));
-        box.append(btn);
-      } else {
-        box.append(el('p', 'muted', 'Esperando a que el anfitrión vuelva al lobby…'));
-      }
-      overlay.append(box);
+      overlay.append(gameOverCard(room));
       overlay.classList.remove('hidden');
       return;
     }
 
     overlay.classList.add('hidden');
   }
+
+  // Podio final (lo usan los tres juegos).
+  function gameOverCard(room) {
+    const box = el('div', 'overlay-card');
+    box.append(el('h2', null, room.resultTitle || '🏆 ¡Fin de la partida!'));
+    const podium = el('div', 'podium');
+    const medals = ['🥇', '🥈', '🥉'];
+    [1, 0, 2].forEach((pos) => {
+      const p = room.ranking[pos];
+      if (!p) return;
+      const col = el('div', `podium-col place-${pos + 1}`);
+      col.append(avatarEl(p.avatar, pos === 0 ? 'lg' : 'md'), el('span', 'podium-name', p.name), el('span', 'podium-score', `${p.score} pts`), el('div', 'podium-step', medals[pos]));
+      podium.append(col);
+    });
+    box.append(podium);
+    if (room.ranking.length > 3) {
+      const rest = el('ul', 'rest-list');
+      room.ranking.slice(3).forEach((p, i) => {
+        const li = el('li');
+        li.append(el('span', null, `#${i + 4} ${p.name}`), el('span', null, `${p.score} pts`));
+        rest.append(li);
+      });
+      box.append(rest);
+    }
+    if (isHost()) {
+      const btn = el('button', 'btn btn-primary btn-lg', 'Volver al lobby');
+      btn.type = 'button';
+      btn.addEventListener('click', () => socket.emit('game:lobby'));
+      box.append(btn);
+    } else {
+      box.append(el('p', 'muted', 'Esperando a que el anfitrión vuelva al lobby…'));
+    }
+    return box;
+  }
+
+  // ─── Basta y Parchís (cada uno en su propio archivo) ───
+  const gameCtx = { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, isHost, renderPlayerList, gameOverCard, clockText };
+  const bastaUI = window.BastaGame(gameCtx);
+  const parchisUI = window.ParchisGame(gameCtx);
 
   function renderGame(room) {
     const theme = state.themes.find((t) => t.id === room.settings.theme);
@@ -1470,11 +1569,21 @@
   function render() {
     const room = state.room;
     if (!room) return;
+    // ¿Qué juego se muestra? En el podio final, el que se estaba jugando.
+    const game = room.phase === 'lobby' || room.phase === 'gameOver' ? (room.settings.game || 'garabato')
+      : room.phase === 'basta' || room.phase === 'parchis' ? room.phase : 'garabato';
     const theme = state.themes.find((t) => t.id === room.settings.theme);
-    applyThemeColors(theme && theme.colors);
+    const g = gameInfo(game);
+    applyThemeColors(game === 'garabato' ? theme && theme.colors : g && g.colors);
     if (room.phase === 'lobby') {
       showScreen('screen-lobby');
       renderLobby(room);
+    } else if (game === 'basta') {
+      showScreen('screen-basta');
+      bastaUI.render(room);
+    } else if (game === 'parchis') {
+      showScreen('screen-parchis');
+      parchisUI.render(room);
     } else {
       showScreen('screen-game');
       renderGame(room);

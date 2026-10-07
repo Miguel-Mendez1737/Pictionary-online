@@ -142,6 +142,30 @@ const cleanName = (v) => clean(v, 16);
 
 const accountsReady = mountAccounts(app, { cleanName, cleanAvatar });
 
+// ─── Juegos disponibles ───────────────────────────────────────────────────────
+// El anfitrión elige en el lobby a qué se juega. Cada juego nuevo vive en su
+// propio archivo dentro de games/ y usa las mismas salas, cuentas, voz y puntos.
+const gameHelpers = {
+  io,
+  syncRoom: (room) => syncRoom(room),
+  systemMsg: (room, text, kind) => systemMsg(room, text, kind),
+  emitTo: (room, id, event, data) => emitTo(room, id, event, data),
+  connectedPlayers: (room) => connectedPlayers(room),
+  endGame: (room) => endGame(room),
+  backToLobby: (room, msg) => backToLobby(room, msg),
+  normalize: (v) => normalize(v),
+  clean: (v, max) => clean(v, max)
+};
+const basta = require('./games/basta')(gameHelpers);
+const parchis = require('./games/parchis')(gameHelpers);
+const GAMES = [
+  { id: 'garabato', label: 'Adivina el Garabato', short: 'Garabato', emoji: '🎨', colors: null },
+  { id: 'basta', label: 'Basta', short: 'Basta', emoji: '✋', colors: ['#e8590c', '#d6336c'] },
+  { id: 'parchis', label: 'Parchís', short: 'Parchís', emoji: '🎲', colors: ['#2f9e44', '#1971c2'] }
+];
+const GAME_IDS = new Set(GAMES.map((g) => g.id));
+const IN_GAME = ['spinning', 'drawing', 'reveal', 'basta', 'parchis'];
+
 // ─── Salas ────────────────────────────────────────────────────────────────────
 // Cada jugador se identifica con una clave estable que genera su navegador
 // (no con el id del socket). Así, si el celular se bloquea o cambia de red,
@@ -153,7 +177,7 @@ function createRoom(code) {
     order: [],                  // orden de turnos (orden de llegada)
     hostId: null,
     phase: 'lobby',             // lobby | spinning | drawing | reveal | gameOver
-    settings: { theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true },
+    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults() },
     round: 0,
     drawnThisRound: new Set(),
     drawerId: null,
@@ -168,7 +192,11 @@ function createRoom(code) {
     wheel: null,                // { items, target, spin: { turns, jitter, startedAt } | null, autoAt }
     timer: null,
     revealTimeout: null,
-    wheelTimeout: null
+    wheelTimeout: null,
+    gameTimer: null,            // temporizador de Basta y Parchís
+    basta: null,
+    parchis: null,
+    resultTitle: null
   };
   rooms.set(code, room);
   return room;
@@ -188,6 +216,8 @@ function clearTimers(room) {
   clearInterval(room.timer);
   clearTimeout(room.revealTimeout);
   clearTimeout(room.wheelTimeout);
+  clearTimeout(room.gameTimer);
+  room.gameTimer = null;
   room.timer = null;
   room.revealTimeout = null;
   room.wheelTimeout = null;
@@ -242,7 +272,10 @@ function snapshotFor(room, playerId) {
     wheel: room.phase === 'spinning' ? wheelFor(room, playerId) : null,
     lastTurn: room.phase === 'reveal' ? room.lastTurn : null,
     privacy: room.privacy || null,
-    ranking: room.phase === 'gameOver' ? ranking(room) : null
+    ranking: room.phase === 'gameOver' ? ranking(room) : null,
+    resultTitle: room.phase === 'gameOver' ? room.resultTitle : null,
+    basta: room.phase === 'basta' ? basta.view(room, playerId) : null,
+    parchis: room.phase === 'parchis' ? parchis.view(room) : null
   };
 }
 
@@ -310,6 +343,9 @@ function revealHint(room) {
 function startGame(room) {
   clearTimers(room);
   for (const p of room.players.values()) p.guessed = false; // los puntos se acumulan entre partidas
+  room.resultTitle = null;
+  if (room.settings.game === 'basta') return basta.start(room);
+  if (room.settings.game === 'parchis') return parchis.start(room);
   room.round = 1;
   room.drawnThisRound.clear();
   room.usedWords.clear();
@@ -435,7 +471,7 @@ function endGame(room) {
   room.word = null;
   room.wheel = null;
   const top = ranking(room)[0];
-  if (top) systemMsg(room, `🏆 ¡${top.name} gana la partida con ${top.score} puntos!`, 'success');
+  if (top && room.settings.game !== 'parchis') systemMsg(room, `🏆 ¡${top.name} gana la partida con ${top.score} puntos!`, 'success');
   syncRoom(room);
 }
 
@@ -448,6 +484,9 @@ function backToLobby(room, message) {
   room.lastTurn = null;
   room.wheel = null;
   room.segments = [];
+  room.basta = null;
+  room.parchis = null;
+  room.resultTitle = null;
   for (const p of room.players.values()) p.guessed = false;
   io.to(room.code).emit('canvas:clear');
   if (message) systemMsg(room, message, 'warn');
@@ -508,6 +547,7 @@ function removePlayer(room, playerId) {
   room.players.delete(playerId);
   room.order = room.order.filter((id) => id !== playerId);
   room.drawnThisRound.delete(playerId);
+  if (room.phase === 'parchis') parchis.onLeave(room, playerId);
 
   if (room.players.size === 0) {
     clearTimers(room);
@@ -517,12 +557,13 @@ function removePlayer(room, playerId) {
   systemMsg(room, `👋 ${player.name} salió de la sala.`, 'leave');
   ensureHost(room);
 
-  const inGame = ['spinning', 'drawing', 'reveal'].includes(room.phase);
+  const inGame = IN_GAME.includes(room.phase);
   if (inGame && room.players.size < MIN_PLAYERS) {
     return backToLobby(room, 'Quedan menos de 2 jugadores: volvemos al lobby.');
   }
   syncRoom(room);
   checkAllGuessed(room);
+  if (room.phase === 'basta') basta.checkReady(room);
 }
 
 // ─── Socket.io ────────────────────────────────────────────────────────────────
@@ -602,7 +643,12 @@ io.on('connection', (socket) => {
     socket.join(code);
     ensureHost(room);
 
-    reply({ ok: true, id: key, room: code, themes: THEME_LIST, roundOptions: ROUND_OPTIONS, turnSeconds: TURN_SECONDS, timeOptions: TIME_OPTIONS });
+    reply({
+      ok: true, id: key, room: code, themes: THEME_LIST, roundOptions: ROUND_OPTIONS, turnSeconds: TURN_SECONDS, timeOptions: TIME_OPTIONS,
+      games: GAMES,
+      basta: { categories: basta.CATEGORIES, roundOptions: basta.ROUND_OPTIONS, timeOptions: basta.TIME_OPTIONS, minCats: basta.MIN_CATS, maxCats: basta.MAX_CATS },
+      parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS }
+    });
     if (room.phase === 'drawing') socket.emit('canvas:history', room.segments);
     syncRoom(room);
   });
@@ -622,8 +668,10 @@ io.on('connection', (socket) => {
 
   socket.on('lobby:settings', (s) => {
     const { room, player } = getCtx();
-    if (!isHost(room, player) || room.phase !== 'lobby') return;
-    if (s && typeof s.theme === 'string' && THEMES[s.theme]) room.settings.theme = s.theme;
+    if (!isHost(room, player) || room.phase !== 'lobby' || !s) return;
+    if (typeof s.game === 'string' && GAME_IDS.has(s.game)) room.settings.game = s.game;
+    basta.applySettings(room, s);
+    if (typeof s.theme === 'string' && THEMES[s.theme]) room.settings.theme = s.theme;
     if (s && ROUND_OPTIONS.includes(Number(s.rounds))) room.settings.rounds = Number(s.rounds);
     if (s && TIME_OPTIONS.includes(Number(s.drawTime))) room.settings.drawTime = Number(s.drawTime);
     if (s && typeof s.muteDrawer === 'boolean') room.settings.muteDrawer = s.muteDrawer;
@@ -633,7 +681,8 @@ io.on('connection', (socket) => {
   socket.on('game:start', () => {
     const { room, player } = getCtx();
     if (!isHost(room, player) || room.phase !== 'lobby') return;
-    if (!room.settings.theme) return socket.emit('chat:system', { text: 'Elige un tema antes de empezar.', kind: 'warn' });
+    if (room.settings.game === 'garabato' && !room.settings.theme) return socket.emit('chat:system', { text: 'Elige un tema antes de empezar.', kind: 'warn' });
+    if (room.settings.game === 'basta' && !basta.ready(room)) return socket.emit('chat:system', { text: `Elige al menos ${basta.MIN_CATS} categorías.`, kind: 'warn' });
     if (connectedPlayers(room).length < MIN_PLAYERS) return socket.emit('chat:system', { text: 'Se necesitan al menos 2 jugadores.', kind: 'warn' });
     startGame(room);
   });
@@ -668,6 +717,34 @@ io.on('connection', (socket) => {
     }
 
     io.to(room.code).emit('chat:message', { id: player.id, name: player.name, avatar: player.avatar, text });
+  });
+
+  // ─── ✋ Basta ───
+  socket.on('basta:answers', (list) => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'basta') basta.onAnswers(room, player, list);
+  });
+  socket.on('basta:stop', (list) => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'basta') basta.onStop(room, player, list);
+  });
+  socket.on('basta:vote', (data) => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'basta') basta.onVote(room, player, data);
+  });
+  socket.on('basta:ready', () => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'basta') basta.onReady(room, player);
+  });
+
+  // ─── 🎲 Parchís ───
+  socket.on('parchis:roll', () => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'parchis') parchis.onRoll(room, player);
+  });
+  socket.on('parchis:move', (piece) => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'parchis') parchis.onMove(room, player, piece);
   });
 
   socket.on('wheel:spin', () => {
@@ -764,10 +841,12 @@ io.on('connection', (socket) => {
       }, DRAWER_WAIT_MS);
     }
 
+    if (room.phase === 'parchis') parchis.onDisconnect(room, player.id);
     if (connectedPlayers(room).length === 0) return; // nadie a quien avisar
     systemMsg(room, `📶 ${player.name} perdió la conexión… tiene ${SCORE_RESET_MS / 1000} s para volver sin perder sus puntos.`, 'leave');
     syncRoom(room);
     checkAllGuessed(room);
+    if (room.phase === 'basta') basta.checkReady(room);
   });
 });
 
