@@ -1357,8 +1357,8 @@ body.is-landscape .tool span { display: none; }
 .basta-mark-big { font-size: 1.2rem; flex: none; width: 24px; text-align: center; }
 .basta-answer.verified, .basta-answer.approved { background: var(--success-soft); }
 .basta-answer.pending { background: var(--warn-soft); }
-.basta-answer.invalid .basta-answer-text, .basta-answer.unknown .basta-answer-text { text-decoration: line-through; color: var(--muted); }
-.basta-answer.invalid, .basta-answer.unknown, .basta-answer.rejected, .basta-answer.letter { background: var(--danger-soft); }
+.basta-answer.invalid .basta-answer-text, .basta-answer.wrongcat .basta-answer-text, .basta-answer.unknown .basta-answer-text { text-decoration: line-through; color: var(--muted); }
+.basta-answer.invalid, .basta-answer.unknown, .basta-answer.wrongcat, .basta-answer.rejected, .basta-answer.letter { background: var(--danger-soft); }
 .basta-answer.empty { background: var(--surface-2); }
 .basta-answer-why.good { color: var(--success); }
 .vote-group { display: flex; gap: 4px; flex: none; }

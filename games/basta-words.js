@@ -104,14 +104,35 @@ function big(name) {
   return BIG[name];
 }
 
+// Listas por categoría: las de este archivo + games/data/categorias.js + colores.
+const CATS = require('./data/categorias');
+let COLORS = [];
+try { COLORS = require('./data/colores.json'); } catch { /* sin archivo de colores */ }
+const CATEGORY = {};
+function categorySet(cat) {
+  if (!CATEGORY[cat]) {
+    const set = new Set(SETS[cat] || []);
+    if (CATS[cat]) CATS[cat].split(',').map(clip).filter(Boolean).forEach((w) => set.add(w));
+    if (cat === 'color') COLORS.map(clip).forEach((w) => set.add(w));
+    if (cat === 'comida') categorySet('fruta').forEach((w) => set.add(w)); // frutas y verduras también son comida
+    CATEGORY[cat] = set;
+  }
+  return CATEGORY[cat];
+}
+
 // Cómo se revisa cada categoría:
-//   place: países y ciudades · list+dict: lista propia o cualquier palabra real del español
-//   dict: cualquier palabra real · (sin entrada): categoría libre (nombres, marcas, películas…)
+//   lista: debe ser de la categoría (un animal en "Animal", etc.)
+//   lugar: país o ciudad del mundo
+//   libre: nombres, apellidos, marcas, películas y artistas (solo letra)
+//   cosa:  cualquier palabra real del español
 const MODE = {
-  pais: 'place',
-  animal: 'list+dict', fruta: 'list+dict', color: 'list+dict', deporte: 'list+dict',
-  profesion: 'list+dict', planta: 'list+dict', comida: 'list+dict',
-  cosa: 'dict'
+  pais: 'lugar',
+  animal: 'lista', fruta: 'lista', color: 'lista', deporte: 'lista', profesion: 'lista', planta: 'lista', comida: 'lista',
+  cosa: 'cosa'
+};
+const CATEGORY_NAME = {
+  pais: 'un país o ciudad', animal: 'un animal', fruta: 'una fruta o verdura', color: 'un color', deporte: 'un deporte',
+  profesion: 'una profesión u oficio', planta: 'una flor o planta', comida: 'una comida', cosa: 'una cosa'
 };
 
 const variants = (base) => {
@@ -120,18 +141,40 @@ const variants = (base) => {
   if (base.endsWith('s')) list.push(base.slice(0, -1));
   return list;
 };
+// Profesiones en femenino: abogada → abogado, doctora → doctor, maestra → maestro.
+const feminine = (w) => {
+  const out = [];
+  if (w.endsWith('a')) { out.push(`${w.slice(0, -1)}o`, w.slice(0, -1), `${w.slice(0, -1)}e`); }
+  if (w.endsWith('esa')) out.push(w.slice(0, -3));
+  if (w.endsWith('ina')) out.push(w.slice(0, -3));
+  return out;
+};
 const inDict = (text) => text.split(' ').every((w) => w.length < 3 || big('palabras').has(w));
 
-// Devuelve: 'known' (la app la reconoce), 'unknown' (no la reconoce) o null (categoría libre).
+// ¿La respuesta es de la categoría? Prueba la frase completa, sus plurales y,
+// si son varias palabras, la primera ("perro chihuahua" → perro, "azul cielo" → azul).
+function inCategory(cat, base) {
+  const set = categorySet(cat);
+  const words = base.split(' ');
+  const tries = new Set([...variants(base), ...variants(words[0])]);
+  if (cat === 'profesion') [...tries].forEach((t) => feminine(t).forEach((f) => tries.add(f)));
+  return [...tries].some((t) => set.has(t));
+}
+
+// Devuelve:
+//   'match'   es de la categoría (✅)
+//   'nomatch' no parece de la categoría (❌, se puede rescatar con 👍)
+//   'known' / 'unknown'  categorías libres o "cosa": si está o no en el diccionario
+//   null      categoría libre sin revisión
 function check(cat, answer) {
   const mode = MODE[cat];
   if (!mode) return null;
-  const base = clip(answer).replace(/^(el|la|los|las|un|una) /, '');
-  if (!base) return 'unknown';
-  if (mode === 'place') {
-    return variants(base).some((t) => SETS.pais.has(t) || big('lugares').has(t)) ? 'known' : 'unknown';
+  const base = clip(answer).replace(/^(el|la|los|las|un|una|unos|unas) /, '');
+  if (!base) return 'nomatch';
+  if (mode === 'lugar') {
+    return variants(base).some((t) => SETS.pais.has(t) || categorySet('pais').has(t) || big('lugares').has(t)) ? 'match' : 'nomatch';
   }
-  if (mode === 'list+dict' && variants(base).some((t) => SETS[cat].has(t))) return 'known';
+  if (mode === 'lista') return inCategory(cat, base) ? 'match' : 'nomatch';
   return inDict(base) ? 'known' : 'unknown';
 }
 
@@ -147,4 +190,4 @@ function gibberish(answer) {
 // Carga los diccionarios al arrancar el servidor (así la primera ronda no espera).
 function preload() { big('palabras'); big('lugares'); }
 
-module.exports = { check, gibberish, preload };
+module.exports = { check, gibberish, preload, CATEGORY_NAME };

@@ -191,13 +191,16 @@ module.exports = function createBasta(h) {
         let status;
         if (!key) status = 'empty';
         else if (key.replace(/ /g, '').length < 2 || key[0] !== letter) status = 'letter';
-        else if (strict && WORDS.gibberish(text)) status = ups >= needed ? 'approved' : 'invalid';
         else if (downs >= needed) status = 'rejected';
+        // Lo que la app rechaza sola se rescata con un solo 👍 de otro jugador (siempre tiene reversa).
+        else if (strict && WORDS.gibberish(text)) status = ups >= 1 ? 'approved' : 'invalid';
         else {
-          const verdict = WORDS.check(cat.id, text);
-          if (verdict === 'known') status = 'verified';
-          // La app no la conoce: se acepta igual (nunca se bloquea); la mayoría puede anularla con 👎.
-          else if (verdict === 'unknown' && strict) status = 'unverified';
+          const verdict = strict ? WORDS.check(cat.id, text) : null;
+          if (verdict === 'match' || verdict === 'known') status = 'verified';
+          // No parece de la categoría (p. ej. "Mesa" en Animal): ❌, pero con un 👍 se acepta.
+          else if (verdict === 'nomatch') status = ups >= 1 ? 'approved' : 'wrongcat';
+          // Palabra libre que la app no conoce: se acepta igual; la mayoría puede anularla con 👎.
+          else if (verdict === 'unknown') status = 'unverified';
           else status = 'ok';
         }
         return { id, text, key: key.replace(/ /g, ''), status, ups, downs };
@@ -247,7 +250,7 @@ module.exports = function createBasta(h) {
       rounds: b.rounds,
       sub: b.sub,
       letter: b.sub === 'letter' ? null : b.letter,
-      cats: b.cats,
+      cats: b.cats.map((c) => ({ ...c, what: WORDS.CATEGORY_NAME[c.id] || null })),
       timeLeft: Math.max(0, b.deadline - Date.now()),
       total: b.sub === 'writing' ? room.settings.bastaTime * 1000 : b.sub === 'review' ? REVIEW_MS : 0,
       stopper: b.stopper,

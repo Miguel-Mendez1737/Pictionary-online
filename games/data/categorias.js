@@ -1,0 +1,138 @@
+'use strict';
+
+// ─── Listas por categoría para Basta ─────────────────────────────────────────
+// Sirven para revisar que la respuesta sea de la categoría (en "Animal", que
+// sea un animal). Se escriben sin importar mayúsculas ni acentos; los plurales
+// sencillos y las formas femeninas de las profesiones se reconocen solos.
+// Si falta una palabra, basta con agregarla a su lista (separada por coma).
+// Los colores vienen además de colores.json (paquete nombres-de-colores, MIT).
+
+module.exports = {
+  animal: `
+    perro, perra, perrito, cachorro, gato, gata, gatito, caballo, yegua, potro, poni, pony, burro, burra, asno, mula, macho, vaca, toro, buey, becerro, ternero, novillo,
+    cerdo, cerda, puerco, cochino, marrano, chancho, lechon, jabali, oveja, borrego, cordero, carnero, cabra, chivo, cabrito, conejo, coneja, liebre, raton, rata, hamster,
+    cuyo, cuy, cobaya, conejillo de indias, ardilla, ardilla voladora, marmota, castor, puercoespin, erizo, topo, musaraña, murcielago, vampiro, zorro, zorra, lobo, loba, coyote,
+    chacal, dingo, hiena, leon, leona, tigre, tigresa, leopardo, jaguar, pantera, puma, guepardo, chita, lince, ocelote, gato montes, margay, serval, caracal, oso, osa,
+    oso pardo, oso polar, oso negro, grizzly, panda, oso panda, panda rojo, mapache, coati, tejon, nutria, comadreja, huron, armiño, marta, gloton, mofeta, zorrillo,
+    zarigueya, tlacuache, canguro, koala, wombat, ualabi, demonio de tasmania, ornitorrinco, equidna, elefante, elefanta, mamut, mastodonte, rinoceronte, hipopotamo,
+    jirafa, okapi, cebra, tapir, camello, dromedario, llama, alpaca, vicuña, guanaco, ciervo, venado, alce, reno, caribu, gamo, corzo, antilope, gacela, impala, ñu, bisonte,
+    bufalo, yak, cebu, mono, mona, chango, gorila, chimpance, orangutan, bonobo, gibon, babuino, mandril, macaco, titi, tamarino, mono araña, mono aullador, saraguato,
+    capuchino, lemur, tarsero, perezoso, oso perezoso, oso hormiguero, osohormiguero, hormiguero, armadillo, pangolin, ballena, ballena azul, orca, delfin, cachalote,
+    beluga, narval, foca, morsa, leon marino, lobo marino, manati, dugongo, capibara, carpincho, chinchilla, vizcacha, aguti, paca, tepezcuintle, jerbo, liron, suricata,
+    mangosta, gineta, nutria marina, lemming, visón, vison, cerdo hormiguero, facoquero, jabalí verrugoso, ocapi, hurón, cuadrupedo, mamifero, animal,
+    aguila, halcon, gavilan, buitre, condor, zopilote, quebrantahuesos, buho, lechuza, tecolote, mochuelo, cuervo, urraca, grajo, gorrion, golondrina, colibri, chupaflor,
+    picaflor, pajaro carpintero, carpintero, tucan, loro, perico, cotorra, guacamaya, guacamayo, papagayo, cacatua, periquito, canario, jilguero, ruiseñor, mirlo, zorzal,
+    petirrojo, cardenal, gallina, gallo, pollo, polluelo, pollito, pato, pata, patito, ganso, oca, cisne, pavo, guajolote, pavo real, faisan, codorniz, perdiz, paloma, palomo,
+    tortola, garza, cigueña, flamenco, flamingo, pelicano, gaviota, albatros, pinguino, avestruz, emu, ñandu, kiwi, grulla, ibis, martin pescador, quetzal, correcaminos,
+    cenzontle, zanate, chachalaca, gallareta, frailecillo, alcatraz, cormoran, piquero, cernicalo, milano, azor, pajaro, ave, gallineta, avutarda, abubilla, oropendola,
+    calandria, alondra, vencejo, cuco, cucu, guajolote, kakapo, cacique, turpial, tangara, chorlito, garceta, pajarillo, ganso salvaje, halcon peregrino, aguila calva,
+    serpiente, culebra, vibora, cobra, boa, piton, anaconda, cascabel, vibora de cascabel, coralillo, coral, mamba, iguana, lagarto, lagartija, camaleon, gecko,
+    salamanquesa, cocodrilo, caiman, aligator, yacare, tortuga, tortuga marina, galapago, dragon de komodo, monstruo de gila, escinco, rana, sapo, renacuajo, salamandra,
+    ajolote, axolote, triton, reptil, anfibio,
+    pez, peces, tiburon, tiburon blanco, tiburon ballena, tiburon martillo, atun, salmon, trucha, sardina, bacalao, merluza, mero, robalo, huachinango, pargo, mojarra,
+    tilapia, bagre, carpa, barracuda, pez espada, pez vela, pez globo, pez payaso, pez dorado, pez martillo, piraña, anguila, morena, raya, mantarraya, manta, caballito de mar,
+    hipocampo, lenguado, anchoa, boqueron, arenque, dorado, marlin, besugo, lubina, corvina, guppy, betta, medusa, aguamala, pulpo, calamar, sepia, jibia, estrella de mar,
+    erizo de mar, anemona, esponja, almeja, mejillon, ostra, ostion, caracol, babosa, cangrejo, jaiba, langosta, langostino, camaron, gamba, cigala, percebe, krill, nautilo,
+    insecto, hormiga, abeja, abejorro, avispa, avispon, mosca, moscardon, mosquito, zancudo, jejen, tabano, mariposa, monarca, polilla, palomilla, escarabajo, catarina,
+    mariquita, vaquita de san antonio, luciernaga, grillo, chapulin, saltamontes, cigarra, chicharra, libelula, caballito del diablo, cucaracha, termita, pulga, piojo,
+    chinche, garrapata, araña, tarantula, viuda negra, alacran, escorpion, ciempies, milpies, lombriz, gusano, oruga, larva, sanguijuela, mantis, mantis religiosa,
+    tijereta, cochinilla, zangano, abeja reina, gorgojo, chapulin, cocuyo, escarabajo pelotero, mayate, hormiga reina,
+    dinosaurio, tiranosaurio, tiranosaurio rex, velociraptor, triceratops, estegosaurio, brontosaurio, braquiosaurio, pterodactilo, diplodocus, dodo, megalodon,
+    unicornio, dragon, fenix, pegaso, grifo, centauro, minotauro, kraken, sirena, hipogrifo, quimera, basilisco
+  `,
+  fruta: `
+    acerola, aguaymanto, albaricoque, arandano, banana, banano, platano, borojo, breva, caimito, capulin, carambola, cereza, chabacano, chirimoya, ciruela, clementina, coco,
+    datil, durazno, feijoa, frambuesa, fresa, frutilla, granada, granadilla, grosella, guanabana, guayaba, guinda, higo, jaca, kiwi, kumquat, lichi, lima, limon, lulo,
+    mamey, mamon, mandarina, mango, mangostino, manzana, maracuya, melocoton, melon, membrillo, mora, nance, naranja, naranjilla, nectarina, nispero, papaya, paraguaya,
+    pera, persimon, caqui, pitahaya, pitaya, piña, ananas, ananá, pomelo, rambutan, sandia, tamarindo, tejocote, toronja, tuna, uva, uvas, uchuva, zapote, zarzamora,
+    guayaba, ciruela pasa, pasa, pasas, cereza negra, fruta, fruta de la pasion, carambolo, mangaba, pequi, cupuazu, acai, jabuticaba, noni, physalis, kiwano, maracuya,
+    acelga, achicoria, ajo, alcachofa, alcaparra, apio, arugula, rucula, arveja, guisante, chicharo, berenjena, berro, betabel, remolacha, brocoli, brecol, calabacin,
+    calabacita, calabaza, zapallo, auyama, ahuyama, camote, batata, boniato, cebolla, cebollin, cebolleta, chalote, chayote, champiñon, hongo, seta, chile, aji, jalapeño,
+    chipotle, habanero, serrano, poblano, pimiento, morron, chirivia, col, repollo, coliflor, col de bruselas, colinabo, ejote, judia verde, vainita, habichuela, elote, maiz,
+    choclo, endibia, escarola, esparrago, espinaca, frijol, haba, garbanzo, lenteja, soya, soja, hinojo, jengibre, jicama, jitomate, tomate, lechuga, malanga, nabo, ñame,
+    nopal, okra, papa, patata, pepino, perejil, cilantro, puerro, poro, quelite, rabano, rabanito, romanesco, tomatillo, tomate verde, yuca, mandioca, zanahoria, zucchini,
+    verdolaga, epazote, huitlacoche, cuitlacoche, flor de calabaza, aguacate, palta, aceituna, oliva, alfalfa, kale, berza, chiles, verdura, legumbre, hortaliza, tuberculo,
+    cacahuate, cacahuete, mani, nuez, almendra, avellana, pistache, pistacho, castaña, piñon, nuez de la india, maranon
+  `,
+  deporte: `
+    aerobic, aerobics, aikido, alpinismo, montañismo, apnea, arqueria, atletismo, automovilismo, badminton, baloncesto, basquetbol, basquet, basketball, beisbol, biatlon,
+    billar, bmx, bobsleigh, boliche, bolos, boxeo, buceo, calistenia, canotaje, capoeira, carrera, carreras, charreria, ciclismo, clavados, crossfit, cricket, criquet, curling,
+    decatlon, equitacion, escalada, esgrima, esqui, esqui acuatico, frontenis, fronton, futbol, futbol americano, futbol sala, futsal, futbolito, futbol rapido, gimnasia,
+    gimnasia ritmica, golf, halterofilia, handball, balonmano, heptatlon, hipismo, hockey, hockey sobre hielo, hockey sobre pasto, jabalina, judo, jiu jitsu, karate, kayak,
+    kendo, kickboxing, kitesurf, korfbal, kung fu, lacrosse, lanzamiento de bala, lanzamiento de disco, lanzamiento de jabalina, lucha, lucha libre, lucha grecorromana,
+    maraton, marcha, motocross, motociclismo, muay thai, mma, artes marciales, natacion, natacion sincronizada, nado sincronizado, netball, padel, parapente, paracaidismo,
+    parkour, patinaje, patinaje artistico, pelota vasca, pentatlon, pesas, levantamiento de pesas, pesca, pesca deportiva, ping pong, pilates, polo, powerlifting, racquetbol,
+    rafting, rapel, rappel, remo, rodeo, rugby, salto, salto de altura, salto de longitud, salto con garrocha, salto con pertiga, senderismo, skate, skateboarding, patineta,
+    snowboard, softbol, sofbol, squash, sumo, surf, surfing, taekwondo, tenis, tenis de mesa, tiro, tiro con arco, triatlon, trekking, vela, voleibol, voley, voleibol de playa,
+    waterpolo, polo acuatico, wakeboard, windsurf, yoga, zumba, bochas, petanca, dardos, ajedrez, rally, karting, formula uno, formula 1, nascar, vallas, relevos, carrera de relevos,
+    carrera de obstaculos, ciclismo de montaña, mountain bike, motonautica, bodyboard, skeleton, luge, trineo, esqui de fondo, salto de esqui, biatlon, tenis de playa,
+    voleibol sentado, goalball, boccia, tiro olimpico, tiro deportivo, cross country, duatlon, ultramaraton, natacion en aguas abiertas, buceo libre, escalada deportiva,
+    boulder, hipica, doma, salto ecuestre, polo, kabaddi, hurling, sepak takraw, frisbee, ultimate, beisbol 5, tochito, tocho bandera, raquetbol, pickleball, spinning, box
+  `,
+  profesion: `
+    abogado, actor, actriz, administrador, agente, agricultor, albañil, alcalde, analista, anestesiologo, animador, antropologo, apicultor, arbitro, arqueologo, arquitecto,
+    artesano, artista, asesor, astronauta, astronomo, atleta, auditor, auxiliar, aviador, azafata, bailarin, banquero, barbero, barista, barrendero, basquetbolista, bibliotecario,
+    biologo, bodeguero, bombero, boxeador, botanico, buzo, caddie, cajero, camarero, camarografo, camionero, campesino, cantante, cantinero, capataz, capitan, cardiologo,
+    carnicero, carpintero, cartero, catedratico, cerrajero, chef, chofer, ciclista, cientifico, cineasta, cirujano, cobrador, cocinero, comediante, comerciante, compositor,
+    comprador, conductor, conserje, constructor, consultor, contador, contralor, coordinador, coreografo, corredor, costurero, costurera, criminologo, cuidador, curador,
+    decorador, delineante, dentista, deportista, dermatologo, detective, dibujante, diplomatico, director, diseñador, doctor, ebanista, ecologo, economista, editor, educador,
+    electricista, empresario, encargado, enfermero, entrenador, escenografo, escritor, escultor, especialista, estilista, estudiante, farmaceutico, fiscal, filosofo, fisico,
+    fisioterapeuta, florista, fontanero, forense, fotografo, futbolista, ganadero, gasero, gastroenterologo, gerente, geografo, geologo, gestor, ginecologo, gobernador,
+    granjero, grabador, guardabosques, guardaespaldas, guardia, guia, guionista, herrero, historiador, hojalatero, ilustrador, impresor, ingeniero, inspector, instructor,
+    intendente, interprete, investigador, jardinero, jefe, jockey, jornalero, joyero, juez, jugador, lavandero, lechero, leñador, librero, licenciado, limpiador, locutor,
+    luchador, maestro, mago, malabarista, manicurista, maquillista, marinero, mariachi, mayordomo, mecanico, medico, mensajero, mesero, meteorologo, militar, minero, modelo,
+    monje, monja, mozo, musico, nadador, narrador, nefrologo, neurologo, niñero, nominista, notario, nutriologo, nutricionista, obrero, obstetra, oculista, odontologo,
+    oficinista, oftalmologo, operador, optometrista, orfebre, ortodoncista, otorrino, paleontologo, panadero, paramedico, parroco, pastelero, pastor, payaso, pediatra,
+    peluquero, periodista, perito, pescador, piloto, pintor, planchador, plomero, podologo, policia, politico, portero, presentador, presidente, productor, profesor,
+    programador, promotor, psicologo, psiquiatra, publicista, quimico, quiropractico, radiologo, recepcionista, rector, redactor, relojero, repartidor, reportero, rey, reina,
+    sacerdote, salvavidas, sastre, secretario, senador, sereno, sindico, sociologo, soldado, soldador, sommelier, supervisor, tapicero, taquero, taquigrafo, tatuador, taxista,
+    tecnico, telefonista, tenista, teniente, terapeuta, tesorero, tipografo, topografo, torero, tornero, traductor, trailero, transportista, trapecista, trabajador social,
+    urbanista, urologo, vaquero, velador, vendedor, ventrilocuo, veterinario, vigilante, violinista, guitarrista, pianista, baterista, viticultor, vulcanizador, youtuber,
+    influencer, zapatero, zoologo, zootecnista, analista de nomina, contador publico, asistente, ayudante, enfermera, partera, comadrona, sirvienta, empleada domestica,
+    ama de casa, chofer, mesera, cocinera, costurera, payasa, monaguillo, policía, agente de transito, cadete, marino, piloto aviador, sobrecargo, aeromozo, aeromoza,
+    paramedico, socorrista, rescatista, conserje, portero, celador, carcelero, verdugo, espia, pirata, corsario, caballero, princesa, principe, emperador, faraon, cacique
+  `,
+  planta: `
+    abedul, abeto, acacia, aguacatero, ahuehuete, alamo, alerce, algarrobo, almendro, araucaria, arce, avellano, baobab, caoba, castaño, cedro, ceiba, cerezo, cipres, ciruelo,
+    encino, roble, eucalipto, fresno, guayabo, haya, higuera, jacaranda, laurel, limonero, magnolio, manzano, mezquite, naranjo, nogal, olivo, olmo, palma, palmera, peral,
+    pino, platanero, sauce, sauce lloron, sabino, secuoya, tabachin, tilo, flamboyan, framboyan, guanacaste, huizache, ocote, oyamel, palo verde, palo de rosa, cactus, saguaro,
+    alcatraz, alheli, amapola, anemona, anturio, astromelia, alstroemeria, azahar, azalea, azucena, begonia, bugambilia, buganvilia, calendula, camelia, cempasuchil,
+    cempoalxochitl, clavel, crisantemo, dalia, gardenia, geranio, girasol, gladiola, gladiolo, heliotropo, hortensia, iris, jazmin, lavanda, lila, lirio, loto, flor de loto,
+    margarita, magnolia, narciso, nardo, nochebuena, flor de pascua, nomeolvides, orquidea, pensamiento, peonia, petunia, primula, prímula, rosa, rosal, tulipan, violeta,
+    gerbera, malva, malvavisco, amaranto, buganvilla, clavelina, dondiego, mirasol, perrito, zinnia, aster, lupino, lupulo, verbena, vinca, ixora, flor, flores,
+    agave, maguey, aloe, aloe vera, sabila, zabila, bambu, nopal, biznaga, helecho, hiedra, musgo, trebol, menta, hierbabuena, yerbabuena, romero, tomillo, oregano, albahaca,
+    manzanilla, ruda, cilantro, perejil, cola de caballo, diente de leon, ortiga, suculenta, bonsai, enredadera, liana, pasto, cesped, zacate, cardo, junco, carrizo, caña,
+    caña de azucar, lirio acuatico, nenufar, venus atrapamoscas, atrapamoscas, planta carnivora, lavanda, salvia, estragon, eneldo, laurel, cebollin, epazote, toronjil,
+    hierba, yerba, arbusto, arbol, palmito, tuya, boj, hiedra venenosa, muerdago, acebo, ficus, potos, monstera, sansevieria, lengua de suegra, costilla de adan, teléfono,
+    begonia, violeta africana, cuna de moises, espatifilo, dracena, croto, hule, ave del paraiso, heliconia, platanillo, tule, ahuehuete, ceibo, coihue, araucaria
+  `,
+  comida: `
+    aguachile, alambre, albondigas, alfajor, arepa, arroz, asado, atole, bacalao, bagel, baguette, barbacoa, bistec, birria, bolillo, bollo, brownie, buñuelo, burrito,
+    cabrito, cajeta, caldo, camarones, canelones, capirotada, carne, carne asada, carnitas, cecina, cereal, ceviche, chalupas, champurrado, chicharron, chilaquiles,
+    chiles rellenos, chile en nogada, chiles en nogada, chorizo, churros, churro, cocido, cochinita pibil, consome, costillas, crepa, crepas, croqueta, croquetas, cuernito,
+    cupcake, dona, donas, dulce, elote, elotes, esquites, empanada, empanadas, enchiladas, ensalada, entomatadas, enfrijoladas, escamoles, espagueti, fabada, fajitas, filete,
+    flan, flautas, fritanga, frijoles, frijoles charros, galleta, galletas, garnacha, gazpacho, gelatina, gordita, gorditas, guacamole, guiso, gyoza, hamburguesa, helado,
+    hot dog, perro caliente, huevo, huevos, huevos rancheros, huevos estrellados, hummus, jamon, jericalla, lasaña, leche, lentejas, licuado, lomo, macarrones, malteada,
+    mantecada, marquesita, mazapan, mermelada, migas, milanesa, mole, mole poblano, molletes, mondongo, morcilla, muffin, nachos, natilla, nieve, ñoquis, ñoqui, omelette,
+    paella, palanqueta, palomitas, pambazo, pan, pan dulce, pan de muerto, panque, panque, panqueque, papas fritas, papas, pastel, pasta, pay, pescado, picadillo, pizza,
+    polenta, pollo, pollo frito, pollo asado, pozole, pulpo, pupusa, pupusas, quesadilla, quesadillas, queso, ramen, ravioles, risotto, rosca, rosca de reyes, salchicha,
+    salpicon, sancocho, sandwich, sandwiches, sopa, sopes, sope, sushi, taco, tacos, tacos al pastor, tamal, tamales, tarta, tlayuda, tlacoyo, torta, tortas ahogadas, tortilla,
+    tortilla española, tostada, tostadas, totopos, waffle, waffles, yogur, yogurt, mixiote, menudo, pancita, huarache, gringa, volcan, pozol, natas, paleta, raspado, chamoy,
+    mangonada, churrasco, parrillada, locro, humita, bandeja paisa, ajiaco, mote, cachapa, pabellon, hallaca, chipa, sopaipilla, completo, choripan, dulce de leche,
+    tres leches, pastel de tres leches, arroz con leche, cocada, budin, croissant, cuerno, pretzel, kebab, falafel, curry, pad thai, dumplings, wonton, chow mein, tempura,
+    onigiri, tofu, shawarma, salmorejo, pulpo a la gallega, jamon serrano, quiche, ratatouille, fondue, nuggets, alitas, chili, chili con carne, pay de manzana, cheesecake,
+    pay de queso, pancakes, hot cakes, hotcakes, avena, granola, mantequilla, crema, azucar, sal, miel, harina, aceite, res, cerdo, mariscos, atun, salmon, camaron, langosta,
+    pulpo, calamares, ostiones, coctel de camaron, sopa de tortilla, sopa de fideo, fideos, fideo, arroz rojo, arroz blanco, frijoles refritos, aguacate, guacamole,
+    salsa, salsa verde, salsa roja, mayonesa, catsup, ketchup, mostaza, vinagre, chocolate, caramelo, dulces, bombon, malvavisco, chicle, pastelito, gansito, mazapan,
+    cafe, te, jugo, agua de jamaica, agua de horchata, horchata, tepache, refresco, limonada, naranjada, malteada, smoothie, atole, champurrado, chocolate caliente,
+    leche, cerveza, vino, tequila, mezcal, pulque, sidra, ponche, comida, desayuno, almuerzo, comida corrida, cena, botana, antojito, postre, platillo, guarnicion
+  `,
+  pais: `
+    estados unidos, eeuu, eua, usa, reino unido, inglaterra, escocia, gales, irlanda del norte, holanda, paises bajos, rusia, china, japon, corea, corea del sur, corea del norte,
+    alemania, francia, italia, españa, portugal, mexico, guatemala, honduras, el salvador, nicaragua, costa rica, panama, belice, cuba, haiti, republica dominicana, puerto rico,
+    jamaica, colombia, venezuela, ecuador, peru, bolivia, chile, argentina, uruguay, paraguay, brasil, guyana, surinam, canada, groenlandia, islandia, vaticano, ciudad del vaticano,
+    cdmx, ciudad de mexico, df, distrito federal, nueva york, los angeles, san francisco, las vegas, miami, chicago, houston, dallas, washington, londres, paris, madrid, roma,
+    berlin, moscu, pekin, beijing, tokio, seul, el cairo, cairo, estambul, atenas, lisboa, amsterdam, bruselas, viena, praga, varsovia, budapest, estocolmo, oslo, copenhague,
+    helsinki, dublin, edimburgo, ginebra, zurich, berna, milan, venecia, florencia, napoles, barcelona, sevilla, valencia, bilbao, malaga, granada, toledo, salamanca
+  `
+};

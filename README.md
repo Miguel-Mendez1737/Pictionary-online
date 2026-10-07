@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.16.7 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.17.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -326,3 +326,10 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   - Si una palabra no está en su diccionario, se acepta igual ✅ con una nota, y la mayoría puede anularla con 👎.
   - Solo se rechazan solas las que no empiezan con la letra y las que no parecen palabra, y estas últimas se pueden rescatar con 👍.
   - Todos los votos se pueden quitar.
+
+## v1.17.0: Basta revisa que la respuesta sea de la categoría
+- **Qué revisa:** con "Solo aceptar respuestas correctas", cada respuesta debe ser de su categoría. En Animal un animal, en Color un color, en País un país o ciudad, en Profesión una profesión (también en femenino), y así con frutas y verduras, deportes, flores y plantas y comida.
+- **Listas:** están en `games/data/categorias.js`, más 546 colores y 9 mil países y ciudades de más de 50 mil habitantes.
+- **Si la app rechaza una que sí vale:** sale ❌ "No parece un animal" y basta un 👍 de otro jugador para aceptarla. Todo tiene reversa: si quita el 👍, vuelve a ❌.
+- **Si acepta una que no vale:** la mayoría la anula con 👎.
+- **Categorías libres:** Nombre, Apellido, Marca, Película y Artista solo revisan la letra; Cosa revisa que sea una palabra del español.

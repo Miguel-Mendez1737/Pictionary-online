@@ -179,11 +179,12 @@ window.BastaGame = function BastaGame(ctx) {
   const REASONS = {
     empty: 'Sin respuesta',
     letter: 'No empieza con la letra',
-    invalid: 'No parece una palabra (si sí vale, voten 👍)',
+    invalid: 'No parece una palabra (si sí vale, toquen 👍)',
+    wrongcat: 'No parece de esta categoría (si sí lo es, toquen 👍)',
     rejected: 'Anulada por votos 👎',
     unverified: 'No está en el diccionario de la app, pero se acepta (si no vale, voten 👎)',
     verified: 'Reconocida por la app',
-    approved: 'Aprobada por votos 👍'
+    approved: 'Aceptada por los jugadores 👍'
   };
   const markOf = (status) => (VALID.has(status) ? '✅' : '❌');
   function renderReview(b) {
@@ -207,7 +208,7 @@ window.BastaGame = function BastaGame(ctx) {
       card.append(ul, el('p', 'muted small center', b.round >= b.rounds ? 'Última ronda: ¡ahora el podio!' : 'La siguiente letra sale en unos segundos…'));
       body.append(card);
     } else {
-      const tip = el('p', 'basta-tip muted small', '✅ aceptada · ❌ no aceptada. La app solo rechaza sola las que no empiezan con la letra o no parecen palabra (estas se rescatan con 👍). Si una aceptada no vale, toquen 👎. Decide la mayoría de los demás.');
+      const tip = el('p', 'basta-tip muted small', '✅ aceptada · ❌ no aceptada. La app revisa que cada respuesta sea de su categoría (en Animal, un animal). Si rechazó una que sí vale, basta un 👍 de otro jugador para aceptarla. Si aceptó una que no vale, la mayoría la anula con 👎.');
       body.append(tip);
     }
 
@@ -222,7 +223,9 @@ window.BastaGame = function BastaGame(ctx) {
         li.append(avatarEl(avatar(cell.id), 'xs'));
         const info = el('div', 'basta-answer-info');
         info.append(el('span', 'basta-answer-name', name(cell.id)), el('span', 'basta-answer-text', cell.text || '—'));
-        if (cell.status !== 'ok') info.append(el('span', `basta-answer-why ${VALID.has(cell.status) ? 'good' : ''}`, REASONS[cell.status]));
+        const why = cell.status === 'wrongcat' && c.what ? `No parece ${c.what} (si sí lo es, toquen 👍)`
+          : cell.status === 'verified' && c.what ? `Sí es ${c.what} ✔️` : REASONS[cell.status];
+        if (cell.status !== 'ok') info.append(el('span', `basta-answer-why ${VALID.has(cell.status) ? 'good' : ''}`, why));
         li.append(info);
         li.append(el('strong', `basta-points${cell.points ? '' : ' zero'}`, `+${cell.points}`));
         const canVote = b.sub === 'review' && cell.id !== state.me && cell.text && !['letter', 'empty'].includes(cell.status);
@@ -238,8 +241,8 @@ window.BastaGame = function BastaGame(ctx) {
             return btn;
           };
           // ❌ "no parece una palabra" se rescata con 👍; las aceptadas se pueden anular con 👎.
-          if (cell.status === 'invalid' || (cell.status === 'approved' && cell.ups)) votes.append(mk('up', '👍', cell.ups));
-          if (cell.status !== 'invalid') votes.append(mk('down', '👎', cell.downs));
+          if (['invalid', 'wrongcat'].includes(cell.status) || (cell.status === 'approved' && cell.ups)) votes.append(mk('up', '👍', cell.ups));
+          if (!['invalid', 'wrongcat'].includes(cell.status)) votes.append(mk('down', '👎', cell.downs));
           li.append(votes);
         }
         ul.append(li);
