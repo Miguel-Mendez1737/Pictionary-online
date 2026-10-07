@@ -27,10 +27,12 @@ const express = require('express');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'users.json');
-// Limpia la dirección pegada: quita espacios, comillas o un "psql '...'" alrededor.
+// Limpia la dirección pegada: quita comillas, un "psql '...'" alrededor y
+// cualquier espacio o salto de línea que se cuele al copiar desde el celular
+// (una dirección de base de datos nunca lleva espacios).
 function cleanDatabaseUrl(raw) {
-  const text = String(raw || '').trim();
-  const match = text.match(/postgres(?:ql)?:\/\/[^\s'"]+/);
+  const text = String(raw || '').replace(/^\s*psql\s+/i, '').replace(/\s+/g, '');
+  const match = text.match(/postgres(?:ql)?:\/\/[^'"]+/);
   return match ? match[0] : text;
 }
 const DATABASE_URL = cleanDatabaseUrl(process.env.DATABASE_URL);
