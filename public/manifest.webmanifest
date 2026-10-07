@@ -1,6 +1,6 @@
 {
-  "name": "Pictionary Online",
-  "short_name": "Pictionary",
+  "name": "Garabatos Online",
+  "short_name": "Garabatos",
   "description": "Dibuja, adivina y suma puntos con tus amigos en tiempo real.",
   "lang": "es",
   "start_url": "/",

@@ -1,10 +1,10 @@
-# Pictionary Online
+# Garabatos Online
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.11.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.12.0 (la versión se toma de `package.json`)
 
-Pictionary multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
+Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
 ## Ejecutar localmente
 
