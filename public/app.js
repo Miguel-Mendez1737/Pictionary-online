@@ -79,7 +79,7 @@
   }
 
   // ─── Bienvenida: nombre de la app, autor y versión ──────────────────────────
-  const APP = Object.assign({ name: 'Pictionary Online', author: 'Miguel Mendez', version: '' }, window.APP_INFO || {});
+  const APP = Object.assign({ name: 'Adivina el Garabato', author: 'Miguel Mendez', version: '' }, window.APP_INFO || {});
   document.querySelectorAll('[data-app="name"]').forEach((n) => { n.textContent = APP.name; });
   document.querySelectorAll('[data-app="author"]').forEach((n) => { n.textContent = APP.author; });
   document.querySelectorAll('[data-app="version"]').forEach((n) => { n.textContent = APP.version ? `v${APP.version}` : ''; });
@@ -193,7 +193,7 @@
   const LETTER_COLORS = ['#ff6b6b', '#ffa94d', '#fcc419', '#51cf66', '#339af0', '#845ef7', '#f06595'];
   function animateTitle(node) {
     if (!node) return;
-    const word = node.dataset.word || 'Pictionary';
+    const word = node.dataset.word || 'Garabato';
     node.textContent = '';
     [...word].forEach((ch, i) => {
       const span = el('span', 'logo-letter', ch);
@@ -934,9 +934,9 @@
   // En el celular abre el menú nativo para compartir (WhatsApp, etc.).
   $('#share-btn').addEventListener('click', async () => {
     const url = `${location.origin}${location.pathname}?sala=${encodeURIComponent(state.room.code)}`;
-    const text = `¡Juguemos Pictionary! Entra a la sala ${state.room.code}`;
+    const text = `¡Juguemos Adivina el Garabato! Entra a la sala ${state.room.code}`;
     if (navigator.share) {
-      try { await navigator.share({ title: 'Pictionary Online', text, url }); return; } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.share({ title: 'Adivina el Garabato', text, url }); return; } catch (e) { if (e.name === 'AbortError') return; }
     }
     try {
       await navigator.clipboard.writeText(url);

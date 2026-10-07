@@ -11,7 +11,7 @@ const mountAccounts = require('./accounts');
 const PKG = require('./package.json');
 
 // Nombre, autor y versión de la app (la versión sale de package.json).
-const APP_INFO = { name: 'Pictionary Online', author: PKG.author || 'Miguel Mendez', version: PKG.version };
+const APP_INFO = { name: 'Adivina el Garabato', author: PKG.author || 'Miguel Mendez', version: PKG.version };
 
 // ─── Configuración ────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Pictionary Online · estilos MOBILE-FIRST
+   Adivina el Garabato · estilos MOBILE-FIRST
    Las reglas base son para celular en vertical. Las media queries al final
    amplían el diseño para tablet, celular horizontal y escritorio.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -727,8 +727,8 @@ body.kb-open .game { --canvas-h: calc(var(--app-h) * .40); }
 .seg-btn { font: inherit; font-weight: 800; min-height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--text); cursor: pointer; }
 .seg-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
 
-/* ─── Título animado "Pictionary Online" ─── */
-.logo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px 8px; margin: 0; line-height: 1.05; }
+/* ─── Título animado "Adivina el Garabato" ─── */
+.logo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px 8px; margin: 0; line-height: 1.05; }
 .logo-word { display: inline-flex; font-size: clamp(1.9rem, 9vw, 2.5rem); font-weight: 900; letter-spacing: -.01em; }
 .logo-letter {
   display: inline-block;
@@ -739,7 +739,7 @@ body.kb-open .game { --canvas-h: calc(var(--app-h) * .40); }
   animation-delay: calc(var(--i) * .09s);
 }
 .logo-online {
-  font-size: 1.5rem; font-weight: 900;
+  font-size: 1.15rem; font-weight: 900;
   padding: 2px 12px 4px;
   border-radius: 999px;
   color: #fff;

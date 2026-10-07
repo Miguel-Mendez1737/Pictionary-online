@@ -1,6 +1,6 @@
 {
-  "name": "Pictionary Online",
-  "short_name": "Pictionary",
+  "name": "Adivina el Garabato",
+  "short_name": "Garabato",
   "description": "Dibuja, adivina y suma puntos con tus amigos en tiempo real.",
   "lang": "es",
   "start_url": "/",
