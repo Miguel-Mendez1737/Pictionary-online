@@ -348,6 +348,9 @@ window.ParchisGame = function ParchisGame(ctx) {
     if (p.stage === 'move' && p.legal.some((m) => m.kind === 'back')) {
       return p.legal.length > 1 ? '🐾 ¡Pata de perro! (2 y 1): toca la ficha que retrocede 3 casillas.' : '🐾 ¡Pata de perro! Tu ficha retrocede 3…';
     }
+    if (p.stage === 'move' && p.oneDie) {
+      return p.legal.length ? '🏁 ¡Última ficha! Usas un solo dado: toca el dado y luego tu ficha.' : '🏁 Última ficha: ningún dado te alcanza exacto.';
+    }
     if (p.stage === 'move') {
       const steal = moves.some((m) => m.kind === 'steal') ? ' 🌩️ ¡Puedes robar el cielo!' : '';
       if (p.legal.some((m) => m.kind === 'release') && p.pending.length === 2) {

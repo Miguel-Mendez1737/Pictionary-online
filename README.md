@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.16.4 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.16.5 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -307,3 +307,7 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.16.4: botón 🌬️ Soplar
 - **Cómo se sopla:** ya no es automático. Con la regla "Soplar" activada, todos ven el botón **🌬️ ¡Soplar!**. Si alguien pudo comer (con un dado o con la suma) y no lo hizo, cualquier otro jugador puede tocarlo antes de que tire el siguiente.
 - **Qué revisa la app:** si es cierto, la ficha que pudo comer vuelve a la cárcel. Si no, responde "No había nada que soplar" y nadie es castigado. Nadie puede soplarse a sí mismo.
+
+## v1.16.5: "un solo dado" automático
+- **Cuándo aplica:** con 2 dados, al tirar se revisa si al jugador le queda una sola ficha, esa ficha ya está en el pasillo del cielo y le faltan 6 casillas o menos.
+- **Qué hace:** si es así, solo usa un dado y el otro no cuenta (no se suman). Ya no es una opción del menú de reglas.

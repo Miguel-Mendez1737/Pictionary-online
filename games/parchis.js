@@ -48,7 +48,6 @@ const RULES = [
   { id: 'threePenalty', label: 'Tres seguidos: a la cárcel', desc: 'Con tres 6 o tres pares seguidos, la última ficha que moviste vuelve a la cárcel.', def: true },
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
   { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas con una de tus fichas.', def: true },
-  { id: 'lastOneDie', label: 'Última ficha: un solo dado', desc: '2 dados: cuando tu última ficha va por el pasillo del cielo, solo usas un dado (el otro no se usa).', def: true },
   { id: 'soplar', label: 'Soplar', desc: 'Si alguien pudo comer (con un dado o con la suma) y no lo hizo, los demás pueden tocar 🌬️ Soplar antes de que tire el siguiente jugador: la app lo revisa y, si es cierto, esa ficha se va a la cárcel.', def: false },
   { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo.', def: false }
 ];
@@ -376,6 +375,16 @@ module.exports = function createParchis(h) {
     stageMove(room, 'move');
   }
 
+  // 🏁 Con 2 dados, si al jugador solo le queda una ficha, ya está en el pasillo
+  // del cielo y le faltan 6 casillas o menos, solo usa un dado.
+  function lastOneDie(room, seat) {
+    const p = P(room);
+    const { lastTrack, goal } = B(room);
+    if (p.dice !== 2) return false;
+    const left = seat.pieces.filter((x) => x < goal);
+    return left.length === 1 && left[0] > lastTrack && goal - left[0] <= 6;
+  }
+
   // 🌬️ Soplar: al tirar se anotan las fichas que pueden comer (con un dado o con la suma).
   function noteChances(room, seat) {
     const p = P(room);
@@ -533,9 +542,8 @@ module.exports = function createParchis(h) {
     const { goal } = B(room);
     if (m.kind === 'release') return releasePair(room, seat);
 
-    // Última ficha por el pasillo del cielo: solo se usa un dado.
-    const lastOne = p.dice === 2 && has(room, 'lastOneDie') && dieIdx >= 0
-      && seat.pieces.filter((x) => x < goal).length === 1 && m.from > B(room).lastTrack;
+    // Última ficha en el pasillo del cielo a 6 casillas o menos: solo se usa un dado (automático).
+    const lastOne = dieIdx >= 0 && lastOneDie(room, seat) && m.from === seat.pieces.find((x) => x < goal);
 
     seat.pieces[m.piece] = m.to;
     seat.lanes[m.piece] = m.lane === null || m.lane === seat.arm ? null : m.lane;
@@ -653,6 +661,7 @@ module.exports = function createParchis(h) {
       streak: p.streak,
       legal: p.legal.map((m) => ({ piece: m.piece, die: m.die, from: m.from, to: m.to, lane: m.lane, capture: m.capture.length > 0, kind: m.kind })),
       bonusAmount: p.stage === 'bonus' ? p.bonusAmount : null,
+      oneDie: p.seats[p.turn] ? lastOneDie(room, p.seats[p.turn]) : false,
       timeLeft: Math.max(0, p.deadline - Date.now()),
       winner: p.winner,
       log: p.log
