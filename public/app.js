@@ -979,6 +979,8 @@
   const bastaTime = $('#basta-time');
   bastaRounds.addEventListener('change', () => sendSettings({ bastaRounds: Number(bastaRounds.value) }));
   bastaTime.addEventListener('change', () => sendSettings({ bastaTime: Number(bastaTime.value) }));
+  const bastaStrict = $('#basta-strict');
+  bastaStrict.addEventListener('change', () => { vibrate(10); sendSettings({ bastaStrict: bastaStrict.checked }); });
   const gameInfo = (id) => state.games.find((g) => g.id === id) || null;
 
   function renderGamePicker(room, host) {
@@ -1022,6 +1024,8 @@
     bastaTime.value = room.settings.bastaTime;
     bastaRounds.disabled = !host;
     bastaTime.disabled = !host;
+    bastaStrict.checked = room.settings.bastaStrict !== false;
+    bastaStrict.disabled = !host;
   }
 
   // ─── Ajustes de Parchís / Parqués ───

@@ -329,6 +329,9 @@ window.ParchisGame = function ParchisGame(ctx) {
     if (p.stage === 'bonus') return moves.length > 1 ? `🎁 Premio: elige una ficha para avanzar ${p.bonusAmount}.` : `🎁 Premio: avanzas ${p.bonusAmount}…`;
     if (p.stage === 'move') {
       const steal = moves.some((m) => m.kind === 'steal') ? ' 🌩️ ¡Puedes robar el cielo!' : '';
+      if (p.legal.some((m) => m.kind === 'release') && p.pending.length === 2) {
+        return `🔓 Sacaste pares (${shown}): toca una ficha de la cárcel para sacarlas, o mueve un ${p.pending[0]} con una ficha y el otro con otra.${steal}`;
+      }
       if (two && p.pending.length === 2 && p.pending[0] !== p.pending[1]) return `👉 Sacaste ${shown}: toca un dado y luego la ficha.${steal}`;
       const amount = p.pending[ui.selDie] ?? p.pending[0];
       return p.legal.length > 1 ? `👉 Mueve ${amount}: toca la ficha.${steal}` : `Moviendo ${amount}…`;

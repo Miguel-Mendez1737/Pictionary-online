@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.15.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.16.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -277,3 +277,15 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   - tres pares sacan (coronan) una ficha;
   - soplar;
   - robar cielo: con el número exacto desde la entrada de un rival se cae sobre su ficha en su pasillo, se la come y se corona por ese cielo.
+
+## v1.16.0: Basta revisa las respuestas, más palabras en Garabato y mejoras al Parqués
+- **✋ Basta: "Solo aceptar respuestas correctas"** (activada por defecto). Cada respuesta se marca ✅ aceptada o ❌ rechazada.
+  - **Cómo revisa:** usa un diccionario del español (635 mil palabras, con plurales y conjugaciones), una lista de países y ciudades del mundo (45 mil nombres) y listas propias por categoría (`games/basta-words.js`). Las fuentes y licencias están en `games/data/FUENTES.md`.
+  - **Respuestas sin sentido:** se rechazan solas, por ejemplo "Bxx" o "aaaa".
+  - **Corrección por votos:** si la app rechazó una palabra válida, la mayoría la rescata con 👍; si aceptó una que no va en esa categoría, la mayoría la anula con 👎.
+  - **Categorías libres:** Nombre, Apellido, Marca, Película y Artista solo revisan la letra.
+- **🎨 Garabato:**
+  - 40 palabras más en cada tema; "Nombres de películas" ahora es "Películas y series".
+  - 5 temas nuevos: 🐾 Animales, 🍔 Comida, 👷 Profesiones, 🗺️ Lugares y 🦸 Personajes.
+  - En total hay 848 palabras.
+- **🎲 Parqués:** con pares y fichas ya en juego, el jugador elige entre tocar la cárcel para sacar fichas o mover cada dado con una ficha distinta. Sin pares, cada dado mueve una ficha distinta, como antes.

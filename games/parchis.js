@@ -331,19 +331,17 @@ module.exports = function createParchis(h) {
     }
 
     // 2 dados: los pares sacan fichas de la cárcel (usa toda la tirada).
-    if (p.dice === 2 && p.roll[0] === p.roll[1] && seat.pieces.includes(-1)) {
-      const jail = seat.pieces.map((s, i) => (s === -1 ? i : -1)).filter((i) => i >= 0);
-      const all = has(room, 'pairsAll') || p.roll[0] === 1 || p.roll[0] === 6;
-      const out = all ? jail : jail.slice(0, 2);
-      release(room, seat, out);
-      p.tries = 0;
-      p.pending = [];
-      log(room, `🔓 ${name} sacó pares (${shown}) y saca ${out.length === 1 ? 'una ficha' : `${out.length} fichas`} de la cárcel.`);
-      return afterMoves(room);
-    }
+    // Si todas están en la cárcel salen solas; si ya hay fichas en juego, el
+    // jugador elige: tocar una ficha de la cárcel para sacarlas, o mover un
+    // dado con una ficha y el otro dado con otra.
+    const pairWithJail = p.dice === 2 && p.roll[0] === p.roll[1] && seat.pieces.includes(-1);
+    if (pairWithJail && allInJail(seat, goal)) return releasePair(room, seat);
 
     p.pending = [...p.roll];
     p.legal = legalAll(room, seat);
+    if (pairWithJail) {
+      seat.pieces.forEach((s, i) => { if (s === -1) p.legal.push({ piece: i, from: -1, to: 0, lane: null, capture: [], kind: 'release', die: 0 }); });
+    }
     if (!p.legal.length) {
       const jailed = allInJail(seat, goal);
       if (jailed && has(room, 'threeTries') && p.tries < 2 && !p.repeatRoll) {
@@ -358,6 +356,19 @@ module.exports = function createParchis(h) {
     }
     p.tries = 0;
     stageMove(room, 'move');
+  }
+
+  function releasePair(room, seat) {
+    const p = P(room);
+    const jail = seat.pieces.map((s, i) => (s === -1 ? i : -1)).filter((i) => i >= 0);
+    const all = has(room, 'pairsAll') || p.roll[0] === 1 || p.roll[0] === 6;
+    const out = all ? jail : jail.slice(0, 2);
+    release(room, seat, out);
+    p.tries = 0;
+    p.pending = [];
+    p.legal = [];
+    log(room, `🔓 ${nameOf(room, seat)} sacó pares (${p.roll.join(' y ')}) y saca ${out.length === 1 ? 'una ficha' : `${out.length} fichas`} de la cárcel.`);
+    return afterMoves(room);
   }
 
   function waitThen(room, fn) {
@@ -431,6 +442,7 @@ module.exports = function createParchis(h) {
     const player = room.players.get(seat.id);
     const name = nameOf(room, seat);
     const { goal } = B(room);
+    if (m.kind === 'release') return releasePair(room, seat);
 
     // 🌬️ Soplar: si podías comer con este dado y no lo hiciste.
     const couldCapture = has(room, 'soplar') && p.legal.some((x) => x.die === dieIdx && x.capture.length);

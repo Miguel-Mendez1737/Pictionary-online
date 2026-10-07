@@ -42,6 +42,9 @@ const REVIEW_MS = 60000 / SPEED;   // tiempo máximo para revisar y votar
 const RESULTS_MS = 6000 / SPEED;   // pausa para ver los puntos de la ronda
 const MAX_ANSWER = 30;
 
+const WORDS = require('./basta-words');
+setTimeout(() => WORDS.preload(), 0);
+
 const POINTS_ONLY = 20;
 const POINTS_UNIQUE = 10;
 const POINTS_REPEATED = 5;
@@ -49,7 +52,7 @@ const POINTS_REPEATED = 5;
 module.exports = function createBasta(h) {
   const { io, syncRoom, systemMsg, connectedPlayers, normalize, clean, endGame } = h;
 
-  const defaults = () => ({ bastaCats: [...DEFAULT_CATS], bastaRounds: 5, bastaTime: 120 });
+  const defaults = () => ({ bastaCats: [...DEFAULT_CATS], bastaRounds: 5, bastaTime: 120, bastaStrict: true });
 
   function applySettings(room, s) {
     if (Array.isArray(s.bastaCats)) {
@@ -58,6 +61,7 @@ module.exports = function createBasta(h) {
     }
     if (ROUND_OPTIONS.includes(Number(s.bastaRounds))) room.settings.bastaRounds = Number(s.bastaRounds);
     if (TIME_OPTIONS.includes(Number(s.bastaTime))) room.settings.bastaTime = Number(s.bastaTime);
+    if (typeof s.bastaStrict === 'boolean') room.settings.bastaStrict = s.bastaStrict;
   }
 
   const ready = (room) => room.settings.bastaCats.length >= MIN_CATS;
@@ -77,7 +81,7 @@ module.exports = function createBasta(h) {
       sub: 'letter',
       letter: null,
       answers: new Map(),   // playerId -> [texto por categoría]
-      rejects: new Map(),   // "playerId|categoría" -> Set(votantes)
+      rejects: new Map(),   // "playerId|categoría" -> Map(votante -> 'up' | 'down')
       ready: new Set(),
       stopper: null,
       deadline: 0,
@@ -106,6 +110,7 @@ module.exports = function createBasta(h) {
     b.ready = new Set();
     b.stopper = null;
     b.results = null;
+    b.finalTable = null;
     b.deadline = Date.now() + LETTER_MS;
     syncRoom(room);
     schedule(room, LETTER_MS, () => startWriting(room));
@@ -160,35 +165,51 @@ module.exports = function createBasta(h) {
   const clip = (text) => normalize(text).replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
 
   // Puntos de la ronda por jugador y categoría (se recalcula con cada voto).
+  // Estados de una respuesta:
+  //   válidas:   verified (está en la lista ✅) · approved (la aprobó la mayoría 👍) · ok (categoría libre)
+  //   inválidas: empty · letter (no empieza con la letra) · invalid (sin sentido) · rejected (👎 de la mayoría)
+  //              unknown (la app no la reconoce; la mayoría puede aprobarla con 👍)
+  const VALID = new Set(['ok', 'verified', 'approved']);
+
   function score(room) {
     const b = room.basta;
     const letter = b.letter.toLowerCase();
+    const strict = room.settings.bastaStrict;
     const voters = connectedPlayers(room).length;
-    const table = new Map(); // playerId -> [{ text, status, points, votes }]
+    // Decide la mayoría de los demás jugadores.
+    const needed = Math.floor(Math.max(1, voters - 1) / 2) + 1;
+    const table = new Map(); // playerId -> [{ text, status, points, ups, downs, needed }]
     const ids = room.order.filter((id) => b.answers.has(id));
 
-    b.cats.forEach((_cat, c) => {
+    b.cats.forEach((cat, c) => {
       const entries = ids.map((id) => {
         const text = (b.answers.get(id) || [])[c] || '';
         const key = clip(text);
-        const votes = (b.rejects.get(`${id}|${c}`) || new Set()).size;
-        // Se anula si vota en contra la mayoría de los demás jugadores.
-        const needed = Math.floor(Math.max(1, voters - 1) / 2) + 1;
-        let status = 'ok';
+        const votes = b.rejects.get(`${id}|${c}`) || new Map();
+        const ups = [...votes.values()].filter((v) => v === 'up').length;
+        const downs = [...votes.values()].filter((v) => v === 'down').length;
+        let status;
         if (!key) status = 'empty';
         else if (key.replace(/ /g, '').length < 2 || key[0] !== letter) status = 'letter';
-        else if (votes >= needed) status = 'rejected';
-        return { id, text, key: key.replace(/ /g, ''), status, votes, needed };
+        else if (strict && WORDS.gibberish(text)) status = 'invalid';
+        else if (downs >= needed) status = 'rejected';
+        else {
+          const verdict = WORDS.check(cat.id, text);
+          if (verdict === 'known') status = 'verified';
+          else if (verdict === 'unknown' && strict) status = ups >= needed ? 'approved' : 'unknown';
+          else status = 'ok';
+        }
+        return { id, text, key: key.replace(/ /g, ''), status, ups, downs };
       });
-      const valid = entries.filter((e) => e.status === 'ok');
+      const valid = entries.filter((e) => VALID.has(e.status));
       entries.forEach((e) => {
         let points = 0;
-        if (e.status === 'ok') {
+        if (VALID.has(e.status)) {
           const same = valid.filter((v) => v.key === e.key).length;
           points = valid.length === 1 ? POINTS_ONLY : same === 1 ? POINTS_UNIQUE : POINTS_REPEATED;
         }
         if (!table.has(e.id)) table.set(e.id, []);
-        table.get(e.id)[c] = { text: e.text, status: e.status, points, votes: e.votes, needed: e.needed };
+        table.get(e.id)[c] = { text: e.text, status: e.status, points, ups: e.ups, downs: e.downs, needed };
       });
     });
     return table;
@@ -198,6 +219,7 @@ module.exports = function createBasta(h) {
     const b = room.basta;
     if (!b || b.sub !== 'review') return;
     const table = score(room);
+    b.finalTable = table;
     const gains = [];
     for (const [id, cells] of table) {
       const p = room.players.get(id);
@@ -238,12 +260,13 @@ module.exports = function createBasta(h) {
       }));
     }
     if (b.sub === 'review' || b.sub === 'results') {
-      const table = score(room);
+      // En "results" se muestra la tabla final (con las no reconocidas ya marcadas ❌).
+      const table = b.sub === 'results' && b.finalTable ? b.finalTable : score(room);
       base.review = b.cats.map((_cat, c) => room.order
         .filter((id) => table.has(id))
         .map((id) => {
           const cell = table.get(id)[c];
-          return { ...cell, id, myVote: (b.rejects.get(`${id}|${c}`) || new Set()).has(playerId) };
+          return { ...cell, id, myVote: (b.rejects.get(`${id}|${c}`) || new Map()).get(playerId) || null };
         }));
       base.ready = [...b.ready];
     }
@@ -286,9 +309,10 @@ module.exports = function createBasta(h) {
     const target = String(data.id || '');
     if (!Number.isInteger(c) || c < 0 || c >= b.cats.length || target === player.id || !b.answers.has(target)) return;
     const key = `${target}|${c}`;
-    if (!b.rejects.has(key)) b.rejects.set(key, new Set());
-    const set = b.rejects.get(key);
-    if (set.has(player.id)) set.delete(player.id); else set.add(player.id);
+    const type = data.type === 'up' ? 'up' : 'down';
+    if (!b.rejects.has(key)) b.rejects.set(key, new Map());
+    const votes = b.rejects.get(key);
+    if (votes.get(player.id) === type) votes.delete(player.id); else votes.set(player.id, type);
     syncRoom(room);
   }
 

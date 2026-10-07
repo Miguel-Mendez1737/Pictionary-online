@@ -174,7 +174,18 @@ window.BastaGame = function BastaGame(ctx) {
   }
 
   // ─── Revisión: todas las respuestas, votos y puntos ───
-  const REASONS = { empty: 'Sin respuesta', letter: 'No empieza con la letra', rejected: 'Anulada por votos' };
+  // ✅ aceptada · ❌ no aceptada
+  const VALID = new Set(['ok', 'verified', 'approved']);
+  const REASONS = {
+    empty: 'Sin respuesta',
+    letter: 'No empieza con la letra',
+    invalid: 'No parece una palabra',
+    rejected: 'Anulada por votos 👎',
+    unknown: 'La app no la reconoce (si sí vale, voten 👍)',
+    verified: 'Reconocida por la app',
+    approved: 'Aprobada por votos 👍'
+  };
+  const markOf = (status) => (VALID.has(status) ? '✅' : '❌');
   function renderReview(b) {
     clearInterval(ui.shuffleTimer);
     ui.view = b.sub;
@@ -196,7 +207,7 @@ window.BastaGame = function BastaGame(ctx) {
       card.append(ul, el('p', 'muted small center', b.round >= b.rounds ? 'Última ronda: ¡ahora el podio!' : 'La siguiente letra sale en unos segundos…'));
       body.append(card);
     } else {
-      const tip = el('p', 'basta-tip muted small', '👎 Toca el pulgar de una respuesta que no valga. Se anula si la mayoría de los demás vota en contra.');
+      const tip = el('p', 'basta-tip muted small', '✅ aceptada · ❌ no aceptada. Si la app rechazó una palabra que sí vale, toquen 👍; si aceptó una que no va en esa categoría, toquen 👎. Decide la mayoría de los demás.');
       body.append(tip);
     }
 
@@ -207,19 +218,28 @@ window.BastaGame = function BastaGame(ctx) {
       (b.review[ci] || []).forEach((cell) => {
         const li = el('li', `basta-answer ${cell.status}`);
         if (cell.id === state.me) li.classList.add('mine');
+        li.append(el('span', `basta-mark-big ${VALID.has(cell.status) ? 'yes' : 'no'}`, markOf(cell.status)));
         li.append(avatarEl(avatar(cell.id), 'xs'));
         const info = el('div', 'basta-answer-info');
         info.append(el('span', 'basta-answer-name', name(cell.id)), el('span', 'basta-answer-text', cell.text || '—'));
-        if (cell.status !== 'ok') info.append(el('span', 'basta-answer-why', REASONS[cell.status]));
+        if (cell.status !== 'ok') info.append(el('span', `basta-answer-why ${VALID.has(cell.status) ? 'good' : ''}`, REASONS[cell.status]));
         li.append(info);
         li.append(el('strong', `basta-points${cell.points ? '' : ' zero'}`, `+${cell.points}`));
-        if (b.sub === 'review' && cell.id !== state.me && cell.text && cell.status !== 'letter') {
-          const vote = el('button', `vote-btn${cell.myVote ? ' on' : ''}`, `👎 ${cell.votes}/${cell.needed}`);
-          vote.type = 'button';
-          vote.title = cell.myVote ? 'Quitar mi voto' : 'Esta respuesta no vale';
-          vote.setAttribute('aria-pressed', String(cell.myVote));
-          vote.addEventListener('click', () => { vibrate(8); socket.emit('basta:vote', { id: cell.id, cat: ci }); });
-          li.append(vote);
+        const canVote = b.sub === 'review' && cell.id !== state.me && cell.text && !['letter', 'invalid', 'empty'].includes(cell.status);
+        if (canVote) {
+          const votes = el('div', 'vote-group');
+          const mk = (type, icon, count) => {
+            const on = cell.myVote === type;
+            const btn = el('button', `vote-btn ${type}${on ? ' on' : ''}`, `${icon} ${count}/${cell.needed}`);
+            btn.type = 'button';
+            btn.title = type === 'up' ? 'Sí vale' : 'No vale';
+            btn.setAttribute('aria-pressed', String(on));
+            btn.addEventListener('click', () => { vibrate(8); socket.emit('basta:vote', { id: cell.id, cat: ci, type }); });
+            return btn;
+          };
+          if (cell.status === 'unknown' || cell.status === 'approved') votes.append(mk('up', '👍', cell.ups));
+          if (cell.status !== 'unknown') votes.append(mk('down', '👎', cell.downs));
+          li.append(votes);
         }
         ul.append(li);
       });
