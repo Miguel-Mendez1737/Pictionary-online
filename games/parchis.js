@@ -48,7 +48,8 @@ const RULES = [
   { id: 'threePenalty', label: 'Tres seguidos: a la cárcel', desc: 'Con tres 6 o tres pares seguidos, la última ficha que moviste vuelve a la cárcel.', def: true },
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
   { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas con una de tus fichas.', def: true },
-  { id: 'soplar', label: 'Soplar', desc: 'Comer es obligatorio: si pudiste comer y no lo hiciste, la ficha que moviste se va a la cárcel.', def: false },
+  { id: 'lastOneDie', label: 'Última ficha: un solo dado', desc: '2 dados: cuando tu última ficha va por el pasillo del cielo, solo usas un dado (el otro no se usa).', def: true },
+  { id: 'soplar', label: 'Soplar', desc: 'Comer es obligatorio: si con tu tirada pudiste comer (con un dado o con la suma) y no lo hiciste, la ficha que pudo comer se va a la cárcel.', def: false },
   { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo.', def: false }
 ];
 const RULE_IDS = new Set(RULES.map((r) => r.id));
@@ -348,6 +349,7 @@ module.exports = function createParchis(h) {
         return waitThen(room, () => nextSeat(room));
       }
       log(room, `🐾 ¡Pata de perro! ${name} sacó 2 y 1: retrocede 3 casillas.`);
+      noteChances(room, seat);
       return stageMove(room, 'move');
     }
 
@@ -369,7 +371,38 @@ module.exports = function createParchis(h) {
       return waitThen(room, () => (p.repeatRoll ? beginStage(room, 'roll') : nextSeat(room)));
     }
     p.tries = 0;
+    noteChances(room, seat);
     stageMove(room, 'move');
+  }
+
+  // 🌬️ Soplar: al tirar se anotan las fichas que pueden comer (con un dado o con la suma).
+  function noteChances(room, seat) {
+    const p = P(room);
+    p.ate = false;
+    p.chances = [];
+    if (!has(room, 'soplar')) return;
+    const add = (i) => { if (!p.chances.includes(i)) p.chances.push(i); };
+    p.legal.forEach((m) => { if (m.capture.length && m.kind !== 'release') add(m.piece); });
+    if (p.pending.length === 2 && !p.legal.some((m) => m.kind === 'back')) {
+      legalMoves(room, seat, p.pending[0] + p.pending[1]).forEach((m) => { if (m.capture.length && m.kind === 'move') add(m.piece); });
+    }
+  }
+
+  // Al terminar de usar la tirada: si pudo comer y no comió, lo soplan.
+  function checkSoplar(room) {
+    const p = P(room);
+    const seat = current(room);
+    const chances = p.chances || [];
+    p.chances = [];
+    if (!has(room, 'soplar') || p.ate || !chances.length) return;
+    const { goal } = B(room);
+    const i = chances.find((k) => seat.pieces[k] >= 0 && seat.pieces[k] < goal);
+    if (i === undefined) return;
+    seat.pieces[i] = -1;
+    seat.lanes[i] = null;
+    const name = nameOf(room, seat);
+    log(room, `🌬️ ${name} pudo comer y no lo hizo: ¡lo soplaron! Esa ficha vuelve a la cárcel.`);
+    io.to(room.code).emit('parchis:event', { kind: 'capture', text: `¡Soplaron a ${name}!` });
   }
 
   function releasePair(room, seat) {
@@ -453,6 +486,7 @@ module.exports = function createParchis(h) {
 
   function sendToJail(room, victimSeat, i, by) {
     const p = P(room);
+    if (by === current(room)) p.ate = true;
     victimSeat.pieces[i] = -1;
     victimSeat.lanes[i] = null;
     const player = room.players.get(by.id);
@@ -477,13 +511,14 @@ module.exports = function createParchis(h) {
     const { goal } = B(room);
     if (m.kind === 'release') return releasePair(room, seat);
 
-    // 🌬️ Soplar: si podías comer con este dado y no lo hiciste.
-    const couldCapture = has(room, 'soplar') && p.legal.some((x) => x.die === dieIdx && x.capture.length);
+    // Última ficha por el pasillo del cielo: solo se usa un dado.
+    const lastOne = p.dice === 2 && has(room, 'lastOneDie') && dieIdx >= 0
+      && seat.pieces.filter((x) => x < goal).length === 1 && m.from > B(room).lastTrack;
 
     seat.pieces[m.piece] = m.to;
     seat.lanes[m.piece] = m.lane === null || m.lane === seat.arm ? null : m.lane;
     p.lastMoved = { seat, i: m.piece };
-    if (m.kind === 'back') p.pending = [];
+    if (m.kind === 'back' || lastOne) p.pending = [];
     else if (dieIdx >= 0) p.pending.splice(dieIdx, 1);
     p.legal = [];
 
@@ -492,13 +527,6 @@ module.exports = function createParchis(h) {
       log(room, `🌩️ ${name} se robó el cielo de ${nameOf(room, owner)}.`);
     }
     m.capture.forEach((c) => sendToJail(room, p.seats[c.seatIdx], c.i, seat));
-
-    if (couldCapture && !m.capture.length) {
-      seat.pieces[m.piece] = -1;
-      seat.lanes[m.piece] = null;
-      log(room, `🌬️ ${name} pudo comer y no lo hizo: ¡lo soplaron! Su ficha vuelve a la cárcel.`);
-      io.to(room.code).emit('parchis:event', { kind: 'capture', text: `¡Soplaron a ${name}!` });
-    }
 
     if (seat.pieces[m.piece] === goal) crowned(room, seat, player, name);
     if (seat.pieces.every((s) => s === goal)) return finish(room, seat);
@@ -547,6 +575,7 @@ module.exports = function createParchis(h) {
       if (p.legal.length) return stageMove(room, 'move');
       p.pending = [];
     }
+    checkSoplar(room);
     if (p.repeatRoll) {
       log(room, `🎲 ${nameOf(room, seat)} sacó ${p.dice === 2 ? 'pares' : '6'}: ¡tira otra vez!`);
       return beginStage(room, 'roll');
@@ -557,7 +586,7 @@ module.exports = function createParchis(h) {
   function nextSeat(room) {
     const p = P(room);
     if (!p || room.phase !== 'parchis') return;
-    Object.assign(p, { streak: 0, tries: 0, roll: [], pending: [], bonus: [], bonusAmount: null, legal: [], repeatRoll: false });
+    Object.assign(p, { streak: 0, tries: 0, roll: [], pending: [], bonus: [], bonusAmount: null, legal: [], repeatRoll: false, chances: [], ate: false });
     for (let n = 1; n <= p.seats.length; n++) {
       const idx = (p.turn + n) % p.seats.length;
       if (!p.seats[idx].gone) { p.turn = idx; break; }

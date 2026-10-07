@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.16.2 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.16.3 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -298,3 +298,8 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Qué hace:** con 2 dados, si sale **2 y 1**, en lugar de avanzar una ficha retrocede 3 casillas (el jugador elige cuál).
 - **Detalles:** solo retroceden las fichas que están en el circuito y que no quedan antes de su salida. Si al retroceder cae sobre un rival fuera de un seguro, se lo come. Si ninguna ficha puede retroceder, se pierde el turno.
 - **Cómo activarla:** está en el menú de reglas y viene activada.
+
+## v1.16.3: Parqués en contra de las manecillas, última ficha y soplar corregido
+- **Sentido de juego:** las fichas avanzan en contra de las manecillas del reloj. El tablero se dibuja en espejo.
+- **Nueva regla "Última ficha: un solo dado"** (activada): con 2 dados, cuando la última ficha de un jugador va por el pasillo del cielo, usa un solo dado y el otro no se usa.
+- **Soplar corregido:** al tirar, la app anota qué fichas podían comer, con cualquiera de los dos dados o con la suma. Si al terminar de usar la tirada no comió, se sopla la ficha que pudo comer y vuelve a la cárcel. Antes solo se revisaba el dado que se usaba y se castigaba a la ficha que se movió.

@@ -154,6 +154,11 @@ window.ParchisGame = function ParchisGame(ctx) {
 
     ui.layer = svg('g', { class: 'pc-layer' });
     board.append(ui.layer);
+    // El tablero se dibuja en espejo para que las fichas avancen en contra de
+    // las manecillas del reloj, como en el juego de mesa.
+    const mirror = svg('g', { transform: `translate(${G.size} 0) scale(-1 1)` });
+    [...board.childNodes].filter((n) => n.nodeName !== 'defs').forEach((n) => mirror.append(n));
+    board.append(mirror);
     ui.pieces = new Map();
     ui.builtFor = arms;
   }
