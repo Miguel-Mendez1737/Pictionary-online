@@ -40,7 +40,9 @@ const DRAWER_WAIT_MS = 15000;    // espera al dibujante antes de cerrar su turno
 const DEFAULT_ROOM = 'PUBLICA';
 const MAX_SEGMENTS = 40000;      // historial de trazos guardado para quien entra tarde
 const ROUND_OPTIONS = [1, 2, 3, 4, 5];
-const TURN_SECONDS = 90;         // 1:30 para adivinar cada dibujo
+const TURN_SECONDS = 90;         // tiempo por defecto para adivinar cada dibujo (1:30)
+// Tiempos que el anfitrión puede elegir en el lobby (en segundos).
+const TIME_OPTIONS = [30, 45, 60, 90, 120, 150, 180];
 
 // Servidores ICE para el chat de voz (WebRTC). STUN basta en la mayoría de
 // redes; para redes estrictas se puede añadir un TURN con la variable
@@ -600,7 +602,7 @@ io.on('connection', (socket) => {
     socket.join(code);
     ensureHost(room);
 
-    reply({ ok: true, id: key, room: code, themes: THEME_LIST, roundOptions: ROUND_OPTIONS, turnSeconds: TURN_SECONDS });
+    reply({ ok: true, id: key, room: code, themes: THEME_LIST, roundOptions: ROUND_OPTIONS, turnSeconds: TURN_SECONDS, timeOptions: TIME_OPTIONS });
     if (room.phase === 'drawing') socket.emit('canvas:history', room.segments);
     syncRoom(room);
   });
@@ -623,6 +625,7 @@ io.on('connection', (socket) => {
     if (!isHost(room, player) || room.phase !== 'lobby') return;
     if (s && typeof s.theme === 'string' && THEMES[s.theme]) room.settings.theme = s.theme;
     if (s && ROUND_OPTIONS.includes(Number(s.rounds))) room.settings.rounds = Number(s.rounds);
+    if (s && TIME_OPTIONS.includes(Number(s.drawTime))) room.settings.drawTime = Number(s.drawTime);
     if (s && typeof s.muteDrawer === 'boolean') room.settings.muteDrawer = s.muteDrawer;
     syncRoom(room);
   });

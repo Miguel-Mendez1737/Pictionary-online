@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.10.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.11.0 (la versión se toma de `package.json`)
 
 Pictionary multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -221,3 +221,8 @@ Para la instalación completa en Android, y para el micrófono, la app debe abri
 - **Errores claros:** los Logs explican la causa en español, por ejemplo una contraseña incorrecta o una dirección mal copiada.
 
 **App publicada:** https://pictionary-online.onrender.com
+
+## v1.11.0: tiempo para adivinar editable
+- **Elegir el tiempo:** en el lobby, el anfitrión elige en **"Tiempo por turno"** entre **0:30, 0:45, 1:00, 1:30 (por defecto), 2:00, 2:30 y 3:00**. Las opciones están en `TIME_OPTIONS`, en `server.js`.
+- **Quién lo ve:** los demás jugadores ven el tiempo elegido, pero no pueden cambiarlo. La regla del lobby muestra el tiempo con palabras.
+- **Se ajusta solo:** el cronómetro, las pistas (a la mitad y al 25 % del tiempo) y los colores de la barra se adaptan al tiempo elegido.

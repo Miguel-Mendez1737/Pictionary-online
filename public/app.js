@@ -12,6 +12,7 @@
     themes: [],
     roundOptions: [],
     turnSeconds: 90,
+    timeOptions: [30, 45, 60, 90, 120, 150, 180],
     avatar: null,       // avatar personalizado (ver avatar.js)
     editorTab: 'base',
     account: null,      // perfil de la cuenta si inició sesión
@@ -749,6 +750,7 @@
       state.themes = res.themes;
       state.roundOptions = res.roundOptions;
       state.turnSeconds = res.turnSeconds || 90;
+      if (Array.isArray(res.timeOptions) && res.timeOptions.length) state.timeOptions = res.timeOptions;
       state.joinData.room = res.room;
       delete state.joinData.createPrivate; // al reconectar vuelve a ESTA sala
       saveSession();
@@ -893,6 +895,17 @@
     }
   });
 
+  // Formatos de tiempo: 90 → "1:30" y "1 minuto 30 segundos"
+  const clockText = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  function longTimeText(sec) {
+    const m = Math.floor(sec / 60);
+    const r = sec % 60;
+    const parts = [];
+    if (m) parts.push(`${m} ${m === 1 ? 'minuto' : 'minutos'}`);
+    if (r) parts.push(`${r} segundos`);
+    return parts.join(' ');
+  }
+
   // ─── 2. Lobby ──────────────────────────────────────────────────────────────
   const roundsSelect = $('#rounds-select');
   const muteDrawerInput = $('#mute-drawer');
@@ -904,12 +917,16 @@
     themeSelect.innerHTML = '<option value="" disabled>Elige un tema…</option>'
       + state.themes.map((t) => `<option value="${t.id}">${t.emoji} ${t.label}</option>`).join('');
     roundsSelect.innerHTML = state.roundOptions.map((n) => `<option value="${n}">${n} ${n === 1 ? 'ronda' : 'rondas'}</option>`).join('');
+    timeSelect.innerHTML = state.timeOptions.map((n) => `<option value="${n}">⏱️ ${clockText(n)} min</option>`).join('');
   }
 
   const isHost = () => state.room && state.room.hostId === state.me;
   const sendSettings = (patch) => socket.emit('lobby:settings', patch);
 
   roundsSelect.addEventListener('change', () => sendSettings({ rounds: Number(roundsSelect.value) }));
+  // El anfitrión elige cuánto tiempo hay para adivinar cada dibujo.
+  const timeSelect = $('#time-select');
+  timeSelect.addEventListener('change', () => { vibrate(10); sendSettings({ drawTime: Number(timeSelect.value) }); });
   muteDrawerInput.addEventListener('change', () => sendSettings({ muteDrawer: muteDrawerInput.checked }));
   $('#start-btn').addEventListener('click', () => socket.emit('game:start'));
   $('#lobby-edit').addEventListener('click', () => openProfile());
@@ -1005,6 +1022,9 @@
       : host ? 'Elige un tema para llenar la ruleta de palabras.' : 'Esperando a que el anfitrión elija el tema…';
 
     roundsSelect.value = room.settings.rounds;
+    timeSelect.value = room.settings.drawTime;
+    timeSelect.disabled = !host;
+    $('#rule-time').textContent = longTimeText(room.settings.drawTime);
     muteDrawerInput.checked = room.settings.muteDrawer;
     roundsSelect.disabled = !host;
     muteDrawerInput.disabled = !host;
@@ -1141,7 +1161,9 @@
     const pct = Math.max(0, Math.min(100, (s / total) * 100));
     const bar = $('#time-bar');
     $('#time-bar-fill').style.width = `${pct}%`;
-    bar.classList.toggle('warn', drawing && s <= 30 && s > 10);
+    // Amarillo en el último tercio (máx. 30 s) y rojo en los últimos 10 s
+    const warnFrom = Math.min(30, Math.round(total / 3));
+    bar.classList.toggle('warn', drawing && s <= warnFrom && s > 10);
     bar.classList.toggle('urgent', drawing && s <= 10);
     bar.classList.toggle('active', Boolean(visible));
     if (drawing && (s === 10 || s === 3)) vibrate(40);

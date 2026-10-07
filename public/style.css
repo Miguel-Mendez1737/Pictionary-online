@@ -408,7 +408,6 @@ canvas.can-draw.erasing { cursor: cell; }
 .net-banner[hidden] { display: none; }
 
 /* Reglas del turno en el lobby */
-.fixed-time { min-height: var(--tap); display: flex; align-items: center; padding: 0 14px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-strong); font-weight: 800; }
 .rule-info { margin: 0 0 14px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--warn-soft); color: #7a4a00; line-height: 1.4; }
 
 /* Herramientas de dibujo: abajo del todo, al alcance del pulgar */

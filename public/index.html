@@ -174,7 +174,7 @@
               <select id="theme-select"></select>
             </label>
             <p class="theme-info muted small" id="theme-info"></p>
-            <p class="rule-info small">⏰ Hay <strong>1 minuto 30 segundos</strong> para adivinar cada dibujo. Solo ganan quienes adivinan: <strong>10 puntos</strong> cada uno. El dibujante no suma puntos.</p>
+            <p class="rule-info small">⏰ Hay <strong id="rule-time">1 minuto 30 segundos</strong> para adivinar cada dibujo. Solo ganan quienes adivinan: <strong>10 puntos</strong> cada uno. El dibujante no suma puntos.</p>
 
             <div class="settings-row">
               <label class="field">
@@ -183,7 +183,7 @@
               </label>
               <div class="field">
                 <span class="field-label">Tiempo por turno</span>
-                <div class="fixed-time">⏱️ 1:30 min</div>
+                <select id="time-select" aria-label="Tiempo para adivinar"></select>
               </div>
             </div>
 
