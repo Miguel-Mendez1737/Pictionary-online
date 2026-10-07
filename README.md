@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.10.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.10.1 (la versión se toma de `package.json`)
 
 Pictionary multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -214,3 +214,10 @@ Para la instalación completa en Android, y para el micrófono, la app debe abri
 - **Agregar amigos desde el lobby:** el dueño puede hacerlo en el momento, y ya pueden entrar.
 - **Salas abiertas:** las salas por código siguen abiertas para cualquiera que tenga el código.
 - **Enlaces de invitación:** al abrir uno (`?sala=CODIGO`), la app lleva a esa sala aunque estuvieras en otra.
+
+## v1.10.1: conexión más robusta con la base de datos
+- **Reconexión automática:** si la base de datos no responde al arrancar, la app **se reconecta sola** (10 s, 20 s, 40 s… hasta cada 5 min). Mientras tanto se puede jugar como invitado.
+- **Dirección limpia:** a la dirección `DATABASE_URL` se le quitan las comillas o espacios pegados por error.
+- **Errores claros:** los Logs explican la causa en español, por ejemplo una contraseña incorrecta o una dirección mal copiada.
+
+**App publicada:** https://pictionary-online.onrender.com

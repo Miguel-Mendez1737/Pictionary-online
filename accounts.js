@@ -27,7 +27,14 @@ const express = require('express');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'users.json');
-const DATABASE_URL = process.env.DATABASE_URL || '';
+// Limpia la dirección pegada: quita espacios, comillas o un "psql '...'" alrededor.
+function cleanDatabaseUrl(raw) {
+  const text = String(raw || '').trim();
+  const match = text.match(/postgres(?:ql)?:\/\/[^\s'"]+/);
+  return match ? match[0] : text;
+}
+const DATABASE_URL = cleanDatabaseUrl(process.env.DATABASE_URL);
+const RETRY_BASE_MS = Number(process.env.ACCOUNTS_RETRY_MS) || 10000;
 const USER_RE = /^[a-z0-9_.-]{3,20}$/;
 const MAX_TOKENS = 5; // sesiones abiertas por cuenta (celular, PC, etc.)
 const MAX_FRIENDS = 200;
@@ -54,6 +61,7 @@ function pgConfig(connectionString) {
 async function load() {
   if (DATABASE_URL) {
     const { Pool } = require('pg');
+    if (pool) { const old = pool; pool = null; old.end().catch(() => {}); }
     pool = new Pool(pgConfig(DATABASE_URL));
     // Las bases gratuitas cierran conexiones inactivas: no debe tumbar la app.
     pool.on('error', (err) => console.warn('PostgreSQL (conexión inactiva):', err.message));
@@ -155,15 +163,35 @@ const ERR = {
 };
 const validPassword = (p) => typeof p === 'string' && p.length >= 6 && p.length <= 100;
 
-// Devuelve una promesa que se cumple cuando las cuentas están cargadas.
+// Explica en español por qué falló la conexión (aparece en los Logs de Render).
+function explainDbError(err) {
+  const code = err && err.code;
+  if (code === '28P01') return 'usuario o contraseña incorrectos. Si cambiaste la contraseña en Neon, copia la dirección nueva y pégala en DATABASE_URL';
+  if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'no se encontró el servidor. Revisa que la dirección esté completa y bien copiada';
+  if (code === '3D000') return 'la base de datos indicada no existe (debe terminar en /neondb)';
+  if (err instanceof TypeError || /Invalid URL/i.test(String(err && err.message))) return 'la dirección no tiene un formato válido; debe empezar con postgresql://';
+  return 'la base de datos no respondió (puede estar despertando)';
+}
+
+// Devuelve una promesa que se cumple tras el primer intento de carga. Si la
+// base de datos falla, el juego sigue funcionando sin cuentas y se reintenta
+// conectar sola (10 s, 20 s, 40 s… hasta cada 5 min) sin reiniciar la app.
 module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
-  const ready = load()
-    .then(() => console.log(`   Cuentas: ${storageLabel} (${Object.keys(db.users).length} usuarios)`))
+  let attempt = 0;
+  const tryLoad = () => load()
+    .then(() => {
+      available = true;
+      if (attempt > 0) console.log('✅ Cuentas reactivadas: la base de datos ya responde.');
+      console.log(`   Cuentas: ${storageLabel} (${Object.keys(db.users).length} usuarios)`);
+    })
     .catch((err) => {
-      // Si la base de datos falla, el juego sigue funcionando sin cuentas.
       available = false;
-      console.error(`⚠️  Cuentas desactivadas: no se pudo conectar a la base de datos (${err.message})`);
+      attempt++;
+      const delay = Math.min(300000, RETRY_BASE_MS * 2 ** Math.min(attempt - 1, 5));
+      console.error(`⚠️  Cuentas en pausa: ${explainDbError(err)}. [${err.code || ''} ${err.message}] Reintento en ${Math.round(delay / 1000)} s.`);
+      setTimeout(tryLoad, delay).unref();
     });
+  const ready = tryLoad();
 
   const router = express.Router();
   router.use(express.json({ limit: '10kb' }));
