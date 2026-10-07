@@ -757,6 +757,10 @@ io.on('connection', (socket) => {
   });
 
   // ─── 🎲 Parchís ───
+  socket.on('parchis:soplar', () => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'parchis') parchis.onSoplar(room, player);
+  });
   socket.on('parchis:roll', () => {
     const { room, player } = getCtx();
     if (player && room.phase === 'parchis') parchis.onRoll(room, player);

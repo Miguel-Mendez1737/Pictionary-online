@@ -49,7 +49,7 @@ const RULES = [
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
   { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas con una de tus fichas.', def: true },
   { id: 'lastOneDie', label: 'Última ficha: un solo dado', desc: '2 dados: cuando tu última ficha va por el pasillo del cielo, solo usas un dado (el otro no se usa).', def: true },
-  { id: 'soplar', label: 'Soplar', desc: 'Comer es obligatorio: si con tu tirada pudiste comer (con un dado o con la suma) y no lo hiciste, la ficha que pudo comer se va a la cárcel.', def: false },
+  { id: 'soplar', label: 'Soplar', desc: 'Si alguien pudo comer (con un dado o con la suma) y no lo hizo, los demás pueden tocar 🌬️ Soplar antes de que tire el siguiente jugador: la app lo revisa y, si es cierto, esa ficha se va a la cárcel.', def: false },
   { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo.', def: false }
 ];
 const RULE_IDS = new Set(RULES.map((r) => r.id));
@@ -302,6 +302,7 @@ module.exports = function createParchis(h) {
     const d = () => 1 + Math.floor(Math.random() * 6);
     p.roll = p.dice === 2 ? [d(), d()] : [d()];
     p.rollId++;
+    if (p.soplable && p.soplable.seatIdx !== p.turn) p.soplable = null; // ya tiró otro: no se puede soplar
     p.bonus = [];
     p.bonusAmount = null;
     const isRepeat = p.dice === 2 ? p.roll[0] === p.roll[1] : p.roll[0] === 6;
@@ -388,21 +389,42 @@ module.exports = function createParchis(h) {
     }
   }
 
-  // Al terminar de usar la tirada: si pudo comer y no comió, lo soplan.
+  // Al terminar de usar la tirada: si pudo comer y no comió, queda "soplable"
+  // hasta que tire otro jugador. Los demás deciden si lo soplan (botón 🌬️).
   function checkSoplar(room) {
     const p = P(room);
-    const seat = current(room);
     const chances = p.chances || [];
     p.chances = [];
     if (!has(room, 'soplar') || p.ate || !chances.length) return;
+    p.soplable = { seatIdx: p.turn, pieces: chances };
+  }
+
+  // Un jugador tocó 🌬️ Soplar: la app revisa si de verdad hay a quién soplar.
+  function onSoplar(room, player) {
+    const p = P(room);
+    if (!p || room.phase !== 'parchis' || p.stage === 'over' || !has(room, 'soplar')) return;
+    const reply = (ok, text) => io.to(player.socketId).emit('parchis:soplar', { ok, text });
+    const s = p.soplable;
+    const offender = s && p.seats[s.seatIdx];
+    if (!offender || offender.gone) {
+      reply(false, 'No había nada que soplar: nadie dejó de comer pudiendo.');
+      log(room, `🌬️ ${player.name} sopló, pero no había nada que soplar.`);
+      return syncRoom(room);
+    }
+    if (offender.id === player.id) return reply(false, 'No te puedes soplar a ti mismo 😅');
     const { goal } = B(room);
-    const i = chances.find((k) => seat.pieces[k] >= 0 && seat.pieces[k] < goal);
-    if (i === undefined) return;
-    seat.pieces[i] = -1;
-    seat.lanes[i] = null;
-    const name = nameOf(room, seat);
-    log(room, `🌬️ ${name} pudo comer y no lo hizo: ¡lo soplaron! Esa ficha vuelve a la cárcel.`);
-    io.to(room.code).emit('parchis:event', { kind: 'capture', text: `¡Soplaron a ${name}!` });
+    const i = s.pieces.find((k) => offender.pieces[k] >= 0 && offender.pieces[k] < goal);
+    p.soplable = null;
+    if (i === undefined) {
+      reply(false, 'Esa ficha ya no está en juego: no se puede soplar.');
+      return syncRoom(room);
+    }
+    offender.pieces[i] = -1;
+    offender.lanes[i] = null;
+    const name = nameOf(room, offender);
+    log(room, `🌬️ ¡${player.name} sopló a ${name}! Pudo comer y no lo hizo: esa ficha vuelve a la cárcel.`);
+    io.to(room.code).emit('parchis:event', { kind: 'capture', text: `¡${player.name} sopló a ${name}!` });
+    syncRoom(room);
   }
 
   function releasePair(room, seat) {
@@ -675,6 +697,6 @@ module.exports = function createParchis(h) {
 
   return {
     MAX_SEATS, COLORS, RULES, PIECE_OPTIONS, DICE_OPTIONS,
-    defaults, applySettings, start, view, onRoll, onMove, onDisconnect, onLeave
+    defaults, applySettings, start, view, onRoll, onMove, onDisconnect, onLeave, onSoplar
   };
 };

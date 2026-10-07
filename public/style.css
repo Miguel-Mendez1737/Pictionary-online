@@ -1363,3 +1363,10 @@ body.is-landscape .tool span { display: none; }
 .basta-answer-why.good { color: var(--success); }
 .vote-group { display: flex; gap: 4px; flex: none; }
 .vote-btn.up.on { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+.soplar-btn { width: 100%; min-height: 50px; font-size: 1.05rem; color: #fff; background: linear-gradient(135deg, #1c7ed6, #22b8cf); box-shadow: 0 5px 0 #1864ab; flex-direction: column; gap: 0; line-height: 1.1; }
+.soplar-btn small { font-weight: 700; font-size: .72rem; opacity: .9; }
+.soplar-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #1864ab; }
+@media (min-width: 900px) and (min-height: 600px) {
+  #parchis.mini-game { grid-template-areas: "head head" "board panel" "board soplar" "board log" "board rules" "board players"; grid-template-rows: auto auto auto auto auto 1fr; }
+  #parchis .soplar-btn { grid-area: soplar; }
+}

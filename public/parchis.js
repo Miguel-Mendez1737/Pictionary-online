@@ -306,6 +306,18 @@ window.ParchisGame = function ParchisGame(ctx) {
     }, 70);
   }
 
+  // ─── 🌬️ Soplar: cualquiera lo toca y el servidor revisa si es cierto ───
+  const soplarBtn = $('#parchis-soplar');
+  soplarBtn.addEventListener('click', () => {
+    if (soplarBtn.disabled) return;
+    soplarBtn.disabled = true;
+    vibrate(20);
+    sfx.beep(520, 0.15, 'sawtooth', 0.04);
+    socket.emit('parchis:soplar');
+    setTimeout(() => { soplarBtn.disabled = false; }, 2500);
+  });
+  socket.on('parchis:soplar', ({ ok, text }) => toast(`🌬️ ${text}`, ok ? 'success' : 'warn'));
+
   // ─── Eventos ───
   socket.on('parchis:event', (e) => {
     if (e.kind === 'capture') { vibrate([60, 40, 60]); sfx.beep(220, 0.2, 'sawtooth', 0.05); toast(`🍽️ ${e.text}`, 'warn'); }
@@ -463,6 +475,7 @@ window.ParchisGame = function ParchisGame(ctx) {
     log.innerHTML = '';
     p.log.slice(-4).reverse().forEach((t, i) => log.append(el('li', i === 0 ? 'latest' : null, t)));
     renderRules(p);
+    soplarBtn.hidden = !p.rules.includes('soplar') || p.stage === 'over';
 
     // Jugadores: color, fichas coronadas y puntos
     const list = $('#parchis-players');
