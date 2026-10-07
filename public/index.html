@@ -63,7 +63,11 @@
             <span class="field-label">Código de sala <small>(opcional)</small></span>
             <input id="room-input-acc" type="text" maxlength="10" placeholder="PUBLICA" autocapitalize="characters" enterkeyhint="go">
           </label>
-          <button class="btn btn-primary btn-lg" id="account-play" type="button">Entrar a jugar</button>
+          <button class="btn btn-primary btn-lg" id="account-play" type="button">Entrar a la sala</button>
+          <div class="or-divider"><span>o</span></div>
+          <button class="btn btn-private btn-lg" id="account-private" type="button">🔒 Crear sala privada</button>
+          <p class="muted small private-sub">Solo podrán entrar los amigos que agregues.</p>
+          <button class="btn btn-ghost friends-btn" id="account-friends" type="button">👥 Mis amigos <span class="pill" id="friends-count">0</span></button>
           <div class="account-actions">
             <button class="btn btn-ghost" id="account-edit" type="button">✏️ Editar perfil</button>
             <button class="btn btn-ghost" id="account-logout" type="button">Cerrar sesión</button>
@@ -96,6 +100,7 @@
             <span class="field-label">Código de sala <small>(opcional)</small></span>
             <input id="room-input" type="text" maxlength="10" placeholder="PUBLICA" autocapitalize="characters" enterkeyhint="go">
           </label>
+          <p class="private-hint small">🔒 ¿Quieres una <strong>sala privada solo para tus amigos</strong>? Crea tu cuenta aquí abajo y podrás hacerla.</p>
 
           <details class="save-account" id="save-account">
             <summary>💾 Crear cuenta <small>(opcional)</small><span>Así la próxima vez entras directo, sin crear tu jugador otra vez.</span></summary>
@@ -139,7 +144,7 @@
         <header class="lobby-head">
           <div class="lobby-title">
             <h2 id="lobby-title">Sala <span class="code-badge" id="lobby-code"></span></h2>
-            <p class="muted small">Invita a tus amigos con el enlace.</p>
+            <p class="muted small" id="lobby-sub">Invita a tus amigos con el enlace.</p>
           </div>
           <div class="head-actions">
             <button class="btn btn-ghost btn-icon" id="lobby-edit" type="button" aria-label="Editar mi perfil" title="Editar mi perfil">✏️</button>
@@ -149,6 +154,11 @@
             <button class="btn btn-ghost btn-icon" data-action="leave" type="button" aria-label="Salir" title="Salir">🚪</button>
           </div>
         </header>
+
+        <div class="privacy-banner" id="privacy-banner" hidden>
+          <span id="privacy-text"></span>
+          <button class="btn btn-ghost btn-small" id="privacy-friends" type="button" hidden>👥 Agregar amigos</button>
+        </div>
 
         <div class="lobby-grid">
           <div class="card">
@@ -291,6 +301,26 @@
         <button class="btn btn-primary" id="profile-save" type="submit">Guardar</button>
       </footer>
     </form>
+  </div>
+
+  <!-- Mis amigos: quiénes pueden entrar a mis salas privadas -->
+  <div class="modal hidden" id="friends-modal" role="dialog" aria-modal="true" aria-labelledby="friends-title">
+    <div class="modal-sheet">
+      <header class="modal-head">
+        <h2 id="friends-title">👥 Mis amigos</h2>
+        <button class="btn btn-ghost btn-icon" id="friends-close" type="button" aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="muted small">Solo tus amigos pueden entrar a tus <strong>salas privadas 🔒</strong>. Agrégalos con su <strong>usuario</strong> (lo ven en su pantalla de inicio, debajo de su nombre).</p>
+        <form class="friend-add" id="friend-form" novalidate>
+          <input id="friend-input" type="text" maxlength="21" placeholder="@usuario de tu amigo" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+          <button class="btn btn-primary" type="submit">Agregar</button>
+        </form>
+        <p class="form-error" id="friends-error" role="alert"></p>
+        <p class="muted small my-user">Tu usuario: <strong id="my-username"></strong> · compártelo para que te agreguen</p>
+        <ul class="friend-list" id="friend-list"></ul>
+      </div>
+    </div>
   </div>
 
   <!-- Cómo instalar la app (acceso directo en la pantalla de inicio) -->

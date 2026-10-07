@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.9.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.10.0 (la versión se toma de `package.json`)
 
 Pictionary multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -204,3 +204,13 @@ Para la instalación completa en Android, y para el micrófono, la app debe abri
   - Sin `DATABASE_URL`, se guardan en `data/users.json`, como antes.
   - Si la base de datos no responde, el juego sigue funcionando y solo se pausan las cuentas.
 - **Guía:** `DESPLIEGUE.md` explica el camino 100% gratuito: Render Free + Neon + Metered.
+
+## v1.10.0: salas privadas solo para amigos 🔒
+- **Mis amigos:** cada cuenta tiene su lista de amigos y los agrega con su **usuario** (`@laura`).
+- **Crear sala privada:** quien tiene cuenta toca **"🔒 Crear sala privada"**. Se genera un código aleatorio de 6 caracteres, por ejemplo `A69FB7`.
+- **Quién entra:** **solo el dueño y sus amigos**.
+  - Alguien que no es amigo ve "🔒 Esta sala es privada… pídele que te agregue".
+  - Los invitados sin cuenta no pueden entrar.
+- **Agregar amigos desde el lobby:** el dueño puede hacerlo en el momento, y ya pueden entrar.
+- **Salas abiertas:** las salas por código siguen abiertas para cualquiera que tenga el código.
+- **Enlaces de invitación:** al abrir uno (`?sala=CODIGO`), la app lleva a esa sala aunque estuvieras en otra.

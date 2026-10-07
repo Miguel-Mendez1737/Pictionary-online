@@ -48,6 +48,7 @@
 - **v1.9.0:**
   - publicación 100% gratis (Render Free + cuentas en Neon PostgreSQL + TURN Metered);
   - código en https://github.com/Miguel-Mendez1737/pictionary-online.
+- **v1.10.0:** salas privadas solo para amigos (lista de amigos por usuario, código aleatorio, control de acceso en el servidor).
 - Las respuestas ignoran mayúsculas, acentos **y espacios**.
 - Probado con emulación de iPhone (390 px), Android pequeño (360 px), celular horizontal y escritorio, sin scroll ni desbordes.
 

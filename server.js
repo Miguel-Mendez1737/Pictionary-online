@@ -167,6 +167,16 @@ function createRoom(code) {
   return room;
 }
 
+// Código para salas privadas: 6 caracteres sin letras confusas (0/O, 1/I/L).
+function newPrivateCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let code;
+  do {
+    code = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  } while (rooms.has(code));
+  return code;
+}
+
 function clearTimers(room) {
   clearInterval(room.timer);
   clearTimeout(room.revealTimeout);
@@ -224,6 +234,7 @@ function snapshotFor(room, playerId) {
     mask: room.word && room.phase !== 'spinning' ? maskWord(room) : null,
     wheel: room.phase === 'spinning' ? wheelFor(room, playerId) : null,
     lastTurn: room.phase === 'reveal' ? room.lastTurn : null,
+    privacy: room.privacy || null,
     ranking: room.phase === 'gameOver' ? ranking(room) : null
   };
 }
@@ -525,11 +536,34 @@ io.on('connection', (socket) => {
     const name = clean(payload?.name, 16);
     if (!name) return reply({ error: 'Escribe tu nombre para continuar.' });
     const avatar = cleanAvatar(payload?.avatar);
-    const code = clean(payload?.room, 10).toUpperCase().replace(/[^A-Z0-9]/g, '') || DEFAULT_ROOM;
     const key = typeof payload?.key === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(payload.key) ? payload.key : socket.id;
+    const account = mountAccounts.userFromToken(payload?.token); // null = invitado
 
-    const room = rooms.get(code) || createRoom(code);
+    let code;
+    let room;
+    if (payload?.createPrivate) {
+      // 🔒 Sala privada: código aleatorio y solo pueden entrar el dueño y sus amigos.
+      if (!mountAccounts.accountsAvailable()) return reply({ error: 'Las salas privadas no están disponibles en este momento.' });
+      if (!account) return reply({ error: '🔒 Para crear una sala privada necesitas iniciar sesión con tu cuenta.' });
+      code = newPrivateCode();
+      room = createRoom(code);
+      room.privacy = { owner: account.username, ownerName: account.name };
+    } else {
+      code = clean(payload?.room, 10).toUpperCase().replace(/[^A-Z0-9]/g, '') || DEFAULT_ROOM;
+      room = rooms.get(code) || createRoom(code);
+    }
     let player = room.players.get(key);
+
+    // Control de acceso a salas privadas (quien ya estaba dentro puede reconectarse).
+    if (room.privacy && !player) {
+      const owner = room.privacy.owner;
+      if (!account) {
+        return reply({ error: `🔒 Esta sala es privada: solo pueden entrar los amigos de @${owner}. Inicia sesión con tu cuenta para entrar.`, privateRoom: true });
+      }
+      if (!mountAccounts.canJoinPrivate(owner, account.username)) {
+        return reply({ error: `🔒 Esta sala es privada: solo pueden entrar los amigos de @${owner}. Pídele que te agregue como amigo (tu usuario es @${account.username}).`, privateRoom: true });
+      }
+    }
 
     if (player) {
       // ── Reconexión: recupera el mismo jugador ──
@@ -550,7 +584,7 @@ io.on('connection', (socket) => {
       if (!wasConnected) systemMsg(room, `🔌 ${name} volvió a la partida.`, 'join');
     } else {
       if (room.players.size >= MAX_PLAYERS) return reply({ error: 'La sala está llena (máx. 12).' });
-      player = { id: key, socketId: socket.id, connected: true, name, avatar, score: 0, guessed: false, voice: false, muted: false, leaveTimer: null };
+      player = { id: key, socketId: socket.id, connected: true, name, avatar, score: 0, guessed: false, voice: false, muted: false, leaveTimer: null, username: account ? account.username : null };
       room.players.set(key, player);
       room.order.push(key);
       systemMsg(room, `👋 ${name} se unió a la sala.`, 'join');

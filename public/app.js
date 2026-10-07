@@ -589,7 +589,8 @@
       box.innerHTML = '';
       box.append(avatarEl(state.account.avatar, 'xl'));
       $('#account-hello').textContent = `¡Hola, ${state.account.name}!`;
-      $('#account-user').textContent = `@${state.account.username}`;
+      $('#account-user').textContent = `Tu usuario: @${state.account.username}`;
+      refreshFriendsCount();
     }
     if (view === 'guest') {
       $('#editor-home').append($('#avatar-editor'));
@@ -599,10 +600,12 @@
   }
 
   // Une al jugador a la sala con su nombre y avatar.
-  function startJoin(name, room) {
+  // createPrivate: crea una sala privada nueva (solo el dueño y sus amigos).
+  function startJoin(name, room, createPrivate = false) {
     storage.set('pictionary:name', name);
     storage.set('pictionary:avatar', JSON.stringify(state.avatar));
     state.joinData = { name, avatar: state.avatar, room, key: playerKey() };
+    if (createPrivate) state.joinData.createPrivate = true;
     if (socket.connected) join(); else socket.connect();
   }
 
@@ -679,6 +682,12 @@
       $('#account-play').disabled = true;
       startJoin(state.account.name, $('#room-input-acc').value.trim());
     });
+    $('#account-private').addEventListener('click', () => {
+      if (!state.account) return;
+      $('#account-private').disabled = true;
+      startJoin(state.account.name, '', true);
+    });
+    $('#account-friends').addEventListener('click', () => openFriends());
     $('#account-edit').addEventListener('click', () => openProfile());
     $('#account-logout').addEventListener('click', async () => {
       try { await api('POST', '/api/logout'); } catch { /* ya expirada */ }
@@ -693,7 +702,9 @@
     if (saved) {
       try {
         const s = JSON.parse(saved);
-        if (s && s.name && s.room) {
+        // Si abrió un enlace de invitación a OTRA sala, manda el enlace.
+        const linkRoom = (params.get('sala') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (s && s.name && s.room && (!linkRoom || linkRoom === s.room)) {
           state.avatar = Avatar.normalize(s.avatar);
           state.joinData = { ...s, key: playerKey() };
           rejoining = true;
@@ -717,12 +728,18 @@
   }
 
   function join() {
-    socket.emit('player:join', state.joinData, (res) => {
+    // El token identifica la cuenta (para crear o entrar a salas privadas).
+    const payload = { ...state.joinData, token: storage.get('pictionary:token') || undefined };
+    socket.emit('player:join', payload, (res) => {
       $('#join-btn').disabled = false;
       $('#account-play').disabled = false;
+      $('#account-private').disabled = false;
       if (!res || res.error) {
         const msg = res ? res.error : 'No se pudo entrar a la sala.';
-        $(state.account ? '#account-error' : '#register-error').textContent = msg;
+        const errEl = $(state.account ? '#account-error' : '#register-error');
+        errEl.textContent = msg;
+        toast(msg, 'warn');
+        setTimeout(() => errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
         state.joinData = null;
         storage.set('pictionary:session', '', sessionStorage);
         showScreen('screen-register');
@@ -733,6 +750,7 @@
       state.roundOptions = res.roundOptions;
       state.turnSeconds = res.turnSeconds || 90;
       state.joinData.room = res.room;
+      delete state.joinData.createPrivate; // al reconectar vuelve a ESTA sala
       saveSession();
       history.replaceState(null, '', `?sala=${encodeURIComponent(res.room)}`);
       fillSelects();
@@ -745,6 +763,66 @@
     const { name, avatar, room } = state.joinData;
     storage.set('pictionary:session', JSON.stringify({ name, avatar, room }), sessionStorage);
   }
+
+  // ─── Mis amigos (para las salas privadas) ──────────────────────────────────
+  function renderFriends(list) {
+    const ul = $('#friend-list');
+    ul.innerHTML = '';
+    $('#friends-count').textContent = String(list.length);
+    if (!list.length) {
+      ul.append(el('li', 'friend-empty', 'Aún no tienes amigos agregados. Escribe el usuario de un amigo arriba.'));
+      return;
+    }
+    list.forEach((f) => {
+      const li = el('li', 'friend');
+      const info = el('div', 'friend-info');
+      info.append(el('strong', null, f.name), el('span', 'muted small', `@${f.username}`));
+      const del = el('button', 'btn btn-ghost btn-icon friend-del', '✕');
+      del.type = 'button';
+      del.setAttribute('aria-label', `Quitar a ${f.name}`);
+      del.addEventListener('click', async () => {
+        try { renderFriends((await api('DELETE', `/api/friends/${encodeURIComponent(f.username)}`)).friends); } catch (ex) { $('#friends-error').textContent = ex.message; }
+      });
+      li.append(avatarEl(f.avatar, 'sm'), info, del);
+      ul.append(li);
+    });
+  }
+
+  async function refreshFriendsCount() {
+    try { renderFriends((await api('GET', '/api/friends')).friends); } catch { /* sin conexión */ }
+  }
+
+  async function openFriends() {
+    if (!state.account) return;
+    $('#friends-error').textContent = '';
+    $('#friend-input').value = '';
+    $('#my-username').textContent = `@${state.account.username}`;
+    $('#friends-modal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    await refreshFriendsCount();
+  }
+  function closeFriends() {
+    $('#friends-modal').classList.add('hidden');
+    document.body.classList.remove('modal-open');
+  }
+  $('#friends-close').addEventListener('click', closeFriends);
+  $('#friends-modal').addEventListener('click', (e) => { if (e.target.id === 'friends-modal') closeFriends(); });
+  $('#privacy-friends').addEventListener('click', () => openFriends());
+  $('#friend-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = $('#friend-input').value.trim();
+    if (!username) return;
+    $('#friends-error').textContent = '';
+    try {
+      const res = await api('POST', '/api/friends', { username });
+      renderFriends(res.friends);
+      $('#friend-input').value = '';
+      toast(`👥 ${res.added.name} ahora es tu amigo`, 'success');
+      vibrate(20);
+    } catch (ex) {
+      $('#friends-error').textContent = ex.message;
+    }
+  });
 
   // ─── Editar perfil (en cualquier momento) ─────────────────────────────────
   // El mismo editor de avatar se "muda" a la ventana mientras está abierta.
@@ -900,6 +978,16 @@
   function renderLobby(room) {
     const host = isHost();
     $('#lobby-code').textContent = room.code;
+    const priv = room.privacy;
+    const isOwner = Boolean(priv && state.account && state.account.username === priv.owner);
+    $('#privacy-banner').hidden = !priv;
+    if (priv) {
+      $('#privacy-text').textContent = isOwner
+        ? '🔒 Tu sala privada: solo pueden entrar tus amigos. Comparte el enlace con ellos.'
+        : `🔒 Sala privada de ${priv.ownerName} (@${priv.owner}): solo entran sus amigos.`;
+      $('#privacy-friends').hidden = !isOwner;
+    }
+    $('#lobby-sub').textContent = priv ? 'Solo tus amigos podrán entrar con el enlace.' : 'Sala abierta: entra cualquiera que tenga el código.';
     $('#lobby-count').textContent = `${room.players.length}/12`;
     renderPlayerList($('#lobby-players'), room, { scores: true });
 

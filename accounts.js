@@ -16,6 +16,9 @@
 //   GET  /api/me        (Authorization: Bearer <token>)      -> { profile }
 //   PUT  /api/me        { name?, avatar?, username?, currentPassword?, newPassword? }
 //   POST /api/logout
+//   GET    /api/friends              -> { friends: [{ username, name, avatar }] }
+//   POST   /api/friends { username } -> agrega un amigo (por su usuario)
+//   DELETE /api/friends/:username    -> quita un amigo
 
 const fs = require('fs');
 const path = require('path');
@@ -27,6 +30,7 @@ const FILE = path.join(DATA_DIR, 'users.json');
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const USER_RE = /^[a-z0-9_.-]{3,20}$/;
 const MAX_TOKENS = 5; // sesiones abiertas por cuenta (celular, PC, etc.)
+const MAX_FRIENDS = 200;
 
 let db = { users: {} };
 let pool = null;          // conexión a PostgreSQL (si hay DATABASE_URL)
@@ -246,9 +250,14 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
 
     // 2) Aplicar
     if (newUsername) {
-      delete db.users[u.username];
+      const old = u.username;
+      delete db.users[old];
       u.username = newUsername;
       db.users[newUsername] = u;
+      // Quien lo tenía como amigo lo sigue teniendo con el usuario nuevo.
+      for (const other of Object.values(db.users)) {
+        if (other.friends) other.friends = other.friends.map((f) => (f === old ? newUsername : f));
+      }
     }
     if (name) u.name = name;
     if (b.avatar !== undefined) u.avatar = cleanAvatar(b.avatar);
@@ -260,6 +269,37 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
     res.json({ profile: publicProfile(u) });
   });
 
+  // ─── Amigos: con quién se pueden compartir las salas privadas ───
+  const friendList = (u) => (u.friends || [])
+    .map((f) => db.users[f])
+    .filter(Boolean)
+    .map(publicProfile);
+
+  router.get('/friends', auth, (req, res) => res.json({ friends: friendList(req.user) }));
+
+  router.post('/friends', auth, rateLimit, (req, res) => {
+    const u = req.user;
+    const username = normUser((req.body || {}).username).replace(/^@/, '');
+    const friend = db.users[username];
+    if (!friend) return res.status(404).json({ error: `No existe ningún jugador con el usuario @${username || '…'}. Revisa cómo lo escribió.` });
+    if (friend === u) return res.status(400).json({ error: 'Ese es tu propio usuario 😄' });
+    u.friends = u.friends || [];
+    if (!u.friends.includes(username)) {
+      if (u.friends.length >= MAX_FRIENDS) return res.status(400).json({ error: 'Llegaste al máximo de amigos.' });
+      u.friends.push(username);
+      save();
+    }
+    res.json({ friends: friendList(u), added: publicProfile(friend) });
+  });
+
+  router.delete('/friends/:username', auth, (req, res) => {
+    const u = req.user;
+    const username = normUser(req.params.username);
+    u.friends = (u.friends || []).filter((f) => f !== username);
+    save();
+    res.json({ friends: friendList(u) });
+  });
+
   router.post('/logout', auth, (req, res) => {
     req.user.tokens = (req.user.tokens || []).filter((t) => t !== sha256(req.token));
     save();
@@ -269,3 +309,20 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
   app.use('/api', router);
   return ready;
 };
+
+// ─── Consultas para el servidor de juego (salas privadas) ───
+// Identifica al jugador por el token de su sesión (o null si es invitado).
+module.exports.userFromToken = (token) => {
+  if (!available || typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) return null;
+  const u = findByToken(token);
+  return u ? { username: u.username, name: u.name } : null;
+};
+// ¿Puede "username" entrar a las salas privadas de "owner"? (el dueño y sus amigos)
+module.exports.canJoinPrivate = (owner, username) => {
+  if (!username) return false;
+  if (owner === username) return true;
+  const o = db.users[owner];
+  return Boolean(o && (o.friends || []).includes(username));
+};
+module.exports.accountsAvailable = () => available;
+
