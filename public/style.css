@@ -1370,3 +1370,5 @@ body.is-landscape .tool span { display: none; }
   #parchis.mini-game { grid-template-areas: "head head" "board panel" "board soplar" "board log" "board rules" "board players"; grid-template-rows: auto auto auto auto auto 1fr; }
   #parchis .soplar-btn { grid-area: soplar; }
 }
+.die.locked { opacity: .45; position: relative; }
+.die.locked::after { content: '🔒'; position: absolute; top: -8px; right: -8px; font-size: 1.1rem; }

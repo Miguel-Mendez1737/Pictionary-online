@@ -349,7 +349,7 @@ window.ParchisGame = function ParchisGame(ctx) {
       return p.legal.length > 1 ? '🐾 ¡Pata de perro! (2 y 1): toca la ficha que retrocede 3 casillas.' : '🐾 ¡Pata de perro! Tu ficha retrocede 3…';
     }
     if (p.stage === 'move' && p.oneDie) {
-      return p.legal.length ? '🏁 ¡Última ficha! Usas un solo dado: toca el dado y luego tu ficha.' : '🏁 Última ficha: ningún dado te alcanza exacto.';
+      return p.legal.length ? '🏁 ¡Última ficha a 6 o menos! Usas un solo dado (el otro se bloquea): toca el dado y luego tu ficha.' : '🏁 Última ficha: ningún dado te alcanza exacto.';
     }
     if (p.stage === 'move') {
       const steal = moves.some((m) => m.kind === 'steal') ? ' 🌩️ ¡Puedes robar el cielo!' : '';
@@ -457,6 +457,12 @@ window.ParchisGame = function ParchisGame(ctx) {
       }
       // Un clic en el dado elige su índice en "pending".
       drawDice(values, { pick, selected, used });
+      // 🔒 Dado bloqueado por la regla de la última ficha
+      if (p.blocked || p.oneDie) {
+        diceBox.querySelectorAll('.die').forEach((b, i) => {
+          if (used.has(i) && p.blocked && !pick.has(i)) b.classList.add('locked');
+        });
+      }
       diceBox.querySelectorAll('.die.pickable').forEach((b, n) => {
         const i = [...pick][n];
         b.onclick = () => { ui.selDie = unused.get(i); vibrate(8); render(state.room); };

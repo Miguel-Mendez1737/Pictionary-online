@@ -301,6 +301,7 @@ module.exports = function createParchis(h) {
     const d = () => 1 + Math.floor(Math.random() * 6);
     p.roll = p.dice === 2 ? [d(), d()] : [d()];
     p.rollId++;
+    p.blocked = false;
     if (p.soplable && p.soplable.seatIdx !== p.turn) p.soplable = null; // ya tiró otro: no se puede soplar
     p.bonus = [];
     p.bonusAmount = null;
@@ -542,14 +543,19 @@ module.exports = function createParchis(h) {
     const { goal } = B(room);
     if (m.kind === 'release') return releasePair(room, seat);
 
-    // Última ficha en el pasillo del cielo a 6 casillas o menos: solo se usa un dado (automático).
-    const lastOne = dieIdx >= 0 && lastOneDie(room, seat) && m.from === seat.pieces.find((x) => x < goal);
 
     seat.pieces[m.piece] = m.to;
     seat.lanes[m.piece] = m.lane === null || m.lane === seat.arm ? null : m.lane;
     p.lastMoved = { seat, i: m.piece };
-    if (m.kind === 'back' || lastOne) p.pending = [];
+    if (m.kind === 'back') p.pending = [];
     else if (dieIdx >= 0) p.pending.splice(dieIdx, 1);
+    // 🔒 Última ficha a 6 casillas o menos del cielo: el otro dado se bloquea (automático).
+    if (p.pending.length && lastOneDie(room, seat)) {
+      const left = goal - seat.pieces.find((x) => x < goal);
+      log(room, `🔒 Última ficha de ${name} a ${left} ${left === 1 ? 'casilla' : 'casillas'} del cielo: el otro dado se bloquea.`);
+      p.pending = [];
+      p.blocked = true;
+    }
     p.legal = [];
 
     if (m.kind === 'steal') {
@@ -662,6 +668,7 @@ module.exports = function createParchis(h) {
       legal: p.legal.map((m) => ({ piece: m.piece, die: m.die, from: m.from, to: m.to, lane: m.lane, capture: m.capture.length > 0, kind: m.kind })),
       bonusAmount: p.stage === 'bonus' ? p.bonusAmount : null,
       oneDie: p.seats[p.turn] ? lastOneDie(room, p.seats[p.turn]) : false,
+      blocked: Boolean(p.blocked),
       timeLeft: Math.max(0, p.deadline - Date.now()),
       winner: p.winner,
       log: p.log
