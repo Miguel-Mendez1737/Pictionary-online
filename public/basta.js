@@ -175,13 +175,13 @@ window.BastaGame = function BastaGame(ctx) {
 
   // ─── Revisión: todas las respuestas, votos y puntos ───
   // ✅ aceptada · ❌ no aceptada
-  const VALID = new Set(['ok', 'verified', 'approved']);
+  const VALID = new Set(['ok', 'verified', 'approved', 'unverified']);
   const REASONS = {
     empty: 'Sin respuesta',
     letter: 'No empieza con la letra',
-    invalid: 'No parece una palabra',
+    invalid: 'No parece una palabra (si sí vale, voten 👍)',
     rejected: 'Anulada por votos 👎',
-    unknown: 'La app no la reconoce (si sí vale, voten 👍)',
+    unverified: 'No está en el diccionario de la app, pero se acepta (si no vale, voten 👎)',
     verified: 'Reconocida por la app',
     approved: 'Aprobada por votos 👍'
   };
@@ -207,7 +207,7 @@ window.BastaGame = function BastaGame(ctx) {
       card.append(ul, el('p', 'muted small center', b.round >= b.rounds ? 'Última ronda: ¡ahora el podio!' : 'La siguiente letra sale en unos segundos…'));
       body.append(card);
     } else {
-      const tip = el('p', 'basta-tip muted small', '✅ aceptada · ❌ no aceptada. Si la app rechazó una palabra que sí vale, toquen 👍; si aceptó una que no va en esa categoría, toquen 👎. Decide la mayoría de los demás.');
+      const tip = el('p', 'basta-tip muted small', '✅ aceptada · ❌ no aceptada. La app solo rechaza sola las que no empiezan con la letra o no parecen palabra (estas se rescatan con 👍). Si una aceptada no vale, toquen 👎. Decide la mayoría de los demás.');
       body.append(tip);
     }
 
@@ -225,7 +225,7 @@ window.BastaGame = function BastaGame(ctx) {
         if (cell.status !== 'ok') info.append(el('span', `basta-answer-why ${VALID.has(cell.status) ? 'good' : ''}`, REASONS[cell.status]));
         li.append(info);
         li.append(el('strong', `basta-points${cell.points ? '' : ' zero'}`, `+${cell.points}`));
-        const canVote = b.sub === 'review' && cell.id !== state.me && cell.text && !['letter', 'invalid', 'empty'].includes(cell.status);
+        const canVote = b.sub === 'review' && cell.id !== state.me && cell.text && !['letter', 'empty'].includes(cell.status);
         if (canVote) {
           const votes = el('div', 'vote-group');
           const mk = (type, icon, count) => {
@@ -237,8 +237,9 @@ window.BastaGame = function BastaGame(ctx) {
             btn.addEventListener('click', () => { vibrate(8); socket.emit('basta:vote', { id: cell.id, cat: ci, type }); });
             return btn;
           };
-          if (cell.status === 'unknown' || cell.status === 'approved') votes.append(mk('up', '👍', cell.ups));
-          if (cell.status !== 'unknown') votes.append(mk('down', '👎', cell.downs));
+          // ❌ "no parece una palabra" se rescata con 👍; las aceptadas se pueden anular con 👎.
+          if (cell.status === 'invalid' || (cell.status === 'approved' && cell.ups)) votes.append(mk('up', '👍', cell.ups));
+          if (cell.status !== 'invalid') votes.append(mk('down', '👎', cell.downs));
           li.append(votes);
         }
         ul.append(li);

@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.16.6 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.16.7 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -315,3 +315,14 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.16.6: el segundo dado se bloquea 🔒
 - **Cuándo:** con 2 dados, en cuanto la última ficha queda a 6 casillas o menos del cielo, aunque sea en medio de la misma tirada.
 - **Qué pasa:** el otro dado se bloquea solo. En el historial sale "🔒 … el otro dado se bloquea" y el dado se ve con un candado.
+
+## v1.16.7: banderas en cualquier celular y Basta sin bloqueos
+- **❓ Trivia: banderas para cualquier celular.**
+  - Las banderas ahora son imágenes PNG (antes SVG) y pesan la mitad.
+  - La bandera de la siguiente pregunta se descarga antes.
+  - Si una imagen no carga, la app reintenta y, si sigue fallando, muestra la bandera en emoji.
+  - El service worker ya no devuelve la portada cuando falla una imagen.
+- **✋ Basta: la app ya no bloquea palabras que no conoce.**
+  - Si una palabra no está en su diccionario, se acepta igual ✅ con una nota, y la mayoría puede anularla con 👎.
+  - Solo se rechazan solas las que no empiezan con la letra y las que no parecen palabra, y estas últimas se pueden rescatar con 👍.
+  - Todos los votos se pueden quitar.

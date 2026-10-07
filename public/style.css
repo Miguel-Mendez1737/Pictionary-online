@@ -1372,3 +1372,8 @@ body.is-landscape .tool span { display: none; }
 }
 .die.locked { opacity: .45; position: relative; }
 .die.locked::after { content: '🔒'; position: absolute; top: -8px; right: -8px; font-size: 1.1rem; }
+.basta-answer.unverified { background: var(--success-soft); }
+.basta-answer.unverified .basta-answer-why { color: var(--warn); }
+/* Bandera en emoji (si la imagen no carga) */
+.flag-emoji { display: grid; place-items: center; font-size: 6rem; line-height: 1; box-shadow: none !important; background: transparent; }
+.opt-flag.flag-emoji { font-size: 3rem; }

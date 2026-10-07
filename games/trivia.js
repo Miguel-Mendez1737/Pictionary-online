@@ -46,9 +46,9 @@ function buildQuestion(source) {
     const correct = options.findIndex((c) => c[0] === code);
     // La mitad de las veces se muestra la bandera; la otra mitad, el nombre con 4 banderas.
     if (source.reverse) {
-      return { cat: 'banderas', text: `¿Cuál es la bandera de ${name}?`, options: options.map((c) => ({ image: `flags/${c[0]}.svg` })), correct };
+      return { cat: 'banderas', text: `¿Cuál es la bandera de ${name}?`, options: options.map((c) => ({ image: `flags/${c[0]}.png` })), correct };
     }
-    return { cat: 'banderas', text: '¿De qué país es esta bandera?', image: `flags/${code}.svg`, options: options.map((c) => ({ text: c[1] })), correct };
+    return { cat: 'banderas', text: '¿De qué país es esta bandera?', image: `flags/${code}.png`, options: options.map((c) => ({ text: c[1] })), correct };
   }
   // Película con emojis
   const [emoji, title] = source.movie;
@@ -191,6 +191,9 @@ module.exports = function createTrivia(h) {
       // La respuesta correcta solo viaja al revelarla.
       base.question = { cat: q.cat, text: q.text, image: q.image || null, emoji: q.emoji || null, options: q.options };
     }
+    // Imágenes de la siguiente pregunta, para que el celular las descargue antes.
+    const next = t.questions[t.index + 1];
+    if (next) base.preload = [next.image, ...next.options.map((o) => o.image)].filter(Boolean);
     if (t.sub === 'reveal') {
       base.result = t.result;
       base.choices = Object.fromEntries([...t.answers.entries()].map(([id, a]) => [id, a.choice]));

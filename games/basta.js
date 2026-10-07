@@ -169,7 +169,7 @@ module.exports = function createBasta(h) {
   //   válidas:   verified (está en la lista ✅) · approved (la aprobó la mayoría 👍) · ok (categoría libre)
   //   inválidas: empty · letter (no empieza con la letra) · invalid (sin sentido) · rejected (👎 de la mayoría)
   //              unknown (la app no la reconoce; la mayoría puede aprobarla con 👍)
-  const VALID = new Set(['ok', 'verified', 'approved']);
+  const VALID = new Set(['ok', 'verified', 'approved', 'unverified']);
 
   function score(room) {
     const b = room.basta;
@@ -191,12 +191,13 @@ module.exports = function createBasta(h) {
         let status;
         if (!key) status = 'empty';
         else if (key.replace(/ /g, '').length < 2 || key[0] !== letter) status = 'letter';
-        else if (strict && WORDS.gibberish(text)) status = 'invalid';
+        else if (strict && WORDS.gibberish(text)) status = ups >= needed ? 'approved' : 'invalid';
         else if (downs >= needed) status = 'rejected';
         else {
           const verdict = WORDS.check(cat.id, text);
           if (verdict === 'known') status = 'verified';
-          else if (verdict === 'unknown' && strict) status = ups >= needed ? 'approved' : 'unknown';
+          // La app no la conoce: se acepta igual (nunca se bloquea); la mayoría puede anularla con 👎.
+          else if (verdict === 'unknown' && strict) status = 'unverified';
           else status = 'ok';
         }
         return { id, text, key: key.replace(/ /g, ''), status, ups, downs };

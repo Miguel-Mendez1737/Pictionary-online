@@ -9,6 +9,38 @@ window.TriviaGame = function TriviaGame(ctx) {
   const SHAPES = ['▲', '◆', '●', '■'];
   const ui = { key: null, deadline: 0, total: 1, clock: 0, lastBeep: null, buttons: [], waitEl: null };
 
+  // Banderas: se precargan y, si una imagen falla, se reintenta y luego se
+  // muestra la bandera en emoji (la letra del país en "letras regionales").
+  const preloaded = new Set();
+  function preload(list) {
+    (list || []).forEach((src) => {
+      if (preloaded.has(src)) return;
+      preloaded.add(src);
+      const img = new Image();
+      img.src = src;
+    });
+  }
+  const emojiFlag = (src) => {
+    const m = /flags\/([a-z]{2})\./.exec(src || '');
+    return m ? [...m[1].toUpperCase()].map((ch) => String.fromCodePoint(0x1f1e6 + ch.charCodeAt(0) - 65)).join('') : '🏳️';
+  };
+  function flagImg(src, className, alt) {
+    const img = el('img', className);
+    img.alt = alt;
+    img.draggable = false;
+    img.decoding = 'async';
+    let retried = false;
+    img.addEventListener('error', () => {
+      if (!retried) { retried = true; img.src = `${src}?r=${Date.now()}`; return; }
+      const span = el('span', `${className} flag-emoji`, emojiFlag(src));
+      span.setAttribute('role', 'img');
+      span.setAttribute('aria-label', alt);
+      img.replaceWith(span);
+    });
+    img.src = src;
+    return img;
+  }
+
   const catInfo = (id) => ((state.triviaInfo && state.triviaInfo.categories) || []).find((c) => c.id === id) || { emoji: '❓', label: 'Trivia' };
 
   socket.on('trivia:fastest', ({ id, name, avatar, ms }) => {
@@ -47,13 +79,7 @@ window.TriviaGame = function TriviaGame(ctx) {
     const card = el('section', 'card trivia-q');
     const cat = catInfo(q.cat);
     card.append(el('span', 'trivia-chip', `${cat.emoji} ${cat.label}`));
-    if (q.image) {
-      const img = el('img', 'trivia-flag');
-      img.src = q.image;
-      img.alt = 'Bandera';
-      img.draggable = false;
-      card.append(img);
-    }
+    if (q.image) card.append(flagImg(q.image, 'trivia-flag', 'Bandera'));
     if (q.emoji) card.append(el('div', 'trivia-emoji', q.emoji));
     card.append(el('h2', 'trivia-text', q.text));
     body.append(card);
@@ -64,11 +90,7 @@ window.TriviaGame = function TriviaGame(ctx) {
       b.type = 'button';
       b.append(el('span', 'opt-shape', SHAPES[i]));
       if (o.image) {
-        const img = el('img', 'opt-flag');
-        img.src = o.image;
-        img.alt = `Opción ${i + 1}`;
-        img.draggable = false;
-        b.append(img);
+        b.append(flagImg(o.image, 'opt-flag', `Opción ${i + 1}`));
       } else {
         b.append(el('span', 'opt-text', o.text));
       }
@@ -179,6 +201,7 @@ window.TriviaGame = function TriviaGame(ctx) {
     $('#trivia-cat').textContent = cat ? `${cat.emoji} ${cat.label}` : '❓ Trivia';
     renderPlayers(room);
     startClock(t);
+    preload(t.preload);
 
     if (t.sub === 'ready') { ui.key = 'ready'; return renderReady(t); }
     const key = `q${t.index}`;
