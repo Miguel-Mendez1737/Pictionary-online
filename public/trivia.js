@@ -29,9 +29,10 @@ window.TriviaGame = function TriviaGame(ctx) {
     img.alt = alt;
     img.draggable = false;
     img.decoding = 'async';
-    let retried = false;
+    let tries = 0;
     img.addEventListener('error', () => {
-      if (!retried) { retried = true; img.src = `${src}?r=${Date.now()}`; return; }
+      // 1) reintenta en PNG (por si el celular no muestra WebP) · 2) emoji de la bandera
+      if (tries++ === 0) { img.src = src.replace(/\.webp$/, '.png'); return; }
       const span = el('span', `${className} flag-emoji`, emojiFlag(src));
       span.setAttribute('role', 'img');
       span.setAttribute('aria-label', alt);

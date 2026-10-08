@@ -85,6 +85,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, file) => {
     // El service worker y la página siempre se revalidan para recibir actualizaciones.
     if (file.endsWith('sw.js') || file.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+    // Las banderas no cambian: el celular las guarda 30 días.
+    else if (file.includes(`${path.sep}flags${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
   }
 }));
 app.get('/health', (_req, res) => res.json({ ok: true, rooms: rooms.size }));
@@ -665,7 +667,7 @@ io.on('connection', (socket) => {
       games: GAMES,
       basta: { categories: basta.CATEGORIES, roundOptions: basta.ROUND_OPTIONS, timeOptions: basta.TIME_OPTIONS, minCats: basta.MIN_CATS, maxCats: basta.MAX_CATS },
       parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS, rules: parchis.RULES, pieceOptions: parchis.PIECE_OPTIONS },
-      trivia: { categories: trivia.CATEGORIES, countOptions: trivia.COUNT_OPTIONS, timeOptions: trivia.TIME_OPTIONS },
+      trivia: { categories: trivia.CATEGORIES, countOptions: trivia.COUNT_OPTIONS, timeOptions: trivia.TIME_OPTIONS, flags: trivia.FLAGS },
       cartas: { maxSeats: cartas.MAX_SEATS, rules: cartas.RULES }
     });
     if (room.phase === 'drawing') socket.emit('canvas:history', room.segments);

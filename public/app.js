@@ -944,9 +944,18 @@
   triviaCount.addEventListener('change', () => sendSettings({ triviaCount: Number(triviaCount.value) }));
   triviaTime.addEventListener('change', () => sendSettings({ triviaTime: Number(triviaTime.value) }));
 
+  // Si en el lobby se eligió Trivia con banderas, se descargan desde ya.
+  let flagsPreloaded = false;
+  function preloadFlags(info, cats) {
+    if (flagsPreloaded || !info.flags || !cats.includes('banderas')) return;
+    flagsPreloaded = true;
+    info.flags.forEach((src) => { const img = new Image(); img.src = src; });
+  }
+
   function renderTriviaSettings(room, host) {
     const info = state.triviaInfo;
     if (!info) return;
+    preloadFlags(info, room.settings.triviaCats || []);
     const chosen = room.settings.triviaCats || [];
     const box = $('#trivia-cats');
     box.innerHTML = '';

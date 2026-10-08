@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.18.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.18.1 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -342,3 +342,8 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Turnos:** si alguien no juega en 30 s (o se desconecta), la app juega por él.
 - **Puntos:** ganar +30.
 - **Nombre:** se llama "¡Última!" para no usar la marca registrada "UNO".
+
+## v1.18.1: banderas más rápidas
+- **Formato:** WebP de 240×180; las 88 banderas pesan 192 KB (antes 494 KB en PNG). Si un celular no muestra WebP, usa el PNG, y si tampoco carga, el emoji.
+- **Precarga:** al elegir Trivia con banderas en el lobby se descargan todas; durante "¡Prepárate!" se precargan las de la partida.
+- **Caché:** el servidor las marca para guardarse 30 días y el service worker las sirve desde el celular (caché aparte que no se borra con las actualizaciones).
