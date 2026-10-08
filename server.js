@@ -159,14 +159,16 @@ const gameHelpers = {
 const basta = require('./games/basta')(gameHelpers);
 const parchis = require('./games/parchis')(gameHelpers);
 const trivia = require('./games/trivia')(gameHelpers);
+const cartas = require('./games/cartas')(gameHelpers);
 const GAMES = [
   { id: 'garabato', label: 'Adivina el Garabato', short: 'Garabato', emoji: '🎨', colors: null },
   { id: 'basta', label: 'Basta', short: 'Basta', emoji: '✋', colors: ['#e8590c', '#d6336c'] },
   { id: 'parchis', label: 'Parchís', short: 'Parchís', emoji: '🎲', colors: ['#2f9e44', '#1971c2'] },
-  { id: 'trivia', label: 'Trivia', short: 'Trivia', emoji: '❓', colors: ['#7048e8', '#1c7ed6'] }
+  { id: 'trivia', label: 'Trivia', short: 'Trivia', emoji: '❓', colors: ['#7048e8', '#1c7ed6'] },
+  { id: 'cartas', label: '¡Última!', short: '¡Última!', emoji: '🃏', colors: ['#e03131', '#1971c2'] }
 ];
 const GAME_IDS = new Set(GAMES.map((g) => g.id));
-const IN_GAME = ['spinning', 'drawing', 'reveal', 'basta', 'parchis', 'trivia'];
+const IN_GAME = ['spinning', 'drawing', 'reveal', 'basta', 'parchis', 'trivia', 'cartas'];
 
 // ─── Salas ────────────────────────────────────────────────────────────────────
 // Cada jugador se identifica con una clave estable que genera su navegador
@@ -179,7 +181,7 @@ function createRoom(code) {
     order: [],                  // orden de turnos (orden de llegada)
     hostId: null,
     phase: 'lobby',             // lobby | spinning | drawing | reveal | gameOver
-    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults(), ...trivia.defaults(), ...parchis.defaults() },
+    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults(), ...trivia.defaults(), ...parchis.defaults(), ...cartas.defaults() },
     round: 0,
     drawnThisRound: new Set(),
     drawerId: null,
@@ -199,6 +201,7 @@ function createRoom(code) {
     basta: null,
     parchis: null,
     trivia: null,
+    cartas: null,
     resultTitle: null
   };
   rooms.set(code, room);
@@ -279,7 +282,8 @@ function snapshotFor(room, playerId) {
     resultTitle: room.phase === 'gameOver' ? room.resultTitle : null,
     basta: room.phase === 'basta' ? basta.view(room, playerId) : null,
     parchis: room.phase === 'parchis' ? parchis.view(room) : null,
-    trivia: room.phase === 'trivia' ? trivia.view(room, playerId) : null
+    trivia: room.phase === 'trivia' ? trivia.view(room, playerId) : null,
+    cartas: room.phase === 'cartas' ? cartas.view(room, playerId) : null
   };
 }
 
@@ -351,6 +355,7 @@ function startGame(room) {
   if (room.settings.game === 'basta') return basta.start(room);
   if (room.settings.game === 'parchis') return parchis.start(room);
   if (room.settings.game === 'trivia') return trivia.start(room);
+  if (room.settings.game === 'cartas') return cartas.start(room);
   room.round = 1;
   room.drawnThisRound.clear();
   room.usedWords.clear();
@@ -493,6 +498,7 @@ function backToLobby(room, message) {
   room.basta = null;
   room.parchis = null;
   room.trivia = null;
+  room.cartas = null;
   room.resultTitle = null;
   for (const p of room.players.values()) p.guessed = false;
   io.to(room.code).emit('canvas:clear');
@@ -557,6 +563,7 @@ function removePlayer(room, playerId) {
   room.order = room.order.filter((id) => id !== playerId);
   room.drawnThisRound.delete(playerId);
   if (room.phase === 'parchis') parchis.onLeave(room, playerId);
+  if (room.phase === 'cartas') cartas.onLeave(room, playerId);
 
   if (room.players.size === 0) {
     clearTimers(room);
@@ -658,7 +665,8 @@ io.on('connection', (socket) => {
       games: GAMES,
       basta: { categories: basta.CATEGORIES, roundOptions: basta.ROUND_OPTIONS, timeOptions: basta.TIME_OPTIONS, minCats: basta.MIN_CATS, maxCats: basta.MAX_CATS },
       parchis: { maxSeats: parchis.MAX_SEATS, colors: parchis.COLORS, rules: parchis.RULES, pieceOptions: parchis.PIECE_OPTIONS },
-      trivia: { categories: trivia.CATEGORIES, countOptions: trivia.COUNT_OPTIONS, timeOptions: trivia.TIME_OPTIONS }
+      trivia: { categories: trivia.CATEGORIES, countOptions: trivia.COUNT_OPTIONS, timeOptions: trivia.TIME_OPTIONS },
+      cartas: { maxSeats: cartas.MAX_SEATS, rules: cartas.RULES }
     });
     if (room.phase === 'drawing') socket.emit('canvas:history', room.segments);
     syncRoom(room);
@@ -684,6 +692,7 @@ io.on('connection', (socket) => {
     basta.applySettings(room, s);
     trivia.applySettings(room, s);
     parchis.applySettings(room, s);
+    cartas.applySettings(room, s);
     if (typeof s.theme === 'string' && THEMES[s.theme]) room.settings.theme = s.theme;
     if (s && ROUND_OPTIONS.includes(Number(s.rounds))) room.settings.rounds = Number(s.rounds);
     if (s && TIME_OPTIONS.includes(Number(s.drawTime))) room.settings.drawTime = Number(s.drawTime);
@@ -749,6 +758,17 @@ io.on('connection', (socket) => {
     const { room, player } = getCtx();
     if (player && room.phase === 'basta') basta.onReady(room, player);
   });
+
+  // ─── 🃏 ¡Última! ───
+  const cartasAction = (fn) => (data) => {
+    const { room, player } = getCtx();
+    if (player && room.phase === 'cartas') fn(room, player, data);
+  };
+  socket.on('cartas:play', cartasAction(cartas.onPlay));
+  socket.on('cartas:draw', cartasAction(cartas.onDraw));
+  socket.on('cartas:pass', cartasAction(cartas.onPass));
+  socket.on('cartas:call', cartasAction(cartas.onCall));
+  socket.on('cartas:catch', cartasAction(cartas.onCatch));
 
   // ─── ❓ Trivia ───
   socket.on('trivia:answer', (choice) => {
@@ -865,6 +885,7 @@ io.on('connection', (socket) => {
     }
 
     if (room.phase === 'parchis') parchis.onDisconnect(room, player.id);
+    if (room.phase === 'cartas') cartas.onDisconnect(room, player.id);
     if (connectedPlayers(room).length === 0) return; // nadie a quien avisar
     systemMsg(room, `📶 ${player.name} perdió la conexión… tiene ${SCORE_RESET_MS / 1000} s para volver sin perder sus puntos.`, 'leave');
     syncRoom(room);

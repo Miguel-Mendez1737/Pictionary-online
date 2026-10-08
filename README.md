@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.17.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.18.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -333,3 +333,12 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Si la app rechaza una que sí vale:** sale ❌ "No parece un animal" y basta un 👍 de otro jugador para aceptarla. Todo tiene reversa: si quita el 👍, vuelve a ❌.
 - **Si acepta una que no vale:** la mayoría la anula con 👎.
 - **Categorías libres:** Nombre, Apellido, Marca, Película y Artista solo revisan la letra; Cosa revisa que sea una palabra del español.
+
+## v1.18.0: nuevo juego 🃏 ¡Última! (`games/cartas.js`, `public/cartas.js`)
+- **Qué es:** juego de cartas de colores, estilo clásico, para 2 a 10 jugadores con baraja de 108 cartas: números del 0 al 9, ⊘ Salta, ⇄ Reversa, +2, Comodín y Comodín +4. Cada quien ve solo sus cartas.
+- **Cómo se juega:** se tira una carta del mismo color o número, o un comodín (y se elige el color). Si no puedes, robas; la carta robada se puede tirar si sirve.
+- **📣 ¡Última!:** al quedarte con una carta debes tocarlo. Si se te olvida, cualquiera puede tocar 🚨 ¡Te atrapé! antes de que juegue el siguiente: robas 2 y quien atrapa gana +5.
+- **Menú de reglas:** acumular +2 y +4, robar hasta poder jugar, ¡Última! obligatorio y +4 libre.
+- **Turnos:** si alguien no juega en 30 s (o se desconecta), la app juega por él.
+- **Puntos:** ganar +30.
+- **Nombre:** se llama "¡Última!" para no usar la marca registrada "UNO".

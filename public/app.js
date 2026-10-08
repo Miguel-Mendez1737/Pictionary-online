@@ -17,6 +17,7 @@
     bastaInfo: null,    // categorías y opciones de Basta
     parchisInfo: null,  // colores y asientos del Parchís
     triviaInfo: null,   // temas y opciones de la Trivia
+    cartasInfo: null,   // reglas de ¡Última!
     avatar: null,       // avatar personalizado (ver avatar.js)
     editorTab: 'base',
     account: null,      // perfil de la cuenta si inició sesión
@@ -759,6 +760,7 @@
       state.bastaInfo = res.basta || null;
       state.parchisInfo = res.parchis || null;
       state.triviaInfo = res.trivia || null;
+      state.cartasInfo = res.cartas || null;
       state.joinData.room = res.room;
       delete state.joinData.createPrivate; // al reconectar vuelve a ESTA sala
       saveSession();
@@ -1028,6 +1030,39 @@
     bastaStrict.disabled = !host;
   }
 
+  // ─── Ajustes de ¡Última! ───
+  const cartasPlayers = $('#cartas-players');
+  cartasPlayers.addEventListener('change', () => sendSettings({ cartasPlayers: Number(cartasPlayers.value) }));
+  function renderCartasSettings(room, host) {
+    const info = state.cartasInfo;
+    if (!info) return;
+    if (!cartasPlayers.options.length) {
+      cartasPlayers.innerHTML = `<option value="0">Todos los de la sala (hasta ${info.maxSeats})</option>`
+        + Array.from({ length: info.maxSeats - 1 }, (_, i) => `<option value="${i + 2}">${i + 2} jugadores</option>`).join('');
+    }
+    cartasPlayers.value = String(room.settings.cartasPlayers || 0);
+    cartasPlayers.disabled = !host;
+    const rules = room.settings.cartasRules || [];
+    const box = $('#cartas-rules');
+    box.innerHTML = '';
+    info.rules.forEach((r) => {
+      const label = el('label', 'rule-check');
+      const input = el('input');
+      input.type = 'checkbox';
+      input.checked = rules.includes(r.id);
+      input.disabled = !host;
+      input.addEventListener('change', () => {
+        vibrate(8);
+        sendSettings({ cartasRules: input.checked ? [...rules, r.id] : rules.filter((x) => x !== r.id) });
+      });
+      const text = el('span', 'rule-text');
+      text.append(el('strong', null, r.label), el('small', null, r.desc));
+      label.append(input, text);
+      box.append(label);
+    });
+    $('#cartas-rules-count').textContent = `${rules.length} activas`;
+  }
+
   // ─── Ajustes de Parchís / Parqués ───
   const parchisPlayers = $('#parchis-players');
   const parchisPieces = $('#parchis-pieces');
@@ -1185,6 +1220,8 @@
     $('#basta-settings').hidden = game !== 'basta';
     $('#parchis-settings').hidden = game !== 'parchis';
     $('#trivia-settings').hidden = game !== 'trivia';
+    $('#cartas-settings').hidden = game !== 'cartas';
+    if (game === 'cartas') renderCartasSettings(room, host);
     if (game === 'trivia') renderTriviaSettings(room, host);
     if (game === 'basta') renderBastaSettings(room, host);
     if (game === 'parchis') renderParchisSettings(room, host);
@@ -1641,6 +1678,7 @@
   const bastaUI = window.BastaGame(gameCtx);
   const parchisUI = window.ParchisGame(gameCtx);
   const triviaUI = window.TriviaGame(gameCtx);
+  const cartasUI = window.CartasGame(gameCtx);
 
   function renderGame(room) {
     const theme = state.themes.find((t) => t.id === room.settings.theme);
@@ -1670,7 +1708,7 @@
     if (!room) return;
     // ¿Qué juego se muestra? En el podio final, el que se estaba jugando.
     const game = room.phase === 'lobby' || room.phase === 'gameOver' ? (room.settings.game || 'garabato')
-      : ['basta', 'parchis', 'trivia'].includes(room.phase) ? room.phase : 'garabato';
+      : ['basta', 'parchis', 'trivia', 'cartas'].includes(room.phase) ? room.phase : 'garabato';
     const theme = state.themes.find((t) => t.id === room.settings.theme);
     const g = gameInfo(game);
     applyThemeColors(game === 'garabato' ? theme && theme.colors : g && g.colors);
@@ -1686,6 +1724,9 @@
     } else if (game === 'trivia') {
       showScreen('screen-trivia');
       triviaUI.render(room);
+    } else if (game === 'cartas') {
+      showScreen('screen-cartas');
+      cartasUI.render(room);
     } else {
       showScreen('screen-game');
       renderGame(room);

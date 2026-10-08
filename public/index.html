@@ -243,6 +243,20 @@
             </div>
           </div>
 
+          <!-- 🃏 ¡Última! -->
+          <div class="card" id="cartas-settings" hidden>
+            <h3>🃏 ¡Última!</h3>
+            <p class="rule-info small">De <strong>2 a 10</strong> personas, 7 cartas cada una. En tu turno tira una carta del <strong>mismo color o número</strong>, o un comodín (y eliges el color). Si no puedes, roba. Cartas especiales: <strong>⊘ Salta</strong>, <strong>⇄ Reversa</strong>, <strong>+2</strong>, <strong>Comodín</strong> y <strong>Comodín +4</strong>. Cuando te quede una carta toca <strong>📣 ¡Última!</strong>: si se te olvida, los demás pueden tocar <strong>🚨 ¡Te atrapé!</strong> y robas 2. Gana quien se quede sin cartas (+30 puntos).</p>
+            <label class="field">
+              <span class="field-label">Jugadores</span>
+              <select id="cartas-players"></select>
+            </label>
+            <details class="rules-menu" id="cartas-rules-menu">
+              <summary>📋 Reglas de la partida <span class="pill" id="cartas-rules-count"></span></summary>
+              <div class="rules-list" id="cartas-rules"></div>
+            </details>
+          </div>
+
           <!-- 🎲 Parchís / Parqués -->
           <div class="card" id="parchis-settings" hidden>
             <h3>🎲 Parchís / Parqués</h3>
@@ -321,6 +335,54 @@
         <div class="mg-body" id="trivia-body"></div>
       </div>
       <div class="overlay hidden" id="trivia-overlay"></div>
+    </section>
+
+    <!-- ═══════════════ 7. ¡ÚLTIMA! (cartas) ═══════════════ -->
+    <section id="screen-cartas" class="screen" aria-label="¡Última!">
+      <div class="mini-game" id="cartas">
+        <header class="mg-head card">
+          <div class="mg-info">
+            <strong>🃏 ¡Última!</strong>
+            <span class="muted small" id="cartas-sub"></span>
+          </div>
+          <div class="mg-actions">
+            <button class="btn btn-ghost voice-btn sound-toggle" type="button"></button>
+            <div class="voice-controls"></div>
+            <button class="btn btn-ghost voice-btn" data-action="leave" type="button" aria-label="Salir" title="Salir">🚪</button>
+          </div>
+        </header>
+        <ul class="cartas-rivals" id="cartas-rivals"></ul>
+        <div class="cartas-table card" id="cartas-table">
+          <button class="ucard back" id="cartas-deck" type="button" aria-label="Robar una carta"><span class="deck-count" id="cartas-deck-count"></span></button>
+          <div class="cartas-top" id="cartas-top"></div>
+          <div class="cartas-info">
+            <span class="cartas-dir" id="cartas-dir">↻</span>
+            <span class="cartas-color" id="cartas-color"></span>
+          </div>
+        </div>
+        <div class="cartas-status card" id="cartas-status"></div>
+        <div class="cartas-actions">
+          <button class="btn btn-ghost" id="cartas-draw" type="button">🂠 Robar</button>
+          <button class="btn btn-ghost" id="cartas-pass" type="button" hidden>👉 Pasar</button>
+          <button class="btn call-btn" id="cartas-call" type="button" hidden>📣 ¡Última!</button>
+          <button class="btn catch-btn" id="cartas-catch" type="button" hidden>🚨 ¡Te atrapé!</button>
+        </div>
+        <div class="cartas-hand" id="cartas-hand" aria-label="Tus cartas"></div>
+        <ul class="parchis-log" id="cartas-log" aria-live="polite"></ul>
+      </div>
+      <div class="overlay hidden" id="cartas-picker">
+        <div class="overlay-card">
+          <h2>🌈 Elige el color</h2>
+          <div class="color-pick">
+            <button class="ucard-color rojo" data-color="rojo" type="button">Rojo</button>
+            <button class="ucard-color amarillo" data-color="amarillo" type="button">Amarillo</button>
+            <button class="ucard-color verde" data-color="verde" type="button">Verde</button>
+            <button class="ucard-color azul" data-color="azul" type="button">Azul</button>
+          </div>
+          <button class="btn btn-ghost" id="cartas-picker-cancel" type="button">Cancelar</button>
+        </div>
+      </div>
+      <div class="overlay hidden" id="cartas-overlay"></div>
     </section>
 
     <!-- ═══════════════ 5. PARCHÍS ═══════════════ -->
@@ -503,6 +565,7 @@
   <script src="basta.js"></script>
   <script src="parchis.js"></script>
   <script src="trivia.js"></script>
+  <script src="cartas.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
