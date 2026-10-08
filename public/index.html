@@ -243,10 +243,10 @@
             </div>
           </div>
 
-          <!-- 🃏 ¡Última! -->
+          <!-- 🃏 ONE -->
           <div class="card" id="cartas-settings" hidden>
-            <h3>🃏 ¡Última!</h3>
-            <p class="rule-info small">De <strong>2 a 10</strong> personas, 7 cartas cada una. En tu turno tira una carta del <strong>mismo color o número</strong>, o un comodín (y eliges el color). Si no puedes, roba. Cartas especiales: <strong>⊘ Salta</strong>, <strong>⇄ Reversa</strong>, <strong>+2</strong>, <strong>Comodín</strong> y <strong>Comodín +4</strong>. Cuando te quede una carta toca <strong>📣 ¡Última!</strong>: si se te olvida, los demás pueden tocar <strong>🚨 ¡Te atrapé!</strong> y robas 2. Gana quien se quede sin cartas (+30 puntos).</p>
+            <h3>🃏 ONE</h3>
+            <p class="rule-info small">De <strong>2 a 10</strong> personas, 7 cartas cada una. En tu turno tira una carta del <strong>mismo color o número</strong>, o un comodín (y eliges el color). Si no puedes, roba. Cartas especiales: <strong>⊘ Salta</strong>, <strong>⇄ Reversa</strong>, <strong>+2</strong>, <strong>Comodín</strong> y <strong>Comodín +4</strong>. Cuando te quede una carta toca <strong>📣 ¡ONE!</strong>: si se te olvida, los demás pueden tocar <strong>🚨 ¡Te atrapé!</strong> y robas 2. Gana quien se quede sin cartas (+30 puntos).</p>
             <label class="field">
               <span class="field-label">Jugadores</span>
               <select id="cartas-players"></select>
@@ -264,7 +264,7 @@
             <div class="settings-row three">
               <label class="field span-all">
                 <span class="field-label">Jugadores</span>
-                <select id="parchis-players"></select>
+                <select id="parchis-count"></select>
               </label>
               <label class="field">
                 <span class="field-label">Fichas</span>
@@ -282,6 +282,10 @@
               <summary>📋 Reglas de la partida <span class="pill" id="parchis-rules-count"></span></summary>
               <div class="rules-list" id="parchis-rules"></div>
             </details>
+            <div class="field color-field">
+              <span class="field-label">🎨 Elige tu color <small>(cada jugador elige el suyo)</small></span>
+              <div class="color-choices" id="parchis-colors"></div>
+            </div>
             <ul class="seat-list" id="parchis-seats"></ul>
           </div>
           </div>
@@ -338,11 +342,11 @@
     </section>
 
     <!-- ═══════════════ 7. ¡ÚLTIMA! (cartas) ═══════════════ -->
-    <section id="screen-cartas" class="screen" aria-label="¡Última!">
+    <section id="screen-cartas" class="screen" aria-label="¡ONE!">
       <div class="mini-game" id="cartas">
         <header class="mg-head card">
           <div class="mg-info">
-            <strong>🃏 ¡Última!</strong>
+            <strong>🃏 ONE</strong>
             <span class="muted small" id="cartas-sub"></span>
           </div>
           <div class="mg-actions">
@@ -364,7 +368,7 @@
         <div class="cartas-actions">
           <button class="btn btn-ghost" id="cartas-draw" type="button">🂠 Robar</button>
           <button class="btn btn-ghost" id="cartas-pass" type="button" hidden>👉 Pasar</button>
-          <button class="btn call-btn" id="cartas-call" type="button" hidden>📣 ¡Última!</button>
+          <button class="btn call-btn" id="cartas-call" type="button" hidden>📣 ¡ONE!</button>
           <button class="btn catch-btn" id="cartas-catch" type="button" hidden>🚨 ¡Te atrapé!</button>
         </div>
         <div class="cartas-hand" id="cartas-hand" aria-label="Tus cartas"></div>

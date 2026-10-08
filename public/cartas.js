@@ -1,6 +1,6 @@
-// ─── 🃏 ¡Última!: pantalla del juego de cartas ───────────────────────────────
+// ─── 🃏 ONE: pantalla del juego de cartas ───────────────────────────────
 // Cada quien ve solo sus cartas. Las que se pueden tirar se resaltan; al tocar
-// un comodín se elige el color. "¡Última!" y "¡Te atrapé!" los revisa el servidor.
+// un comodín se elige el color. "¡ONE!" y "¡Te atrapé!" los revisa el servidor.
 window.CartasGame = function CartasGame(ctx) {
   'use strict';
   const { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, gameOverCard } = ctx;

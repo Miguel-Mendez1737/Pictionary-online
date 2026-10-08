@@ -8,7 +8,8 @@ window.ParchisGame = function ParchisGame(ctx) {
   const { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, gameOverCard } = ctx;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const ARM_COLORS = ['#f5b700', '#2f6fdf', '#e03131', '#2f9e44', '#f76707', '#7048e8', '#e64980', '#0c8599', '#8d5524', '#495057'];
+  const DEFAULT_COLORS = ['#f5b700', '#2f6fdf', '#e03131', '#2f9e44', '#f76707', '#7048e8', '#e64980', '#0c8599', '#8d5524', '#495057'];
+  let ARM_COLORS = DEFAULT_COLORS; // color de cada brazo (el que eligió quien juega ahí)
   const ARM = 17;
   const board = $('#parchis-board');
   const diceBox = $('#parchis-die');
@@ -391,7 +392,12 @@ window.ParchisGame = function ParchisGame(ctx) {
     overlay.classList.add('hidden');
     const p = room.parchis;
     if (!p) return;
-    if (ui.builtFor !== (p.arms || 4)) buildBoard(p.arms || 4);
+    const boardKey = `${p.arms || 4}|${(p.armColors || []).join()}`;
+    if (ui.builtKey !== boardKey) {
+      ARM_COLORS = p.armColors && p.armColors.length ? p.armColors : DEFAULT_COLORS;
+      buildBoard(p.arms || 4);
+      ui.builtKey = boardKey;
+    }
 
     const playerOf = (id) => room.players.find((x) => x.id === id) || null;
     const cur = p.seats[p.turn];

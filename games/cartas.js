@@ -1,11 +1,11 @@
 'use strict';
 
-// ─── 🃏 ¡Última! (juego de cartas de colores, estilo clásico) ────────────────
+// ─── 🃏 ONE (juego de cartas de colores, estilo clásico) ────────────────
 // Baraja de 108 cartas: 4 colores con un 0, dos de cada número del 1 al 9,
 // dos "Salta", dos "Reversa" y dos "+2"; además 4 Comodines y 4 Comodines +4.
 // Cada jugador recibe 7 cartas. En tu turno juegas una carta del mismo color o
 // del mismo número/símbolo, o un comodín. Si no puedes (o no quieres), robas.
-// Al quedarte con una carta debes tocar "¡Última!"; si se te olvida, cualquiera
+// Al quedarte con una carta debes tocar "¡ONE!"; si se te olvida, cualquiera
 // puede tocar "¡Te atrapé!" antes de que juegue el siguiente y robas 2.
 // Gana quien se quede sin cartas. Puntos: ganar +30, atrapar a alguien +5.
 
@@ -17,7 +17,7 @@ const HAND = 7;
 const RULES = [
   { id: 'stack', label: 'Acumular +2 y +4', desc: 'Si te tiran un +2 (o +4) y tienes otro, lo puedes poner encima y el siguiente roba la suma.', def: false },
   { id: 'drawUntil', label: 'Robar hasta poder jugar', desc: 'Si no puedes jugar, robas cartas hasta que salga una que sí puedas tirar.', def: false },
-  { id: 'catchCall', label: '¡Última! obligatorio', desc: 'Al quedarte con una carta debes tocar "¡Última!". Si no, los demás pueden atraparte y robas 2.', def: true },
+  { id: 'catchCall', label: '¡ONE! obligatorio', desc: 'Al quedarte con una carta debes tocar "¡ONE!". Si no, los demás pueden atraparte y robas 2.', def: true },
   { id: 'wild4Free', label: '+4 libre', desc: 'El +4 se puede tirar aunque tengas cartas del color en juego (si se apaga, solo cuando no tienes ese color).', def: true }
 ];
 const RULE_IDS = new Set(RULES.map((r) => r.id));
@@ -111,7 +111,7 @@ module.exports = function createCartas(h) {
       pendingDraw: 0,     // cartas acumuladas por +2 / +4
       drewThisTurn: false,
       drawnCard: null,    // carta recién robada que se puede tirar
-      catchable: null,    // { seatIdx } alguien quedó con 1 carta sin decir ¡Última!
+      catchable: null,    // { seatIdx } alguien quedó con 1 carta sin decir ONE
       deadline: 0,
       winner: null,
       log: [],
@@ -126,7 +126,7 @@ module.exports = function createCartas(h) {
     c.discard.push(first);
     c.color = first.color;
     const watchers = room.order.length - ids.length;
-    systemMsg(room, `🃏 ¡Comienza ¡Última!! ${ids.length} jugadores, 7 cartas cada uno.${watchers > 0 ? ' Los demás miran la partida.' : ''}`, 'success');
+    systemMsg(room, `🃏 ¡Comienza ONE! ${ids.length} jugadores, 7 cartas cada uno.${watchers > 0 ? ' Los demás miran la partida.' : ''}`, 'success');
     beginTurn(room);
   }
 
@@ -170,7 +170,7 @@ module.exports = function createCartas(h) {
     return i;
   }
 
-  // La siguiente persona actúa: ya no se puede atrapar a quien olvidó decir ¡Última!
+  // La siguiente persona actúa: ya no se puede atrapar a quien olvidó decir ONE
   function closeCatch(room) { C(room).catchable = null; }
 
   function play(room, seat, cardId, chosenColor) {
@@ -190,7 +190,7 @@ module.exports = function createCartas(h) {
     c.lastPlay = { seat: c.turn, card: { ...card, color } };
     const name = nameOf(room, seat);
 
-    // Se quedó con una carta: debe decir ¡Última!
+    // Se quedó con una carta: debe decir ONE
     if (seat.hand.length === 1 && has(room, 'catchCall') && !seat.called) c.catchable = { seatIdx: c.turn };
     if (seat.hand.length !== 1) seat.called = false;
 
@@ -273,7 +273,7 @@ module.exports = function createCartas(h) {
     const c = C(room);
     if (!c || room.phase !== 'cartas' || c.winner) return;
     const seat = current(room);
-    if (seat.hand.length === 2 && has(room, 'catchCall')) seat.called = true; // la app dice ¡Última! por quien se fue
+    if (seat.hand.length === 2 && has(room, 'catchCall')) seat.called = true; // la app dice ONE por quien se fue
     const options = c.drewThisTurn ? (c.drawnCard ? [c.drawnCard] : []) : seat.hand.filter((x) => canPlay(room, seat, x));
     if (options.length) {
       const pick = options.find((x) => x.color !== 'negro') || options[0];
@@ -295,11 +295,11 @@ module.exports = function createCartas(h) {
     if (player) player.score += POINTS_WIN;
     const name = nameOf(room, seat);
     log(room, `🏆 ¡${name} se quedó sin cartas y ganó!`);
-    systemMsg(room, `🏆 ¡${name} ganó ¡Última!! (+${POINTS_WIN} puntos)`, 'success');
+    systemMsg(room, `🏆 ¡${name} ganó ONE! (+${POINTS_WIN} puntos)`, 'success');
     io.to(room.code).emit('cartas:event', { kind: 'win', text: `¡${name} ganó!`, id: seat.id });
     syncRoom(room);
     schedule(room, END_MS, () => {
-      room.resultTitle = `🃏 ¡${name} ganó ¡Última!!`;
+      room.resultTitle = `🃏 ¡${name} ganó ONE!`;
       endGame(room);
     });
     return true;
@@ -347,7 +347,7 @@ module.exports = function createCartas(h) {
   function onDraw(room, player) { if (isTurn(room, player)) drawAction(room, current(room)); }
   function onPass(room, player) { if (isTurn(room, player)) pass(room, current(room)); }
 
-  // "¡Última!": se puede decir con 1 carta, o con 2 en tu turno antes de tirar.
+  // "¡ONE!": se puede decir con 1 carta, o con 2 en tu turno antes de tirar.
   function onCall(room, player) {
     const c = C(room);
     const seat = mySeat(room, player);
@@ -355,12 +355,12 @@ module.exports = function createCartas(h) {
     if (seat.hand.length > 2 || (seat.hand.length === 2 && current(room) !== seat)) return;
     seat.called = true;
     if (c.catchable && c.seats[c.catchable.seatIdx] === seat) c.catchable = null;
-    log(room, `📣 ¡${player.name} dijo "¡Última!"!`);
-    io.to(room.code).emit('cartas:event', { kind: 'call', text: `¡${player.name}: ¡Última!!`, id: player.id });
+    log(room, `📣 ¡${player.name} dijo "¡ONE!"!`);
+    io.to(room.code).emit('cartas:event', { kind: 'call', text: `¡${player.name}: ONE!`, id: player.id });
     syncRoom(room);
   }
 
-  // "¡Te atrapé!": la app revisa si de verdad alguien olvidó decir ¡Última!
+  // "¡Te atrapé!": la app revisa si de verdad alguien olvidó decir ONE
   function onCatch(room, player) {
     const c = C(room);
     if (!c || c.winner) return;
@@ -369,15 +369,15 @@ module.exports = function createCartas(h) {
     const offender = k && c.seats[k.seatIdx];
     if (!offender || offender.called || offender.hand.length !== 1) {
       c.catchable = null;
-      return reply(false, 'Nadie olvidó decir "¡Última!".');
+      return reply(false, 'Nadie olvidó decir "¡ONE!".');
     }
-    if (offender.id === player.id) return reply(false, '¡Mejor toca "¡Última!"! 😉');
+    if (offender.id === player.id) return reply(false, '¡Mejor toca "¡ONE!"! 😉');
     draw(room, offender, 2);
     c.catchable = null;
     const catcher = room.players.get(player.id);
     if (catcher) catcher.score += POINTS_CATCH;
     const name = nameOf(room, offender);
-    log(room, `🚨 ¡${player.name} atrapó a ${name} sin decir "¡Última!"! Roba 2.`);
+    log(room, `🚨 ¡${player.name} atrapó a ${name} sin decir "¡ONE!"! Roba 2.`);
     io.to(room.code).emit('cartas:event', { kind: 'catch', text: `¡${player.name} atrapó a ${name}!` });
     syncRoom(room);
   }

@@ -17,7 +17,7 @@
     bastaInfo: null,    // categorías y opciones de Basta
     parchisInfo: null,  // colores y asientos del Parchís
     triviaInfo: null,   // temas y opciones de la Trivia
-    cartasInfo: null,   // reglas de ¡Última!
+    cartasInfo: null,   // reglas de ONE
     avatar: null,       // avatar personalizado (ver avatar.js)
     editorTab: 'base',
     account: null,      // perfil de la cuenta si inició sesión
@@ -1039,7 +1039,7 @@
     bastaStrict.disabled = !host;
   }
 
-  // ─── Ajustes de ¡Última! ───
+  // ─── Ajustes de ONE ───
   const cartasPlayers = $('#cartas-players');
   cartasPlayers.addEventListener('change', () => sendSettings({ cartasPlayers: Number(cartasPlayers.value) }));
   function renderCartasSettings(room, host) {
@@ -1073,7 +1073,7 @@
   }
 
   // ─── Ajustes de Parchís / Parqués ───
-  const parchisPlayers = $('#parchis-players');
+  const parchisPlayers = $('#parchis-count');
   const parchisPieces = $('#parchis-pieces');
   const parchisDice = $('#parchis-dice');
   parchisPlayers.addEventListener('change', () => sendSettings({ parchisPlayers: Number(parchisPlayers.value) }));
@@ -1116,14 +1116,50 @@
     });
     $('#parchis-rules-count').textContent = `${rules.length} activas`;
 
-    // Quiénes juegan (y con qué color)
+    // 🎨 Cada jugador (también el anfitrión) elige su color
+    const chosen = room.parchisColors || {};
+    const connected = room.players.filter((p) => p.connected);
+    const takenBy = {};
+    Object.entries(chosen).forEach(([id, k]) => {
+      const pl = connected.find((x) => x.id === id);
+      if (pl) takenBy[k] = pl;
+    });
+    const colorsBox = $('#parchis-colors');
+    colorsBox.innerHTML = '';
+    info.colors.forEach((c, k) => {
+      const owner = takenBy[k];
+      const mine = owner && owner.id === state.me;
+      const b = el('button', `color-choice${mine ? ' mine' : ''}${owner && !mine ? ' taken' : ''}`);
+      b.type = 'button';
+      b.style.setProperty('--seat', c.hex);
+      b.title = owner ? `${c.name}: ${mine ? 'tu color' : owner.name}` : c.name;
+      b.setAttribute('aria-label', b.title);
+      b.append(el('span', 'color-dot'));
+      b.append(owner ? avatarEl(owner.avatar, 'xs') : el('span', 'color-name', c.name));
+      b.disabled = Boolean(owner && !mine);
+      b.addEventListener('click', () => { vibrate(10); socket.emit('parchis:color', mine ? null : k); });
+      colorsBox.append(b);
+    });
+
+    // Quiénes juegan (y con qué color): igual que lo asigna el servidor
     const seatsBox = $('#parchis-seats');
     seatsBox.innerHTML = '';
-    const connected = room.players.filter((p) => p.connected);
     const playing = connected.slice(0, Math.min(st.parchisPlayers || info.maxSeats, info.maxSeats));
     const arms = playing.length <= 4 ? ({ 1: [0], 2: [0, 2], 3: [0, 1, 2], 4: [0, 1, 2, 3] }[playing.length] || []) : playing.map((_p, i) => i);
+    const used = new Set();
+    const colorOf = playing.map((p) => {
+      const k = chosen[p.id];
+      if (Number.isInteger(k) && !used.has(k)) { used.add(k); return k; }
+      return null;
+    });
+    colorOf.forEach((k, i) => {
+      if (k !== null) return;
+      const free = [arms[i], ...info.colors.keys()].find((x) => x < info.colors.length && !used.has(x));
+      colorOf[i] = free;
+      used.add(free);
+    });
     playing.forEach((p, i) => {
-      const color = info.colors[arms[i]];
+      const color = info.colors[colorOf[i]];
       const li = el('li', 'seat');
       li.style.setProperty('--seat', color.hex);
       li.append(el('span', 'seat-dot'), avatarEl(p.avatar, 'xs'), el('span', 'seat-name', p.name), el('span', 'muted small', color.name));

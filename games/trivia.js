@@ -57,12 +57,30 @@ function buildQuestion(source) {
   return { cat: 'emojis', text: '¿Qué película es?', emoji, options: options.map((t) => ({ text: t })), correct: options.indexOf(title) };
 }
 
+// Clave de cada pregunta para recordar cuáles ya salieron.
+const keyOf = (src) => (src.kind === 'text' ? `t:${src.q[0]}` : src.kind === 'flag' ? `f:${src.country[0]}:${src.reverse ? 'r' : 'n'}` : `e:${src.movie[1]}`);
+
 // Elige las preguntas de la partida repartidas entre las categorías elegidas.
-function makeQuiz(cats, count) {
+// Primero salen las que esta sala todavía no ha visto; cuando un tema se acaba,
+// se vuelve a empezar con ese tema.
+function makeQuiz(cats, count, seen = new Set()) {
   const pools = cats.map((cat) => {
-    if (cat === 'banderas') return shuffle(COUNTRIES).map((country, i) => ({ kind: 'flag', country, reverse: i % 2 === 1 }));
-    if (cat === 'emojis') return shuffle(EMOJI_MOVIES).map((movie) => ({ kind: 'emoji', movie }));
-    return shuffle(QUESTIONS[cat] || []).map((q) => ({ kind: 'text', cat, q }));
+    let all;
+    if (cat === 'banderas') all = COUNTRIES.flatMap((country) => [{ kind: 'flag', country, reverse: false }, { kind: 'flag', country, reverse: true }]);
+    else if (cat === 'emojis') all = EMOJI_MOVIES.map((movie) => ({ kind: 'emoji', movie }));
+    else all = (QUESTIONS[cat] || []).map((q) => ({ kind: 'text', cat, q }));
+    let fresh = all.filter((x) => !seen.has(keyOf(x)));
+    if (fresh.length < Math.ceil(count / cats.length)) {
+      all.forEach((x) => seen.delete(keyOf(x))); // tema casi agotado: se reinicia
+      fresh = all;
+    }
+    // Una sola pregunta de bandera por país en la misma partida.
+    const pool = shuffle(fresh);
+    if (cat === 'banderas') {
+      const countries = new Set();
+      return pool.filter((x) => (countries.has(x.country[0]) ? false : countries.add(x.country[0])));
+    }
+    return pool;
   }).filter((p) => p.length);
   const chosen = [];
   // Una de cada categoría por turnos, para que salgan temas variados.
@@ -74,6 +92,7 @@ function makeQuiz(cats, count) {
     }
     order = shuffle(order);
   }
+  chosen.forEach((x) => seen.add(keyOf(x)));
   return shuffle(chosen).map(buildQuestion);
 }
 
@@ -99,7 +118,7 @@ module.exports = function createTrivia(h) {
   function start(room) {
     room.phase = 'trivia';
     room.trivia = {
-      questions: makeQuiz(room.settings.triviaCats, room.settings.triviaCount),
+      questions: makeQuiz(room.settings.triviaCats, room.settings.triviaCount, h.memoryOf ? h.memoryOf(room).trivia : undefined),
       index: -1,
       sub: 'ready',          // ready | question | reveal
       answers: new Map(),    // playerId -> { choice, ms }

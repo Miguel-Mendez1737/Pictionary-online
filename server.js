@@ -147,7 +147,19 @@ const accountsReady = mountAccounts(app, { cleanName, cleanAvatar });
 // ─── Juegos disponibles ───────────────────────────────────────────────────────
 // El anfitrión elige en el lobby a qué se juega. Cada juego nuevo vive en su
 // propio archivo dentro de games/ y usa las mismas salas, cuentas, voz y puntos.
+// ─── Memoria para no repetir ─────────────────────────────────────────────────
+// Cada sala recuerda qué palabras, preguntas y letras ya salieron (también entre
+// partidas). Las salas privadas recuerdan por dueño: aunque se cree una sala
+// nueva, no se repite lo de la vez anterior. Se guarda en memoria del servidor.
+const memories = new Map();
+function memoryOf(room) {
+  const key = room.privacy ? `dueño:${room.privacy.owner}` : `sala:${room.code}`;
+  if (!memories.has(key)) memories.set(key, { words: {}, trivia: new Set(), letters: new Set() });
+  return memories.get(key);
+}
+
 const gameHelpers = {
+  memoryOf: (room) => memoryOf(room),
   io,
   syncRoom: (room) => syncRoom(room),
   systemMsg: (room, text, kind) => systemMsg(room, text, kind),
@@ -167,7 +179,7 @@ const GAMES = [
   { id: 'basta', label: 'Basta', short: 'Basta', emoji: '✋', colors: ['#e8590c', '#d6336c'] },
   { id: 'parchis', label: 'Parchís', short: 'Parchís', emoji: '🎲', colors: ['#2f9e44', '#1971c2'] },
   { id: 'trivia', label: 'Trivia', short: 'Trivia', emoji: '❓', colors: ['#7048e8', '#1c7ed6'] },
-  { id: 'cartas', label: '¡Última!', short: '¡Última!', emoji: '🃏', colors: ['#e03131', '#1971c2'] }
+  { id: 'cartas', label: 'ONE', short: 'ONE', emoji: '🃏', colors: ['#e03131', '#1971c2'] }
 ];
 const GAME_IDS = new Set(GAMES.map((g) => g.id));
 const IN_GAME = ['spinning', 'drawing', 'reveal', 'basta', 'parchis', 'trivia', 'cartas'];
@@ -280,6 +292,7 @@ function snapshotFor(room, playerId) {
     wheel: room.phase === 'spinning' ? wheelFor(room, playerId) : null,
     lastTurn: room.phase === 'reveal' ? room.lastTurn : null,
     privacy: room.privacy || null,
+    parchisColors: room.parchisColors || {},
     ranking: room.phase === 'gameOver' ? ranking(room) : null,
     resultTitle: room.phase === 'gameOver' ? room.resultTitle : null,
     basta: room.phase === 'basta' ? basta.view(room, playerId) : null,
@@ -330,15 +343,24 @@ function systemMsg(room, text, kind = 'info') {
 }
 
 // ─── Lógica de juego ──────────────────────────────────────────────────────────
+// Palabras que ya salieron en este tema (en esta sala, también en partidas anteriores).
+function seenWords(room) {
+  const mem = memoryOf(room);
+  const theme = room.settings.theme;
+  if (!mem.words[theme]) mem.words[theme] = new Set();
+  return mem.words[theme];
+}
+
 function pickWord(room) {
   const list = THEMES[room.settings.theme].words;
-  let available = list.filter((w) => !room.usedWords.has(w));
+  const seen = seenWords(room);
+  let available = list.filter((w) => !seen.has(w));
   if (available.length === 0) {
-    room.usedWords.clear();
+    seen.clear(); // ya salieron todas: se empieza de nuevo
     available = list;
   }
   const word = available[Math.floor(Math.random() * available.length)];
-  room.usedWords.add(word);
+  seen.add(word);
   return word;
 }
 
@@ -360,7 +382,6 @@ function startGame(room) {
   if (room.settings.game === 'cartas') return cartas.start(room);
   room.round = 1;
   room.drawnThisRound.clear();
-  room.usedWords.clear();
   systemMsg(room, `🚀 ¡Comienza la partida! Tema: ${THEMES[room.settings.theme].label}.`, 'success');
   nextTurn(room);
 }
@@ -396,8 +417,9 @@ function nextTurn(room) {
   // 🎡 Ruleta: la palabra secreta + otras del mismo tema, en orden aleatorio.
   // Se prefieren palabras que aún no han salido en la partida.
   const pool = THEMES[room.settings.theme].words.filter((w) => w !== room.word);
-  const fresh = shuffle(pool.filter((w) => !room.usedWords.has(w)));
-  const seen = shuffle(pool.filter((w) => room.usedWords.has(w)));
+  const used = seenWords(room);
+  const fresh = shuffle(pool.filter((w) => !used.has(w)));
+  const seen = shuffle(pool.filter((w) => used.has(w)));
   const others = [...fresh, ...seen].slice(0, WHEEL_SIZE - 1);
   const items = shuffle([room.word, ...others]);
   room.wheel = { items, target: items.indexOf(room.word), spin: null, autoAt: Date.now() + WHEEL_AUTO_SPIN_MS };
@@ -564,6 +586,7 @@ function removePlayer(room, playerId) {
   room.players.delete(playerId);
   room.order = room.order.filter((id) => id !== playerId);
   room.drawnThisRound.delete(playerId);
+  if (room.parchisColors) delete room.parchisColors[playerId];
   if (room.phase === 'parchis') parchis.onLeave(room, playerId);
   if (room.phase === 'cartas') cartas.onLeave(room, playerId);
 
@@ -761,7 +784,7 @@ io.on('connection', (socket) => {
     if (player && room.phase === 'basta') basta.onReady(room, player);
   });
 
-  // ─── 🃏 ¡Última! ───
+  // ─── 🃏 ONE ───
   const cartasAction = (fn) => (data) => {
     const { room, player } = getCtx();
     if (player && room.phase === 'cartas') fn(room, player, data);
@@ -779,6 +802,14 @@ io.on('connection', (socket) => {
   });
 
   // ─── 🎲 Parchís ───
+  // 🎨 Cada jugador (también el anfitrión) elige su color de Parchís en el lobby.
+  socket.on('parchis:color', (idx) => {
+    const { room, player } = getCtx();
+    if (!player) return;
+    const res = parchis.chooseColor(room, player, idx === null ? null : idx);
+    if (!res.ok && res.text) socket.emit('chat:system', { text: res.text, kind: 'warn' });
+    syncRoom(room);
+  });
   socket.on('parchis:soplar', () => {
     const { room, player } = getCtx();
     if (player && room.phase === 'parchis') parchis.onSoplar(room, player);

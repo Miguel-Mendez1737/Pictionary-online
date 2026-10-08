@@ -77,7 +77,7 @@ module.exports = function createBasta(h) {
       round: 0,
       rounds: room.settings.bastaRounds,
       cats: room.settings.bastaCats.map((id) => CATEGORIES.find((c) => c.id === id)),
-      used: new Set(),
+      used: h.memoryOf ? h.memoryOf(room).letters : new Set(), // letras que ya salieron en esta sala
       sub: 'letter',
       letter: null,
       answers: new Map(),   // playerId -> [texto por categoría]

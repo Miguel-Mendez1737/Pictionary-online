@@ -22,6 +22,12 @@ const CATEGORIES = [
 
 const QUESTIONS = {
   geografia: [
+    ['¿Cuál es la capital de Chile?', 'Santiago', 'Valparaíso', 'Concepción', 'Lima'],
+    ['¿Cuál es el río más largo de México?', 'Río Bravo', 'Río Lerma', 'Río Balsas', 'Río Usumacinta'],
+    ['¿En qué país está la ciudad de Marrakech?', 'Marruecos', 'Egipto', 'Túnez', 'Argelia'],
+    ['¿Cuál es la capital de Venezuela?', 'Caracas', 'Maracaibo', 'Valencia', 'Bogotá'],
+    ['¿Qué país tiene más habitantes del mundo?', 'India', 'Estados Unidos', 'Indonesia', 'Rusia'],
+    ['¿En qué continente está Australia?', 'Oceanía', 'Asia', 'África', 'Europa'],
     ['¿Cuál es la capital de Canadá?', 'Ottawa', 'Toronto', 'Montreal', 'Vancouver'],
     ['¿Cuál es el río más largo de Sudamérica?', 'Amazonas', 'Paraná', 'Orinoco', 'Magdalena'],
     ['¿Cuál es el país más grande del mundo?', 'Rusia', 'Canadá', 'China', 'Estados Unidos'],
@@ -48,6 +54,12 @@ const QUESTIONS = {
     ['¿En qué país está la Gran Muralla?', 'China', 'Japón', 'India', 'Mongolia']
   ],
   historia: [
+    ['¿Qué imperio construyó la ciudad de Cusco como su capital?', 'El inca', 'El azteca', 'El maya', 'El romano'],
+    ['¿Quién fue el primer emperador romano?', 'Augusto', 'Julio César', 'Nerón', 'Calígula'],
+    ['¿En qué año se independizó Estados Unidos?', '1776', '1810', '1492', '1789'],
+    ['¿Qué civilización inventó la escritura cuneiforme?', 'Los sumerios', 'Los egipcios', 'Los chinos', 'Los griegos'],
+    ['¿Quién fue el cura que dio el Grito de Dolores?', 'Miguel Hidalgo', 'José María Morelos', 'Vicente Guerrero', 'Benito Juárez'],
+    ['¿Qué muralla se construyó para proteger a China de invasiones?', 'La Gran Muralla', 'El Muro de Adriano', 'El Muro de Berlín', 'La Muralla de Ávila'],
     ['¿En qué año llegó Cristóbal Colón a América?', '1492', '1500', '1512', '1488'],
     ['¿Quién fue el primer presidente de Estados Unidos?', 'George Washington', 'Abraham Lincoln', 'Thomas Jefferson', 'John Adams'],
     ['¿En qué año comenzó la Independencia de México?', '1810', '1821', '1910', '1789'],
@@ -71,6 +83,11 @@ const QUESTIONS = {
     ['¿Quién fue el primer ser humano en viajar al espacio?', 'Yuri Gagarin', 'Neil Armstrong', 'John Glenn', 'Valentina Tereshkova']
   ],
   ciencia: [
+    ['¿Cuál es el gas más abundante en el aire que respiramos?', 'Nitrógeno', 'Oxígeno', 'Dióxido de carbono', 'Hidrógeno'],
+    ['¿Qué órgano bombea la sangre?', 'El corazón', 'Los pulmones', 'El hígado', 'Los riñones'],
+    ['¿Qué planeta está más lejos del Sol?', 'Neptuno', 'Urano', 'Saturno', 'Júpiter'],
+    ['¿Cuál es el hueso más largo del cuerpo humano?', 'El fémur', 'La tibia', 'El húmero', 'La columna'],
+    ['¿Qué fuerza nos mantiene pegados al suelo?', 'La gravedad', 'El magnetismo', 'La fricción', 'La inercia'],
     ['¿Cuál es el planeta más grande del sistema solar?', 'Júpiter', 'Saturno', 'Neptuno', 'Tierra'],
     ['¿Cuál es el símbolo químico del oro?', 'Au', 'Ag', 'Or', 'Go'],
     ['¿Cuántos huesos tiene el cuerpo humano adulto?', '206', '180', '250', '312'],
@@ -94,6 +111,12 @@ const QUESTIONS = {
     ['¿Qué planeta tiene los anillos más visibles?', 'Saturno', 'Marte', 'Venus', 'Mercurio']
   ],
   deportes: [
+    ['¿Cuántos jugadores hay en un equipo de voleibol en la cancha?', '6', '5', '7', '4'],
+    ['¿En qué país se inventó el fútbol moderno?', 'Inglaterra', 'Brasil', 'Italia', 'España'],
+    ['¿Cuántos hoyos tiene un recorrido normal de golf?', '18', '9', '12', '24'],
+    ['Contando el de 2026, ¿qué país ha sido sede del Mundial de fútbol más veces?', 'México', 'Brasil', 'Alemania', 'Argentina'],
+    ['¿Cómo se llama el golpe de tenis que se da sin que la pelota bote?', 'Volea', 'Saque', 'Revés', 'Globo'],
+    ['¿Cuánto dura un round de boxeo profesional?', '3 minutos', '2 minutos', '5 minutos', '1 minuto'],
     ['¿Cuántos jugadores tiene en la cancha un equipo de fútbol?', '11', '10', '9', '12'],
     ['¿Qué país ha ganado más Copas del Mundo de fútbol?', 'Brasil', 'Alemania', 'Italia', 'Argentina'],
     ['¿Cada cuántos años se celebran los Juegos Olímpicos de verano?', '4', '2', '3', '5'],
@@ -117,6 +140,12 @@ const QUESTIONS = {
     ['¿En qué deporte se usa el término "touchdown"?', 'Fútbol americano', 'Rugby', 'Béisbol', 'Hockey']
   ],
   cine: [
+    ['¿Cómo se llama el muñeco de nieve de \"Frozen\"?', 'Olaf', 'Sven', 'Kristoff', 'Hans'],
+    ['¿Qué superhéroe usa un escudo con una estrella?', 'Capitán América', 'Iron Man', 'Thor', 'Hulk'],
+    ['¿Cómo se llama el perro de los Picapiedra?', 'Dino', 'Scooby', 'Pluto', 'Odie'],
+    ['¿En qué película aparece el robot R2-D2?', 'Star Wars', 'Wall-E', 'Terminator', 'Transformers'],
+    ['¿Qué héroe de Chespirito usa un "chipote chillón"?', 'El Chapulín Colorado', 'El Chavo del 8', 'El Doctor Chapatín', 'El Chómpiras'],
+    ['¿Cómo se llama la casa de magia de Harry Potter?', 'Gryffindor', 'Slytherin', 'Hufflepuff', 'Ravenclaw'],
     ['¿Cómo se llama el vaquero de "Toy Story"?', 'Woody', 'Buzz', 'Rex', 'Andy'],
     ['¿Quién dirigió la película "Titanic" (1997)?', 'James Cameron', 'Steven Spielberg', 'Christopher Nolan', 'Ridley Scott'],
     ['¿Cómo se llama el ogro verde de DreamWorks?', 'Shrek', 'Fiona', 'Grinch', 'Gru'],
@@ -139,6 +168,12 @@ const QUESTIONS = {
     ['¿Cómo se llama el mago protagonista de los libros de J. K. Rowling?', 'Harry Potter', 'Merlín', 'Gandalf', 'Doctor Strange']
   ],
   musica: [
+    ['¿Qué instrumento toca un baterista?', 'Batería', 'Guitarra', 'Piano', 'Trompeta'],
+    ['¿De qué país es el cantante Bad Bunny?', 'Puerto Rico', 'Colombia', 'México', 'República Dominicana'],
+    ['¿Qué cantante es conocido como \"El Príncipe de la Canción\"?', 'José José', 'Luis Miguel', 'Juan Gabriel', 'Camilo Sesto'],
+    ['¿Cuántas cuerdas tiene un violín?', '4', '5', '6', '3'],
+    ['¿Qué género musical es típico de la República Dominicana?', 'Merengue', 'Tango', 'Cumbia', 'Ranchera'],
+    ['¿Qué banda grabó el disco \"Abbey Road\"?', 'The Beatles', 'Queen', 'The Rolling Stones', 'ABBA'],
     ['¿Quién es conocido como "El Rey del Pop"?', 'Michael Jackson', 'Elvis Presley', 'Prince', 'Freddie Mercury'],
     ['¿De qué país es la cantante Shakira?', 'Colombia', 'México', 'Venezuela', 'Argentina'],
     ['¿Cuántas cuerdas tiene una guitarra clásica?', '6', '4', '5', '8'],
@@ -161,6 +196,12 @@ const QUESTIONS = {
     ['¿Qué instrumento tiene teclas blancas y negras?', 'Piano', 'Arpa', 'Violín', 'Trompeta']
   ],
   cultura: [
+    ['¿Cuántos días tiene una semana?', '7', '5', '6', '8'],
+    ['¿Qué número romano es la \"X\"?', '10', '5', '50', '100'],
+    ['¿Cuál es el color de la esperanza según el dicho?', 'Verde', 'Azul', 'Blanco', 'Amarillo'],
+    ['¿Quién escribió \"El Principito\"?', 'Antoine de Saint-Exupéry', 'Julio Verne', 'Víctor Hugo', 'Alejandro Dumas'],
+    ['¿Cuántos minutos tiene un día?', '1,440', '1,200', '2,400', '720'],
+    ['¿Qué se celebra el 25 de diciembre?', 'Navidad', 'Año Nuevo', 'Día de Reyes', 'Día de la Independencia'],
     ['¿Quién escribió "Don Quijote de la Mancha"?', 'Miguel de Cervantes', 'Gabriel García Márquez', 'Lope de Vega', 'Federico García Lorca'],
     ['¿Quién escribió "Cien años de soledad"?', 'Gabriel García Márquez', 'Mario Vargas Llosa', 'Octavio Paz', 'Pablo Neruda'],
     ['¿Cuántos días tiene un año bisiesto?', '366', '365', '364', '367'],
@@ -184,6 +225,12 @@ const QUESTIONS = {
     ['¿Cuántos jugadores participan en una partida de ajedrez?', '2', '4', '1', '3']
   ],
   animales: [
+    ['¿Cuál es el único mamífero que pone huevos además del equidna?', 'El ornitorrinco', 'El canguro', 'El murciélago', 'La ballena'],
+    ['¿Qué animal es conocido por cambiar su piel completa al crecer?', 'La serpiente', 'El perro', 'La tortuga', 'El pez'],
+    ['¿Cuántas patas tiene un pulpo?', '8', '6', '10', '4'],
+    ['¿Qué ave es símbolo de la sabiduría?', 'El búho', 'El loro', 'El águila', 'La paloma'],
+    ['¿Dónde guarda el camello su reserva de energía?', 'En la joroba', 'En las patas', 'En la cola', 'En el cuello'],
+    ['¿Qué animal es el mejor amigo del hombre según el dicho?', 'El perro', 'El gato', 'El caballo', 'El loro'],
     ['¿Cuál es el animal más alto del mundo?', 'La jirafa', 'El elefante', 'El avestruz', 'El camello'],
     ['¿Qué animal es conocido como "el rey de la selva"?', 'El león', 'El tigre', 'El gorila', 'El jaguar'],
     ['¿Cuántas patas tiene un insecto?', '6', '8', '4', '10'],
@@ -201,6 +248,12 @@ const QUESTIONS = {
     ['¿Qué animal tiene la trompa más larga?', 'El elefante', 'El tapir', 'El oso hormiguero', 'El rinoceronte']
   ],
   comida: [
+    ['¿Qué ingrediente lleva siempre la pizza margarita?', 'Albahaca', 'Piña', 'Jamón', 'Champiñones'],
+    ['¿De qué país es típico el taco al pastor?', 'México', 'Colombia', 'España', 'Argentina'],
+    ['¿Qué antojito mexicano lleva granos de elote con mayonesa, queso y chile?', 'Esquites', 'Pozole', 'Tamales', 'Enchiladas'],
+    ['¿Qué bebida se hace con granos tostados y molidos?', 'Café', 'Té', 'Jugo', 'Leche'],
+    ['¿Qué país es famoso por el sushi y el ramen?', 'Japón', 'China', 'Tailandia', 'Corea del Sur'],
+    ['¿Qué se le pone a las palomitas para que sean dulces?', 'Caramelo', 'Sal', 'Chile', 'Limón'],
     ['¿De qué país es originario el sushi?', 'Japón', 'China', 'Corea del Sur', 'Tailandia'],
     ['¿Cuál es el ingrediente principal del hummus?', 'Garbanzo', 'Lenteja', 'Frijol', 'Haba'],
     ['¿De qué fruta se hace el vino?', 'Uva', 'Manzana', 'Ciruela', 'Cereza'],
@@ -218,6 +271,12 @@ const QUESTIONS = {
     ['¿Qué grano es la base del arroz con leche?', 'Arroz', 'Avena', 'Trigo', 'Maíz']
   ],
   tecnologia: [
+    ['¿Qué significa la \"G\" en las redes 4G y 5G?', 'Generación', 'Gigas', 'Global', 'Gráfica'],
+    ['¿Qué empresa creó el buscador más usado del mundo?', 'Google', 'Microsoft', 'Apple', 'Amazon'],
+    ['¿Cómo se llama el asistente de voz de Apple?', 'Siri', 'Alexa', 'Cortana', 'Bixby'],
+    ['¿Qué tecla se usa para escribir en mayúsculas sostenidas?', 'Bloq Mayús', 'Enter', 'Espacio', 'Tab'],
+    ['¿Qué empresa vende la consola Switch?', 'Nintendo', 'Sony', 'Microsoft', 'Sega'],
+    ['¿Qué red social es famosa por videos cortos verticales?', 'TikTok', 'LinkedIn', 'Pinterest', 'Wikipedia'],
     ['¿Qué empresa creó el iPhone?', 'Apple', 'Samsung', 'Google', 'Microsoft'],
     ['¿Quién fundó Microsoft junto a Paul Allen?', 'Bill Gates', 'Steve Jobs', 'Mark Zuckerberg', 'Elon Musk'],
     ['¿Qué significan las letras "www" de las páginas web?', 'World Wide Web', 'World Wide Window', 'Web World Wide', 'Wide World Web'],

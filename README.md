@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.18.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.19.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -334,7 +334,7 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Si acepta una que no vale:** la mayoría la anula con 👎.
 - **Categorías libres:** Nombre, Apellido, Marca, Película y Artista solo revisan la letra; Cosa revisa que sea una palabra del español.
 
-## v1.18.0: nuevo juego 🃏 ¡Última! (`games/cartas.js`, `public/cartas.js`)
+## v1.18.0: nuevo juego de cartas (hoy ONE) (`games/cartas.js`, `public/cartas.js`)
 - **Qué es:** juego de cartas de colores, estilo clásico, para 2 a 10 jugadores con baraja de 108 cartas: números del 0 al 9, ⊘ Salta, ⇄ Reversa, +2, Comodín y Comodín +4. Cada quien ve solo sus cartas.
 - **Cómo se juega:** se tira una carta del mismo color o número, o un comodín (y se elige el color). Si no puedes, robas; la carta robada se puede tirar si sirve.
 - **📣 ¡Última!:** al quedarte con una carta debes tocarlo. Si se te olvida, cualquiera puede tocar 🚨 ¡Te atrapé! antes de que juegue el siguiente: robas 2 y quien atrapa gana +5.
@@ -347,3 +347,14 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Formato:** WebP de 240×180; las 88 banderas pesan 192 KB (antes 494 KB en PNG). Si un celular no muestra WebP, usa el PNG, y si tampoco carga, el emoji.
 - **Precarga:** al elegir Trivia con banderas en el lobby se descargan todas; durante "¡Prepárate!" se precargan las de la partida.
 - **Caché:** el servidor las marca para guardarse 30 días y el service worker las sirve desde el celular (caché aparte que no se borra con las actualizaciones).
+
+## v1.19.0: colores en el Parchís, sin repeticiones y el juego ONE
+- **🎲 Parchís: cada jugador elige su color.** En el lobby hay 10 colores para todos, también para el anfitrión, y un color ocupado muestra el avatar de su dueño. Quien no elige recibe el primer color libre y el tablero se pinta con los colores elegidos. También se corrigió la lista de jugadores dentro de la partida, que no se veía por un id repetido.
+- **No repetir:** cada sala recuerda lo que ya salió, también entre partidas. Las salas privadas lo recuerdan por dueño. Aplica a:
+  - las palabras de Garabato por tema;
+  - las preguntas de Trivia (cada bandera, en sus dos formas);
+  - las letras de Basta.
+  
+  No se repite nada hasta agotar el tema. La memoria vive en el servidor y se borra si se reinicia.
+- **Trivia:** 59 preguntas nuevas, 252 en total.
+- **🃏 El juego de cartas ahora se llama ONE.** El botón dice "📣 ¡ONE!".

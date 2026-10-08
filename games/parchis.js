@@ -136,7 +136,7 @@ module.exports = function createParchis(h) {
       dice: room.settings.parchisDice,
       rules: new Set(room.settings.parchisRules),
       pieceCount: pieces,
-      seats: ids.map((id, i) => ({ id, arm: arms[i], pieces: Array(pieces).fill(-1), lanes: Array(pieces).fill(null), gone: false })),
+      seats: ids.map((id, i) => ({ id, arm: arms[i], colorIdx: arms[i], pieces: Array(pieces).fill(-1), lanes: Array(pieces).fill(null), gone: false })),
       turn: 0,
       stage: 'roll',     // roll | move | bonus | crown | wait | over
       roll: [],          // valores de la última tirada
@@ -153,11 +153,51 @@ module.exports = function createParchis(h) {
       winner: null,
       log: []
     };
-    const names = room.parchis.seats.map((s) => `${room.players.get(s.id).name} (${COLORS[s.arm].name})`).join(', ');
+    assignColors(room);
+    const names = room.parchis.seats.map((s) => `${room.players.get(s.id).name} (${COLORS[s.colorIdx].name})`).join(', ');
     const watchers = room.order.length - n;
     const mode = room.parchis.dice === 2 ? 'Parqués con 2 dados' : 'Parchís con 1 dado';
     systemMsg(room, `🎲 ¡Comienza el ${mode}! ${pieces} fichas cada uno. Juegan: ${names}.${watchers > 0 ? ' Los demás miran la partida.' : ''}`, 'success');
     beginStage(room, 'roll');
+  }
+
+  // 🎨 Cada jugador puede elegir su color en el lobby (room.parchisColors).
+  // Quien no eligió recibe el primer color libre. Los brazos sin jugador se
+  // pintan con los colores que nadie usó.
+  function assignColors(room) {
+    const p = P(room);
+    const chosen = room.parchisColors || {};
+    const used = new Set();
+    p.seats.forEach((seat) => {
+      const want = chosen[seat.id];
+      if (Number.isInteger(want) && want >= 0 && want < COLORS.length && !used.has(want)) seat.colorIdx = want;
+      else seat.colorIdx = null;
+      if (seat.colorIdx !== null) used.add(seat.colorIdx);
+    });
+    p.seats.forEach((seat) => {
+      if (seat.colorIdx !== null) return;
+      const free = [seat.arm, ...COLORS.keys()].find((k) => k < COLORS.length && !used.has(k));
+      seat.colorIdx = free;
+      used.add(free);
+    });
+    const spare = [...COLORS.keys()].filter((k) => !used.has(k));
+    p.armColors = Array.from({ length: p.board.arms }, (_, a) => {
+      const seat = p.seats.find((s) => s.arm === a);
+      return seat ? COLORS[seat.colorIdx].hex : COLORS[spare.shift() ?? a].hex;
+    });
+  }
+
+  // El jugador eligió (o quitó) su color en el lobby.
+  function chooseColor(room, player, idx) {
+    if (room.phase !== 'lobby') return { ok: false };
+    room.parchisColors = room.parchisColors || {};
+    if (idx === null) { delete room.parchisColors[player.id]; return { ok: true }; }
+    const k = Number(idx);
+    if (!Number.isInteger(k) || k < 0 || k >= COLORS.length) return { ok: false };
+    const taken = Object.entries(room.parchisColors).find(([id, c]) => c === k && id !== player.id && room.players.get(id)?.connected);
+    if (taken) return { ok: false, text: `Ese color ya lo eligió ${room.players.get(taken[0]).name}.` };
+    room.parchisColors[player.id] = k;
+    return { ok: true };
   }
 
   function log(room, text) {
@@ -657,7 +697,8 @@ module.exports = function createParchis(h) {
       dice: p.dice,
       pieceCount: p.pieceCount,
       rules: [...p.rules],
-      seats: p.seats.map((s) => ({ id: s.id, arm: s.arm, color: COLORS[s.arm], pieces: s.pieces, lanes: s.lanes, gone: s.gone })),
+      seats: p.seats.map((s) => ({ id: s.id, arm: s.arm, color: COLORS[s.colorIdx], pieces: s.pieces, lanes: s.lanes, gone: s.gone })),
+      armColors: p.armColors,
       turn: p.turn,
       turnId: p.seats[p.turn]?.id,
       stage: p.stage,
@@ -713,6 +754,6 @@ module.exports = function createParchis(h) {
 
   return {
     MAX_SEATS, COLORS, RULES, PIECE_OPTIONS, DICE_OPTIONS,
-    defaults, applySettings, start, view, onRoll, onMove, onDisconnect, onLeave, onSoplar
+    defaults, applySettings, start, view, onRoll, onMove, onDisconnect, onLeave, onSoplar, chooseColor
   };
 };
