@@ -1469,3 +1469,9 @@ body.is-landscape .tool span { display: none; }
 .color-choice .color-name { font-size: .66rem; font-weight: 800; color: var(--muted); }
 .color-choice.mine { border-color: var(--seat); background: color-mix(in srgb, var(--seat) 14%, white); box-shadow: 0 0 0 2px var(--seat); }
 .color-choice.taken { opacity: .55; cursor: default; }
+/* ¿Con cuál dado mueves primero? */
+.dice-box { flex-wrap: wrap; justify-content: center; max-width: 150px; }
+.dice-hint { flex-basis: 100%; text-align: center; font-size: .68rem; font-weight: 800; color: var(--muted); line-height: 1.2; }
+.die.pickable.selected::after { content: '✓'; position: absolute; top: -9px; right: -7px; width: 20px; height: 20px; border-radius: 50%; background: var(--seat); color: #fff; font-size: .75rem; font-weight: 900; display: grid; place-items: center; }
+.die.pickable { position: relative; }
+.die.pickable:not(.selected) { opacity: .55; transform: scale(.92); }

@@ -438,7 +438,8 @@ window.ParchisGame = function ParchisGame(ctx) {
 
     // Dados: se animan con cada tirada nueva; después se eligen y se mueven las fichas.
     diceBox.style.setProperty('--seat', cur ? cur.color.hex : '#999');
-    const count = p.dice || 1;
+    // Con la última ficha a 6 o menos del cielo solo aparece un dado.
+    const count = p.oneDie ? 1 : (p.dice || 1);
     const showDice = () => {
       if (p.stage === 'roll') return drawDice(Array(count).fill(null), { canRoll: myTurn });
       const values = p.roll && p.roll.length ? p.roll : Array(count).fill(null);
@@ -473,6 +474,11 @@ window.ParchisGame = function ParchisGame(ctx) {
         const i = [...pick][n];
         b.onclick = () => { ui.selDie = unused.get(i); vibrate(8); render(state.room); };
       });
+      // ¿Con cuál dado mueves primero? (solo cuando hay dos dados distintos para elegir)
+      if (pick.size === 2) {
+        const chosen = values[selected];
+        diceBox.append(el('span', 'dice-hint', `Mueves primero con el ${chosen} · toca el otro dado para cambiar`));
+      }
     };
     const piecesNow = () => renderPieces(p, myTurn);
     if (p.rollId !== ui.rollId && p.roll && p.roll.length) {

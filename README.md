@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.19.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.19.1 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -358,3 +358,7 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   No se repite nada hasta agotar el tema. La memoria vive en el servidor y se borra si se reinicia.
 - **Trivia:** 59 preguntas nuevas, 252 en total.
 - **🃏 El juego de cartas ahora se llama ONE.** El botón dice "📣 ¡ONE!".
+
+## v1.19.1: elegir dado y un solo dado al final
+- **🎲 Elegir con qué dado mover primero:** con dos dados distintos, toca el que quieras usar. El elegido se marca con ✓ y el otro se ve apagado. Un aviso dice "Mueves primero con el X · toca el otro dado para cambiar".
+- **🏁 Un solo dado al final:** si tu última ficha está en el pasillo del cielo a 6 casillas o menos de coronar, se tira y se muestra un solo dado. Si llegas a esa distancia a mitad de jugada, el segundo dado se bloquea.

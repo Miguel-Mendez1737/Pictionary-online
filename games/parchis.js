@@ -339,13 +339,14 @@ module.exports = function createParchis(h) {
     const name = nameOf(room, seat);
     const { goal } = B(room);
     const d = () => 1 + Math.floor(Math.random() * 6);
-    p.roll = p.dice === 2 ? [d(), d()] : [d()];
+    // 🏁 Última ficha en el pasillo del cielo a 6 casillas o menos: solo se tira UN dado.
+    p.roll = p.dice === 2 && !lastOneDie(room, seat) ? [d(), d()] : [d()];
     p.rollId++;
     p.blocked = false;
     if (p.soplable && p.soplable.seatIdx !== p.turn) p.soplable = null; // ya tiró otro: no se puede soplar
     p.bonus = [];
     p.bonusAmount = null;
-    const isRepeat = p.dice === 2 ? p.roll[0] === p.roll[1] : p.roll[0] === 6;
+    const isRepeat = p.roll.length === 2 ? p.roll[0] === p.roll[1] : p.dice === 1 && p.roll[0] === 6;
     p.repeatRoll = isRepeat && has(room, 'repeat');
     p.streak = p.repeatRoll ? p.streak + 1 : 0;
     const shown = p.roll.join(' y ');
