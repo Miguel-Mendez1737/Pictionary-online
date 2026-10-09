@@ -444,11 +444,12 @@ window.ParchisGame = function ParchisGame(ctx) {
       if (p.stage === 'roll') return drawDice(Array(count).fill(null), { canRoll: myTurn });
       const values = p.roll && p.roll.length ? p.roll : Array(count).fill(null);
       // Qué dados quedan sin usar (índices de la tirada que siguen en "pending").
-      const left = [...p.pending];
+      // unused: índice del dado en pantalla -> índice en "pending" (el orden puede ser distinto).
+      const taken = new Set();
       const unused = new Map();
       values.forEach((v, i) => {
-        const k = left.indexOf(v);
-        if (k !== -1) { unused.set(i, k); left.splice(k, 1); }
+        const k = p.pending.findIndex((x, j) => x === v && !taken.has(j));
+        if (k !== -1) { unused.set(i, k); taken.add(k); }
       });
       const used = new Set(values.map((_v, i) => i).filter((i) => !unused.has(i)));
       const pick = new Set();

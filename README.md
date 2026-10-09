@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.19.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.19.2 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -362,3 +362,6 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.19.1: elegir dado y un solo dado al final
 - **🎲 Elegir con qué dado mover primero:** con dos dados distintos, toca el que quieras usar. El elegido se marca con ✓ y el otro se ve apagado. Un aviso dice "Mueves primero con el X · toca el otro dado para cambiar".
 - **🏁 Un solo dado al final:** si tu última ficha está en el pasillo del cielo a 6 casillas o menos de coronar, se tira y se muestra un solo dado. Si llegas a esa distancia a mitad de jugada, el segundo dado se bloquea.
+
+## v1.19.2: arreglo al elegir el dado
+- **🎲 Parchís:** al tocar el otro dado, la app seguía moviendo con el primero cuando el servidor guardaba los dados en otro orden (por ejemplo 6 y 5 contra 5 y 6). Ahora se mueve con el dado que marcaste con ✓.
