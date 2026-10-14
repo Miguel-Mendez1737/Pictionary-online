@@ -169,9 +169,10 @@ window.ParchisGame = function ParchisGame(ctx) {
   function movesFor(p) {
     if (p.stage === 'crown') return p.legal;
     if (p.stage === 'bonus') return p.legal;
-    const dice = [...new Set(p.legal.map((m) => m.die))];
+    // die 2 = robar cielo con la suma de los dos dados: siempre se puede tocar.
+    const dice = [...new Set(p.legal.map((m) => m.die).filter((d) => d !== 2))];
     if (!dice.includes(ui.selDie)) ui.selDie = dice.length ? dice[0] : 0;
-    return p.legal.filter((m) => m.die === ui.selDie);
+    return p.legal.filter((m) => m.die === ui.selDie || m.die === 2);
   }
 
   // ─── Fichas ───

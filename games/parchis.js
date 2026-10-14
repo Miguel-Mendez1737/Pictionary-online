@@ -266,6 +266,22 @@ module.exports = function createParchis(h) {
       if (seen.has(key)) return;
       let capture = [];
       let blocked = false;
+      // 🌩️ Robar cielo: desde la entrada de un rival (pasando por ella o parado en ella),
+      // el resto exacto cae en su pasillo sobre una ficha suya.
+      const trySteal = (k) => {
+        if (!has(room, 'robarCielo') || lane !== seat.arm || k > lastTrack) return;
+        const abs = absOf(seat.arm, k);
+        const rival = p.seats.find((s) => !s.gone && s !== seat && entryOf(s.arm) === abs);
+        const r = to - k;
+        if (!rival || r < 1 || r > 7) return;
+        const victims = corridorAt(room, rival.arm, lastTrack + r).filter((o) => o.seat !== seat);
+        const path = [];
+        for (let c = 1; c < r; c++) path.push(corridorAt(room, rival.arm, lastTrack + c).length);
+        if (victims.length && !(barriers && path.some((n) => n >= 2))) {
+          moves.push({ piece: i, from, to: lastTrack + r, lane: rival.arm, capture: victims.map((o) => ref(room, o)), kind: 'steal' });
+        }
+      };
+      trySteal(from);
       for (let k = from + 1; k <= to && !blocked; k++) {
         const landing = k === to;
         if (k <= lastTrack) {
@@ -277,19 +293,7 @@ module.exports = function createParchis(h) {
             if (rivals.length && !(safes && safe.has(abs))) capture = rivals.map((o) => ref(room, o));
             else if (rivals.length && occ.length >= 2) blocked = true;
           }
-          // 🌩️ Robar cielo: desde la entrada de un rival, el resto exacto cae en su pasillo sobre una ficha suya.
-          if (!landing && has(room, 'robarCielo') && lane === seat.arm) {
-            const rival = p.seats.find((s) => !s.gone && s !== seat && entryOf(s.arm) === abs);
-            const r = to - k;
-            if (rival && r >= 1 && r <= 7) {
-              const victims = corridorAt(room, rival.arm, lastTrack + r).filter((o) => o.seat !== seat);
-              const path = [];
-              for (let c = 1; c < r; c++) path.push(corridorAt(room, rival.arm, lastTrack + c).length);
-              if (victims.length && !(barriers && path.some((n) => n >= 2))) {
-                moves.push({ piece: i, from, to: lastTrack + r, lane: rival.arm, capture: victims.map((o) => ref(room, o)), kind: 'steal' });
-              }
-            }
-          }
+          if (!landing) trySteal(k);
         } else if (k < goal) {
           const n = corridorAt(room, lane, k).length;
           if (n >= 2 && (barriers || landing)) { blocked = true; break; }
@@ -528,6 +532,14 @@ module.exports = function createParchis(h) {
       used.add(amount);
       legalMoves(room, seat, amount).forEach((m) => list.push({ ...m, die }));
     });
+    // 🌩️ Robar cielo con la suma de los dos dados (die: 2 = usa los dos).
+    if (p.pending.length === 2 && has(room, 'robarCielo')) {
+      legalMoves(room, seat, p.pending[0] + p.pending[1]).forEach((m) => {
+        if (m.kind !== 'steal') return;
+        if (list.some((x) => x.kind === 'steal' && x.piece === m.piece && x.lane === m.lane && x.to === m.to)) return;
+        list.push({ ...m, die: 2 });
+      });
+    }
     return list;
   }
 
@@ -589,6 +601,7 @@ module.exports = function createParchis(h) {
     seat.lanes[m.piece] = m.lane === null || m.lane === seat.arm ? null : m.lane;
     p.lastMoved = { seat, i: m.piece };
     if (m.kind === 'back') p.pending = [];
+    else if (dieIdx === 2) p.pending = []; // robar cielo con la suma: usa los dos dados
     else if (dieIdx >= 0) p.pending.splice(dieIdx, 1);
     // 🔒 Última ficha a 6 casillas o menos del cielo: el otro dado se bloquea (automático).
     if (p.pending.length && lastOneDie(room, seat)) {
