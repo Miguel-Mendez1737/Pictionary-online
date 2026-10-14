@@ -248,7 +248,10 @@ module.exports = function createParchis(h) {
         if (own.length < 2) {
           const rivals = occ.filter((o) => o.seat !== seat);
           const capture = has(room, 'exitCapture') ? rivals : occ.length >= 2 ? rivals.slice(-1) : [];
-          return [{ piece: jail, from: -1, to: 0, lane: null, capture: capture.map((o) => ref(room, o)), kind: 'exit' }];
+          const exitMove = { piece: jail, from: -1, to: 0, lane: null, capture: capture.map((o) => ref(room, o)), kind: 'exit' };
+          // Salir es obligatorio, salvo que con ese 5 se pueda robar el cielo: el jugador elige.
+          const steals = has(room, 'robarCielo') ? legalMoves(room, seat, amount, { bonus: true }).filter((m) => m.kind === 'steal') : [];
+          return [exitMove, ...steals];
         }
       }
     }

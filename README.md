@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.19.3 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.19.4 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -369,3 +369,6 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.19.3: robar cielo arreglado y revisión de reglas
 - **🌩️ Robar cielo:** ahora también funciona si tu ficha está parada justo en la entrada del rival, y con la suma de los dos dados (gasta los dos). Antes solo funcionaba pasando por la entrada con un dado.
 - **Revisión:** se probó cada regla del Parchís por separado (salir con 5, repetir, comer y premio +20, seguros, barreras, comer en la salida, coronar y premio +10, llegada exacta, tres seguidos, pata de perro, soplar, un solo dado al final, robar cielo). También se simularon 120 partidas completas de 2 a 10 jugadores con reglas al azar, sin errores ni bloqueos.
+
+## v1.19.4: robar cielo con un 5
+- **🌩️ Parchís con 1 dado:** si sacas 5 y tienes fichas en la cárcel, antes la app te obligaba a salir aunque el 5 diera exacto para robar el cielo. Ahora eliges: sacar la ficha o robar.
