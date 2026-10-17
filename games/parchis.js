@@ -49,7 +49,8 @@ const RULES = [
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
   { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas con una de tus fichas.', def: true },
   { id: 'soplar', label: 'Soplar', desc: 'Si alguien pudo comer (con un dado o con la suma) y no lo hizo, los demás pueden tocar 🌬️ Soplar antes de que tire el siguiente jugador: la app lo revisa y, si es cierto, esa ficha se va a la cárcel.', def: false },
-  { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo.', def: false }
+  { id: 'oneSum', label: 'Una ficha: mueve la suma', desc: '2 dados: si solo tienes una ficha corriendo por el tablero, mueves la suma de los dos dados de corrido (no puedes comer con un solo dado). Si la suma no cabe, puedes usar un dado.', def: true },
+  { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo. Mientras el ladrón siga en ese pasillo, el dueño o cualquier otro jugador con el número exacto se lo puede comer.', def: false }
 ];
 const RULE_IDS = new Set(RULES.map((r) => r.id));
 const DEFAULT_RULES = RULES.filter((r) => r.def).map((r) => r.id);
@@ -298,8 +299,13 @@ module.exports = function createParchis(h) {
           }
           if (!landing) trySteal(k);
         } else if (k < goal) {
-          const n = corridorAt(room, lane, k).length;
-          if (n >= 2 && (barriers || landing)) { blocked = true; break; }
+          const occ = corridorAt(room, lane, k);
+          if (occ.length >= 2 && (barriers || landing)) { blocked = true; break; }
+          // 🌩️ Un ladrón de cielo que todavía no corona se puede comer dentro del pasillo.
+          if (landing && has(room, 'robarCielo')) {
+            const thieves = occ.filter((o) => o.seat !== seat);
+            if (thieves.length) capture = thieves.map((o) => ref(room, o));
+          }
         }
       }
       if (blocked) return;
@@ -526,8 +532,20 @@ module.exports = function createParchis(h) {
   }
 
   // Todas las jugadas posibles con los dados que faltan (cada una dice qué dado usa).
+  // 🎯 Con 2 dados y una sola ficha corriendo por el tablero, se mueve la suma de corrido.
+  function oneRunner(room, seat) {
+    const p = P(room);
+    const { goal } = B(room);
+    return p.dice === 2 && has(room, 'oneSum') && p.pending.length === 2
+      && seat.pieces.filter((x) => x >= 0 && x < goal).length === 1;
+  }
+
   function legalAll(room, seat) {
     const p = P(room);
+    if (oneRunner(room, seat)) {
+      const sum = legalMoves(room, seat, p.pending[0] + p.pending[1]).filter((m) => m.kind !== 'exit').map((m) => ({ ...m, die: 2 }));
+      if (sum.length) return sum; // si la suma no cabe (p. ej. se pasa del cielo), puede usar un dado
+    }
     const list = [];
     const used = new Set();
     p.pending.forEach((amount, die) => {
@@ -726,6 +744,7 @@ module.exports = function createParchis(h) {
       legal: p.legal.map((m) => ({ piece: m.piece, die: m.die, from: m.from, to: m.to, lane: m.lane, capture: m.capture.length > 0, kind: m.kind })),
       bonusAmount: p.stage === 'bonus' ? p.bonusAmount : null,
       oneDie: p.seats[p.turn] ? lastOneDie(room, p.seats[p.turn]) : false,
+      sumOnly: p.stage === 'move' && p.legal.length > 0 && p.legal.every((m) => m.die === 2 || m.kind === 'release'),
       blocked: Boolean(p.blocked),
       timeLeft: Math.max(0, p.deadline - Date.now()),
       winner: p.winner,
