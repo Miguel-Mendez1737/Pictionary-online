@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.20.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.20.1 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -376,3 +376,6 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.20.0: dos reglas nuevas en el Parchís
 - **🎯 Una ficha: mueve la suma** (activada por defecto). Con 2 dados, si solo tienes una ficha corriendo por el tablero, mueves la suma de los dos dados de corrido. Así no puedes comer con un solo dado; solo comes si la suma cae exacto. Si la suma se pasa del cielo, puedes usar un dado. Con pares y fichas en la cárcel puedes elegir entre sacarlas o mover la suma.
 - **🌩️ Comerse al ladrón de cielo** (con "Robar cielo"). Mientras el que robó un cielo no corone, cualquier otro jugador que dé el número exacto para entrar a ese pasillo se lo come. El dueño del pasillo también se lo come si cae exacto sobre él.
+
+## v1.20.1: los pares rompen la barrera
+- **🧱 Pares rompen barrera** (activada por defecto, funciona junto con "Barreras"). Con 2 dados, dos fichas juntas no dejan pasar a nadie, salvo al que saca pares: ese puede pasar por encima, pero no caer en la barrera. Aplica también al robar cielo. Los premios de +20 y +10 no rompen barreras.

@@ -42,6 +42,7 @@ const RULES = [
   { id: 'safes', label: 'Seguros ⭐', desc: 'En los seguros y salidas no se puede comer.', def: true },
   { id: 'exitCapture', label: 'Comer en la salida', desc: 'Al sacar fichas de la cárcel te comes a los rivales que estén en tu salida.', def: true },
   { id: 'barriers', label: 'Barreras', desc: 'Dos fichas en la misma casilla no dejan pasar a nadie.', def: true },
+  { id: 'pairBreak', label: 'Pares rompen barrera', desc: 'Con "Barreras": 2 dados, si sacas pares puedes pasar por encima de una barrera (pero no caer en ella).', def: true },
   { id: 'captureBonus', label: 'Premio por comer (+20)', desc: 'Al comer una ficha avanzas 20 casillas con la ficha que quieras.', def: true },
   { id: 'goalBonus', label: 'Premio por coronar (+10)', desc: 'Al meter una ficha al cielo avanzas 10 casillas con otra.', def: true },
   { id: 'exact', label: 'Llegada exacta al cielo', desc: 'Para coronar necesitas el número exacto.', def: true },
@@ -235,7 +236,9 @@ module.exports = function createParchis(h) {
   function legalMoves(room, seat, amount, { bonus = false } = {}) {
     const { lastTrack, goal, exitOf, entryOf, absOf, safe } = B(room);
     const p = P(room);
-    const barriers = has(room, 'barriers');
+    // 🧱 Con pares (2 dados) se puede pasar por encima de una barrera, pero no caer en ella.
+    const pairRoll = p.dice === 2 && p.roll.length === 2 && p.roll[0] === p.roll[1];
+    const barriers = has(room, 'barriers') && !(has(room, 'pairBreak') && pairRoll && !bonus);
     const safes = has(room, 'safes');
     const moves = [];
 
