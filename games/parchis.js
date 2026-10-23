@@ -41,7 +41,7 @@ const RULES = [
   { id: 'pairsAll', label: 'Cualquier par saca todas', desc: '2 dados: cualquier par saca todas las fichas de la cárcel (si no, solo 1-1 y 6-6 sacan todas y los demás pares sacan dos).', def: false },
   { id: 'safes', label: 'Seguros ⭐', desc: 'En los seguros y salidas no se puede comer.', def: true },
   { id: 'exitCapture', label: 'Comer en la salida', desc: 'Al sacar fichas de la cárcel te comes a los rivales que estén en tu salida.', def: true },
-  { id: 'barriers', label: 'Barreras', desc: 'Dos fichas en la misma casilla no dejan pasar a nadie.', def: true },
+  { id: 'barriers', label: 'Barreras', desc: 'Dos fichas en un seguro o en una salida no dejan pasar a nadie (en las demás casillas no bloquean). Tampoco se puede retroceder por encima con la pata de perro.', def: true },
   { id: 'pairBreak', label: 'Pares rompen barrera', desc: 'Con "Barreras": 2 dados, si sacas pares puedes pasar por encima de una barrera (pero no caer en ella).', def: true },
   { id: 'captureBonus', label: 'Premio por comer (+20)', desc: 'Al comer una ficha avanzas 20 casillas con la ficha que quieras.', def: true },
   { id: 'goalBonus', label: 'Premio por coronar (+10)', desc: 'Al meter una ficha al cielo avanzas 10 casillas con otra.', def: true },
@@ -282,9 +282,8 @@ module.exports = function createParchis(h) {
         const r = to - k;
         if (!rival || r < 1 || r > 7) return;
         const victims = corridorAt(room, rival.arm, lastTrack + r).filter((o) => o.seat !== seat);
-        const path = [];
-        for (let c = 1; c < r; c++) path.push(corridorAt(room, rival.arm, lastTrack + c).length);
-        if (victims.length && !(barriers && path.some((n) => n >= 2))) {
+        // En los pasillos no hay bloqueos (solo en seguros y salidas).
+        if (victims.length) {
           moves.push({ piece: i, from, to: lastTrack + r, lane: rival.arm, capture: victims.map((o) => ref(room, o)), kind: 'steal' });
         }
       };
@@ -294,16 +293,16 @@ module.exports = function createParchis(h) {
         if (k <= lastTrack) {
           const abs = absOf(seat.arm, k);
           const occ = occupantsAt(room, abs);
-          if (occ.length >= 2 && (barriers || landing)) { blocked = true; break; }
+          // 🧱 Bloqueo: dos fichas en un seguro o salida. Fuera de los seguros no bloquean.
+          const wall = occ.length >= 2 && safe.has(abs);
+          if (wall && (barriers || landing)) { blocked = true; break; }
           if (landing && occ.length) {
             const rivals = occ.filter((o) => o.seat !== seat);
             if (rivals.length && !(safes && safe.has(abs))) capture = rivals.map((o) => ref(room, o));
-            else if (rivals.length && occ.length >= 2) blocked = true;
           }
           if (!landing) trySteal(k);
         } else if (k < goal) {
           const occ = corridorAt(room, lane, k);
-          if (occ.length >= 2 && (barriers || landing)) { blocked = true; break; }
           // 🌩️ Un ladrón de cielo que todavía no corona se puede comer dentro del pasillo.
           if (landing && has(room, 'robarCielo')) {
             const thieves = occ.filter((o) => o.seat !== seat);
@@ -449,6 +448,8 @@ module.exports = function createParchis(h) {
     p.ate = false;
     p.chances = [];
     if (!has(room, 'soplar')) return;
+    // Con pares y fichas en la cárcel, sacarlas es una opción válida en lugar de comer: no se sopla.
+    if (p.legal.some((m) => m.kind === 'release')) return;
     const add = (i) => { if (!p.chances.includes(i)) p.chances.push(i); };
     p.legal.forEach((m) => { if (m.capture.length && m.kind !== 'release') add(m.piece); });
     if (p.pending.length === 2 && !p.legal.some((m) => m.kind === 'back')) {
@@ -501,9 +502,16 @@ module.exports = function createParchis(h) {
     const out = all ? jail : jail.slice(0, 2);
     release(room, seat, out);
     p.tries = 0;
-    p.pending = [];
     p.legal = [];
-    log(room, `🔓 ${nameOf(room, seat)} sacó pares (${p.roll.join(' y ')}) y saca ${out.length === 1 ? 'una ficha' : `${out.length} fichas`} de la cárcel.`);
+    if (out.length === 1) {
+      // Solo había una ficha en la cárcel: sale con medio par y con la otra mitad
+      // se corre (con esa misma ficha o con otra que esté en juego).
+      p.pending = [p.roll[1]];
+      log(room, `🔓 ${nameOf(room, seat)} sacó pares (${p.roll.join(' y ')}): saca su ficha de la cárcel y corre ${p.roll[1]} con la ficha que quiera.`);
+      return afterMoves(room);
+    }
+    p.pending = [];
+    log(room, `🔓 ${nameOf(room, seat)} sacó pares (${p.roll.join(' y ')}) y saca ${out.length} fichas de la cárcel.`);
     return afterMoves(room);
   }
 
@@ -515,9 +523,12 @@ module.exports = function createParchis(h) {
     seat.pieces.forEach((from, i) => {
       if (from < amount || from > lastTrack || seat.lanes[i] !== null || seen.has(from)) return;
       const to = from - amount;
+      // 🧱 Al retroceder tampoco se puede pasar sobre un bloqueo (ni caer en él).
+      const wallAt = (k) => { const a = absOf(seat.arm, k); return occupantsAt(room, a).length >= 2 && safe.has(a); };
+      for (let k = from - 1; k > to; k--) if (has(room, 'barriers') && wallAt(k)) return;
+      if (wallAt(to)) return;
       const abs = absOf(seat.arm, to);
       const occ = occupantsAt(room, abs);
-      if (occ.length >= 2) return;
       const rivals = occ.filter((o) => o.seat !== seat);
       const capture = rivals.length && !(has(room, 'safes') && safe.has(abs)) ? rivals.map((o) => ref(room, o)) : [];
       seen.add(from);

@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.20.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.21.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -379,3 +379,15 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 
 ## v1.20.1: los pares rompen la barrera
 - **🧱 Pares rompen barrera** (activada por defecto, funciona junto con "Barreras"). Con 2 dados, dos fichas juntas no dejan pasar a nadie, salvo al que saca pares: ese puede pasar por encima, pero no caer en la barrera. Aplica también al robar cielo. Los premios de +20 y +10 no rompen barreras.
+
+## v1.21.0: colores para dibujar, temas nuevos y ajustes al Parchís
+- **🎨 Garabato con colores:** el botón 🎨 de la barra de dibujo abre 20 colores. Los puntos de grosor muestran el color elegido y todos ven el dibujo a color.
+- **Temas nuevos:**
+  - 🏷️ **Marcas y logos** (100): ropa, carros, electrodomésticos, tecnología, restaurantes y bebidas.
+  - 🏙️ **Ciudades famosas** (75).
+  - 🎲 **Aleatorio**: la ruleta mezcla palabras de todos los temas y arriba se muestra de qué tema es la palabra de cada turno.
+- **🎲 Parchís:**
+  - **Bloqueo:** dos fichas solo bloquean en los seguros y las salidas. En las demás casillas se puede pasar, y si caes encima de dos fichas rivales te las comes.
+  - **Pata de perro:** no se puede retroceder pasando por encima de un bloqueo.
+  - **Una sola ficha en la cárcel:** con un par sale usando la mitad, y la otra mitad se corre con esa ficha o con otra que esté en juego.
+  - **Soplar:** no se puede soplar a quien, con un par, tenía la opción de sacar fichas de la cárcel en lugar de comer.

@@ -286,5 +286,59 @@ module.exports = {
       'Sintetizador', 'Micrófono', 'Bocina', 'Atril', 'Batuta',
       'Metrónomo', 'Partitura', 'Púa', 'Baquetas', 'Arco de violín'
     ]
+  },
+  marcas: {
+    label: 'Marcas y logos',
+    emoji: '🏷️',
+    colors: ['#d6336c', '#f59f00'], // colores de la interfaz con este tema
+    words: [
+      // Ropa y calzado
+      'Nike', 'Adidas', 'Puma', 'Converse', 'Vans',
+      'Levis', 'Zara', 'Lacoste', 'Tommy Hilfiger', 'Gucci',
+      'Louis Vuitton', 'Chanel', 'Crocs', 'Reebok', 'Under Armour',
+      'Ralph Lauren', 'Calvin Klein', 'Totto', 'Victorias Secret', 'Rolex',
+      // Carros y motos
+      'Toyota', 'Chevrolet', 'Ford', 'Ferrari', 'Lamborghini',
+      'Mercedes Benz', 'BMW', 'Audi', 'Volkswagen', 'Mazda',
+      'Renault', 'Nissan', 'Kia', 'Hyundai', 'Tesla',
+      'Porsche', 'Jeep', 'Honda', 'Yamaha', 'Harley Davidson',
+      // Electrodomésticos y tecnología
+      'Samsung', 'LG', 'Sony', 'Whirlpool', 'Oster',
+      'Philips', 'Apple', 'Huawei', 'Xiaomi', 'Motorola',
+      'Panasonic', 'Electrolux', 'Mabe', 'Haceb', 'HP',
+      'Microsoft', 'Google', 'PlayStation', 'Nintendo', 'Canon',
+      // Restaurantes y comida
+      'McDonalds', 'Burger King', 'KFC', 'Starbucks', 'Subway',
+      'Dominos Pizza', 'Pizza Hut', 'Frisby', 'El Corral', 'Crepes y Waffles',
+      'Juan Valdez', 'Taco Bell', 'Dunkin Donuts', 'Papa Johns', 'Kokoriko',
+      // Bebidas, golosinas y otras
+      'Coca-Cola', 'Pepsi', 'Postobón', 'Red Bull', 'Nestlé',
+      'Oreo', 'Chupa Chups', 'Jet', 'Colombina', 'Bimbo',
+      'Netflix', 'YouTube', 'WhatsApp', 'Instagram', 'Facebook',
+      'TikTok', 'Amazon', 'Mercado Libre', 'Rappi', 'Uber',
+      'Disney', 'Lego', 'Barbie', 'Hot Wheels', 'Shell'
+    ]
+  },
+  ciudades: {
+    label: 'Ciudades famosas',
+    emoji: '🏙️',
+    colors: ['#1864ab', '#e8590c'], // colores de la interfaz con este tema
+    words: [
+      'París', 'Londres', 'Nueva York', 'Roma', 'Tokio',
+      'Barcelona', 'Madrid', 'Venecia', 'Ámsterdam', 'Berlín',
+      'Moscú', 'Pekín', 'Dubái', 'Sídney', 'Río de Janeiro',
+      'Buenos Aires', 'Ciudad de México', 'Cancún', 'Las Vegas', 'Los Ángeles',
+      'Miami', 'San Francisco', 'Chicago', 'Washington', 'Hollywood',
+      'Toronto', 'La Habana', 'Lima', 'Cusco', 'Machu Picchu',
+      'Santiago de Chile', 'Quito', 'Caracas', 'Panamá', 'San Juan',
+      'Bogotá', 'Medellín', 'Cartagena', 'Cali', 'Barranquilla',
+      'Santa Marta', 'San Andrés', 'Villa de Leyva', 'Atenas', 'Estambul',
+      'El Cairo', 'Jerusalén', 'El Vaticano', 'Pisa', 'Florencia',
+      'Lisboa', 'Praga', 'Viena', 'Ginebra', 'Mónaco',
+      'Hong Kong', 'Singapur', 'Seúl', 'Bangkok', 'Nueva Delhi',
+      'Agra', 'Shanghái', 'Kioto', 'Ciudad del Cabo', 'Marrakech',
+      'Orlando', 'Nueva Orleans', 'Sevilla', 'Edimburgo', 'Dublín',
+      'Bali', 'Honolulu', 'Acapulco', 'Punta Cana', 'Montevideo'
+    ]
   }
 };

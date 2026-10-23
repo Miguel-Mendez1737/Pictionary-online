@@ -7,6 +7,15 @@ const https = require('https');
 const express = require('express');
 const { Server } = require('socket.io');
 const THEMES = require('./words');
+// 🎲 Tema aleatorio: la ruleta mezcla palabras de todos los temas.
+const THEME_OF = new Map(); // palabra -> tema al que pertenece
+for (const [id, t] of Object.entries(THEMES)) t.words.forEach((w) => { if (!THEME_OF.has(w)) THEME_OF.set(w, id); });
+THEMES.aleatorio = {
+  label: 'Aleatorio (todos los temas)',
+  emoji: '🎲',
+  colors: ['#7048e8', '#f59f00'],
+  words: [...THEME_OF.keys()]
+};
 const mountAccounts = require('./accounts');
 const PKG = require('./package.json');
 
@@ -91,7 +100,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 app.get('/health', (_req, res) => res.json({ ok: true, rooms: rooms.size }));
 
-const THEME_LIST = Object.entries(THEMES).map(([id, t]) => ({
+const THEME_LIST = Object.entries(THEMES).sort(([a], [b]) => (b === 'aleatorio') - (a === 'aleatorio')).map(([id, t]) => ({
   id, label: t.label, emoji: t.emoji, count: t.words.length, colors: t.colors || null
 }));
 
@@ -289,6 +298,9 @@ function snapshotFor(room, playerId) {
     players: publicPlayers(room),
     word: canSeeWord ? room.word : null,
     mask: room.word && room.phase !== 'spinning' ? maskWord(room) : null,
+    // En el tema aleatorio se dice a qué tema pertenece la palabra (pista para adivinar).
+    wordTheme: room.word && room.phase !== 'spinning' && room.settings.theme === 'aleatorio' && THEMES[THEME_OF.get(room.word)]
+      ? `${THEMES[THEME_OF.get(room.word)].emoji} ${THEMES[THEME_OF.get(room.word)].label}` : null,
     wheel: room.phase === 'spinning' ? wheelFor(room, playerId) : null,
     lastTurn: room.phase === 'reveal' ? room.lastTurn : null,
     privacy: room.privacy || null,
@@ -835,6 +847,7 @@ io.on('connection', (socket) => {
     if (coords.some((n) => !Number.isFinite(n))) return;
     const [x0, y0, x1, y1] = coords.map((n) => clamp(n, 0, 1));
     const seg = { x0, y0, x1, y1, w: clamp(Number(s.w) || 6, 1, 40), e: Boolean(s.e) };
+    if (typeof s.c === 'string' && /^#[0-9a-f]{6}$/i.test(s.c)) seg.c = s.c.toLowerCase();
     if (room.segments.length < MAX_SEGMENTS) room.segments.push(seg);
     socket.to(room.code).emit('draw:segment', seg);
   });

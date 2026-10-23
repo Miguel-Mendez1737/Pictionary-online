@@ -22,7 +22,7 @@
     editorTab: 'base',
     account: null,      // perfil de la cuenta si inició sesión
     editing: false,     // ventana "Editar perfil" abierta
-    tool: { size: 4, eraser: false },
+    tool: { size: 4, eraser: false, color: '#111111' },
     lastPhase: null,
     lastDrawerId: null
   };
@@ -1314,7 +1314,7 @@
   }
 
   function drawSegment(seg) {
-    ctx.strokeStyle = seg.e ? '#ffffff' : '#111111';
+    ctx.strokeStyle = seg.e ? '#ffffff' : (seg.c || '#111111');
     ctx.lineWidth = seg.w;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -1336,7 +1336,7 @@
   }
 
   function emitSegment(a, b) {
-    const seg = { x0: round4(a.x), y0: round4(a.y), x1: round4(b.x), y1: round4(b.y), w: state.tool.size, e: state.tool.eraser };
+    const seg = { x0: round4(a.x), y0: round4(a.y), x1: round4(b.x), y1: round4(b.y), w: state.tool.size, e: state.tool.eraser, c: state.tool.color };
     drawSegment(seg);
     socket.emit('draw:segment', seg);
   }
@@ -1378,6 +1378,45 @@
     document.querySelectorAll('.tool.size').forEach((b) => b.classList.toggle('active', b === btn));
     vibrate(8);
   }));
+  // 🎨 Colores para dibujar
+  const DRAW_COLORS = [
+    '#111111', '#868e96', '#ffffff', '#8d5524', '#f4c095',
+    '#e03131', '#ff8787', '#f76707', '#ffa94d', '#fcc419',
+    '#fff3a3', '#2f9e44', '#8ce99a', '#0b7285', '#3bc9db',
+    '#1c4ed8', '#74c0fc', '#7048e8', '#e64980', '#ffc9de'
+  ];
+  const palette = $('#color-palette');
+  const colorBtn = $('#color-btn');
+  const setColor = (c) => {
+    state.tool.color = c;
+    $('#toolbar').style.setProperty('--brush', c);
+    palette.querySelectorAll('.pal').forEach((b) => b.classList.toggle('selected', b.dataset.c === c));
+  };
+  DRAW_COLORS.forEach((c) => {
+    const b = el('button', 'pal');
+    b.type = 'button';
+    b.dataset.c = c;
+    b.style.setProperty('--c', c);
+    b.setAttribute('aria-label', `Color ${c}`);
+    b.addEventListener('click', () => {
+      setColor(c);
+      state.tool.eraser = false;
+      $('#eraser-btn').classList.remove('active');
+      canvas.classList.remove('erasing');
+      palette.classList.add('hidden');
+      colorBtn.setAttribute('aria-expanded', 'false');
+      vibrate(8);
+    });
+    palette.append(b);
+  });
+  setColor(state.tool.color);
+  colorBtn.addEventListener('click', () => {
+    const open = palette.classList.toggle('hidden') === false;
+    colorBtn.setAttribute('aria-expanded', String(open));
+    vibrate(8);
+  });
+  canvas.addEventListener('pointerdown', () => { palette.classList.add('hidden'); colorBtn.setAttribute('aria-expanded', 'false'); });
+
   $('#eraser-btn').addEventListener('click', (e) => {
     state.tool.eraser = !state.tool.eraser;
     e.currentTarget.classList.toggle('active', state.tool.eraser);
@@ -1728,7 +1767,8 @@
   function renderGame(room) {
     const theme = state.themes.find((t) => t.id === room.settings.theme);
     $('#round-label').textContent = `Ronda ${Math.max(1, room.round)}/${room.settings.rounds}`;
-    $('#theme-label').textContent = theme ? `${theme.emoji} ${theme.label}` : '';
+    // 🎲 En el tema aleatorio se muestra de qué tema es la palabra de este turno.
+    $('#theme-label').textContent = room.wordTheme ? `🎲 Tema: ${room.wordTheme}` : theme ? `${theme.emoji} ${theme.label}` : '';
     renderPlayerList($('#game-players'), room, { scores: true });
     renderWord(room);
     setTimer(room.timeLeft);
