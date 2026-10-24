@@ -8,13 +8,11 @@ const express = require('express');
 const { Server } = require('socket.io');
 const THEMES = require('./words');
 // 🎲 Tema aleatorio: la ruleta mezcla palabras de todos los temas.
-const THEME_OF = new Map(); // palabra -> tema al que pertenece
-for (const [id, t] of Object.entries(THEMES)) t.words.forEach((w) => { if (!THEME_OF.has(w)) THEME_OF.set(w, id); });
 THEMES.aleatorio = {
   label: 'Aleatorio (todos los temas)',
   emoji: '🎲',
   colors: ['#7048e8', '#f59f00'],
-  words: [...THEME_OF.keys()]
+  words: [...new Set(Object.values(THEMES).flatMap((t) => t.words))]
 };
 const mountAccounts = require('./accounts');
 const PKG = require('./package.json');
@@ -152,6 +150,28 @@ function cleanAvatar(a) {
 const cleanName = (v) => clean(v, 16);
 
 const accountsReady = mountAccounts(app, { cleanName, cleanAvatar });
+// Al arrancar se recupera la memoria de lo que ya salió en cada sala.
+function loadMemories() {
+  mountAccounts.loadExtra(MEMORY_KEY).then((saved) => {
+    for (const [k, m] of Object.entries(saved || {})) {
+      const cur = memories.get(k) || { words: {}, trivia: new Set(), letters: new Set() };
+      for (const [t, list] of Object.entries(m.w || {})) {
+        cur.words[t] = new Set([...(cur.words[t] || []), ...list]);
+      }
+      (m.t || []).forEach((x) => cur.trivia.add(x));
+      (m.l || []).forEach((x) => cur.letters.add(x));
+      cur.at = Math.max(cur.at || 0, m.at || 0);
+      memories.set(k, cur);
+    }
+    if (saved) console.log(`   Memoria para no repetir: ${Object.keys(saved).length} salas recordadas.`);
+    memoriesLoaded = true;
+  }).catch((err) => {
+    // Si la base de datos no responde, no se guarda nada (para no borrar lo que había) y se reintenta.
+    console.warn('No se pudo leer la memoria de palabras:', err.message, '· reintento en 1 min');
+    setTimeout(loadMemories, 60000).unref();
+  });
+}
+accountsReady.then(loadMemories);
 
 // ─── Juegos disponibles ───────────────────────────────────────────────────────
 // El anfitrión elige en el lobby a qué se juega. Cada juego nuevo vive en su
@@ -164,8 +184,38 @@ const memories = new Map();
 function memoryOf(room) {
   const key = room.privacy ? `dueño:${room.privacy.owner}` : `sala:${room.code}`;
   if (!memories.has(key)) memories.set(key, { words: {}, trivia: new Set(), letters: new Set() });
-  return memories.get(key);
+  const mem = memories.get(key);
+  mem.at = Date.now();
+  saveMemoriesSoon();
+  return mem;
 }
+
+// La memoria se guarda en la base de datos (o en un archivo) para que no se
+// pierda cuando Render duerme o reinicia el servidor.
+const MEMORY_KEY = 'memoria';
+const MAX_MEMORIES = 300;
+let memoryTimer = null;
+let memoriesLoaded = false;
+function serializeMemories() {
+  const list = [...memories.entries()].sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).slice(0, MAX_MEMORIES);
+  return Object.fromEntries(list.map(([k, m]) => [k, {
+    at: m.at || 0,
+    w: Object.fromEntries(Object.entries(m.words).map(([t, set]) => [t, [...set]])),
+    t: [...m.trivia],
+    l: [...m.letters]
+  }]));
+}
+function saveMemories() {
+  clearTimeout(memoryTimer);
+  memoryTimer = null;
+  if (!memoriesLoaded) return Promise.resolve(); // no pisar lo guardado antes de leerlo
+  return mountAccounts.saveExtra(MEMORY_KEY, serializeMemories())
+    .catch((err) => console.warn('No se pudo guardar la memoria de palabras:', err.message));
+}
+function saveMemoriesSoon() {
+  if (!memoryTimer) memoryTimer = setTimeout(saveMemories, 10000);
+}
+mountAccounts.onShutdown(() => saveMemories());
 
 const gameHelpers = {
   memoryOf: (room) => memoryOf(room),
@@ -297,10 +347,13 @@ function snapshotFor(room, playerId) {
     timeLeft: room.timeLeft,
     players: publicPlayers(room),
     word: canSeeWord ? room.word : null,
+    // 💡 Pista solo para el que dibuja (p. ej. París → Torre Eiffel).
+    drawHint: playerId === room.drawerId && room.word && THEMES[room.wordThemeId] && THEMES[room.wordThemeId].hints
+      ? THEMES[room.wordThemeId].hints[room.word] || null : null,
     mask: room.word && room.phase !== 'spinning' ? maskWord(room) : null,
     // En el tema aleatorio se dice a qué tema pertenece la palabra (pista para adivinar).
-    wordTheme: room.word && room.phase !== 'spinning' && room.settings.theme === 'aleatorio' && THEMES[THEME_OF.get(room.word)]
-      ? `${THEMES[THEME_OF.get(room.word)].emoji} ${THEMES[THEME_OF.get(room.word)].label}` : null,
+    wordTheme: room.word && room.phase !== 'spinning' && room.settings.theme === 'aleatorio' && THEMES[room.wordThemeId]
+      ? `${THEMES[room.wordThemeId].emoji} ${THEMES[room.wordThemeId].label}` : null,
     wheel: room.phase === 'spinning' ? wheelFor(room, playerId) : null,
     lastTurn: room.phase === 'reveal' ? room.lastTurn : null,
     privacy: room.privacy || null,
@@ -356,16 +409,25 @@ function systemMsg(room, text, kind = 'info') {
 
 // ─── Lógica de juego ──────────────────────────────────────────────────────────
 // Palabras que ya salieron en este tema (en esta sala, también en partidas anteriores).
-function seenWords(room) {
+function seenWords(room, theme = room.settings.theme) {
   const mem = memoryOf(room);
-  const theme = room.settings.theme;
   if (!mem.words[theme]) mem.words[theme] = new Set();
   return mem.words[theme];
 }
 
 function pickWord(room) {
-  const list = THEMES[room.settings.theme].words;
-  const seen = seenWords(room);
+  let theme = room.settings.theme;
+  // 🎲 Aleatorio: primero se sortea el tema (de los que aún tienen palabras sin salir)
+  // y luego una palabra de ese tema. Así el tema que se muestra es el de la palabra.
+  if (theme === 'aleatorio') {
+    const ids = Object.keys(THEMES).filter((id) => id !== 'aleatorio');
+    const fresh = ids.filter((id) => THEMES[id].words.some((w) => !seenWords(room, id).has(w)));
+    const pool = fresh.length ? fresh : ids;
+    theme = pool[Math.floor(Math.random() * pool.length)];
+  }
+  room.wordThemeId = theme;
+  const list = THEMES[theme].words;
+  const seen = seenWords(room, theme);
   let available = list.filter((w) => !seen.has(w));
   if (available.length === 0) {
     seen.clear(); // ya salieron todas: se empieza de nuevo

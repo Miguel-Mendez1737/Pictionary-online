@@ -59,6 +59,7 @@
           <div id="account-avatar"></div>
           <h2 class="account-hello" id="account-hello">¡Hola!</h2>
           <p class="muted small" id="account-user"></p>
+          <button class="recovery-warn" id="account-recovery-warn" type="button" hidden>🛟 Aún no tienes pregunta de seguridad: si olvidas tu contraseña no podrás recuperarla. <strong>Configúrala aquí</strong></button>
           <label class="field">
             <span class="field-label">Código de sala <small>(opcional)</small></span>
             <input id="room-input-acc" type="text" maxlength="10" placeholder="PUBLICA" autocapitalize="characters" enterkeyhint="go">
@@ -72,6 +73,7 @@
             <button class="btn btn-ghost" id="account-edit" type="button">✏️ Editar perfil</button>
             <button class="btn btn-ghost" id="account-logout" type="button">Cerrar sesión</button>
           </div>
+          <button class="btn btn-ghost" id="account-admin-reset" type="button" hidden>🛠️ Restablecer la contraseña de un jugador</button>
           <p class="form-error" id="account-error" role="alert"></p>
         </div>
 
@@ -112,6 +114,14 @@
               <span class="field-label">Contraseña <small>(mínimo 6 caracteres)</small></span>
               <input id="reg-password" type="password" maxlength="100" autocomplete="new-password">
             </label>
+            <label class="field">
+              <span class="field-label">🛟 Pregunta de seguridad <small>(para recuperar tu contraseña si la olvidas)</small></span>
+              <select id="reg-question" class="recovery-question"></select>
+            </label>
+            <label class="field">
+              <span class="field-label">Tu respuesta</span>
+              <input id="reg-answer" type="text" maxlength="60" autocomplete="off" autocorrect="off" spellcheck="false">
+            </label>
           </details>
 
           <button class="btn btn-primary btn-lg" type="submit" id="join-btn">Entrar a jugar</button>
@@ -132,7 +142,32 @@
           </label>
           <button class="btn btn-primary btn-lg" type="submit" id="login-btn">Entrar</button>
           <p class="form-error" id="login-error" role="alert"></p>
+          <p class="switch-view"><button class="link-btn" id="go-recover" type="button">¿Olvidaste tu contraseña?</button></p>
           <p class="switch-view">¿Nuevo aquí? <button class="link-btn" id="go-register" type="button">Crea tu jugador</button></p>
+        </form>
+
+        <!-- Recuperar la contraseña con la pregunta de seguridad -->
+        <form id="recover-form" class="card" novalidate hidden>
+          <h2 class="form-title">🔑 Recuperar contraseña</h2>
+          <label class="field">
+            <span class="field-label">Tu usuario</span>
+            <input id="recover-username" type="text" maxlength="20" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next">
+          </label>
+          <button class="btn btn-ghost" id="recover-find" type="button">Ver mi pregunta de seguridad</button>
+          <div id="recover-step2" hidden>
+            <p class="recover-question" id="recover-question"></p>
+            <label class="field">
+              <span class="field-label">Tu respuesta</span>
+              <input id="recover-answer" type="text" maxlength="60" autocomplete="off" autocorrect="off" spellcheck="false">
+            </label>
+            <label class="field">
+              <span class="field-label">Nueva contraseña <small>(mínimo 6 caracteres)</small></span>
+              <input id="recover-password" type="password" maxlength="100" autocomplete="new-password" enterkeyhint="go">
+            </label>
+            <button class="btn btn-primary btn-lg" type="submit" id="recover-btn">Cambiar contraseña y entrar</button>
+          </div>
+          <p class="form-error" id="recover-error" role="alert"></p>
+          <p class="switch-view"><button class="link-btn" id="recover-back" type="button">← Volver a iniciar sesión</button></p>
         </form>
         <p class="credits"><span data-app="name">Adivina el Garabato</span> <span data-app="version"></span> · by <strong data-app="author">Miguel Mendez</strong></p>
       </div>
@@ -510,6 +545,17 @@
             <label class="field">
               <span class="field-label">Nueva contraseña</span>
               <input id="profile-new" type="password" autocomplete="new-password">
+            </label>
+          </details>
+          <details class="save-account" id="profile-recovery">
+            <summary>🛟 Pregunta de seguridad <span id="profile-recovery-state"></span></summary>
+            <label class="field">
+              <span class="field-label">Pregunta</span>
+              <select id="profile-question" class="recovery-question"></select>
+            </label>
+            <label class="field">
+              <span class="field-label">Respuesta <small>(déjala vacía para no cambiarla)</small></span>
+              <input id="profile-answer" type="text" maxlength="60" autocomplete="off" autocorrect="off" spellcheck="false">
             </label>
           </details>
         </div>

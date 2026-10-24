@@ -121,10 +121,14 @@ function save() {
 }
 // Al apagar el servidor (Render lo hace al dormirse o actualizar) se guarda lo pendiente.
 let closing = false;
+const shutdownHooks = []; // otras cosas que guardar antes de apagar (p. ej. la memoria de palabras)
 ['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, async () => {
   if (closing) return;
   closing = true;
   try {
+    for (const fn of shutdownHooks) {
+      try { await Promise.race([fn(), new Promise((r) => setTimeout(r, 4000))]); } catch { /* se intenta lo demás */ }
+    }
     if (saveTimer) flush();
     await Promise.race([writing, new Promise((r) => setTimeout(r, 5000))]);
     if (pool) await pool.end();
@@ -161,7 +165,38 @@ function findByToken(token) {
   return Object.values(db.users).find((u) => (u.tokens || []).includes(h)) || null;
 }
 
-const publicProfile = (u) => ({ username: u.username, name: u.name, avatar: u.avatar });
+// 🔑 Recuperar la contraseña con una pregunta de seguridad (no hay correo).
+const QUESTIONS = [
+  '¿Cómo se llamaba tu primera mascota?',
+  '¿En qué ciudad nació tu mamá?',
+  '¿Cuál es el segundo nombre de tu papá?',
+  '¿Cómo se llamaba tu primer colegio?',
+  '¿Cuál es tu comida favorita?',
+  '¿Cómo se llama tu mejor amigo de la infancia?',
+  '¿Cuál fue tu primer trabajo?',
+  '¿De qué equipo de fútbol eres hincha?'
+];
+// La respuesta se compara sin mayúsculas, tildes ni espacios de más.
+const normAnswer = (a) => String(a ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9ñ ]/g, ' ').replace(/\s+/g, ' ').trim();
+function makeRecovery(question, answer) {
+  const q = Number(question);
+  const a = normAnswer(answer);
+  if (!Number.isInteger(q) || q < 0 || q >= QUESTIONS.length || a.length < 2 || a.length > 60) return null;
+  return { q, ...hashPassword(a) };
+}
+const checkAnswer = (user, answer) => Boolean(user.recovery) && checkPassword(user.recovery, normAnswer(answer));
+
+// 🛠️ Administradores (variable ADMIN_USERS en Render, separados por coma): pueden
+// restablecer la contraseña de un jugador que la olvidó y no tiene pregunta de seguridad.
+const ADMINS = new Set(String(process.env.ADMIN_USERS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
+const isAdmin = (u) => ADMINS.has(u.username);
+
+const publicProfile = (u) => ({
+  username: u.username, name: u.name, avatar: u.avatar,
+  recoveryQuestion: u.recovery ? QUESTIONS[u.recovery.q] : null,
+  ...(isAdmin(u) ? { admin: true } : {})
+});
 
 const ERR = {
   username: 'El usuario debe tener de 3 a 20 caracteres: letras, números, punto, guion o guion bajo (sin espacios).',
@@ -170,7 +205,11 @@ const ERR = {
   login: 'Usuario o contraseña incorrectos.',
   session: 'Tu sesión expiró. Inicia sesión de nuevo.',
   name: 'Escribe tu nombre.',
-  current: 'La contraseña actual no es correcta.'
+  current: 'La contraseña actual no es correcta.',
+  recovery: 'Elige una pregunta de seguridad y escribe una respuesta (mínimo 2 letras).',
+  noRecovery: 'Esta cuenta no tiene pregunta de seguridad. Pídele al creador de la app que te restablezca la contraseña.',
+  answer: 'La respuesta no es correcta.',
+  tooMany: 'Demasiados intentos con esta cuenta. Espera una hora e inténtalo de nuevo.'
 };
 const validPassword = (p) => typeof p === 'string' && p.length >= 6 && p.length <= 100;
 
@@ -239,6 +278,11 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
     if (!USER_RE.test(username)) return res.status(400).json({ error: ERR.username });
     if (!validPassword(b.password)) return res.status(400).json({ error: ERR.password });
     if (db.users[username]) return res.status(409).json({ error: ERR.taken });
+    let recovery = null;
+    if (b.question !== undefined || b.answer) {
+      recovery = makeRecovery(b.question, b.answer);
+      if (!recovery) return res.status(400).json({ error: ERR.recovery });
+    }
     const name = cleanName(b.name) || username;
     const user = {
       username,
@@ -248,6 +292,7 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
       tokens: [],
       createdAt: new Date().toISOString()
     };
+    if (recovery) user.recovery = recovery;
     db.users[username] = user;
     res.json({ token: issueToken(user), profile: publicProfile(user) });
   });
@@ -262,6 +307,49 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
   });
 
   router.get('/me', auth, (req, res) => res.json({ profile: publicProfile(req.user) }));
+
+  // ─── 🔑 ¿Olvidaste tu contraseña? ───
+  router.get('/recover/questions', (_req, res) => res.json({ questions: QUESTIONS }));
+  router.post('/admin/reset', auth, rateLimit, (req, res) => {
+    if (!isAdmin(req.user)) return res.status(403).json({ error: 'Solo el administrador puede hacer esto.' });
+    const b = req.body || {};
+    const user = db.users[normUser(b.username)];
+    if (!user) return res.status(404).json({ error: 'No existe una cuenta con ese usuario.' });
+    if (!validPassword(b.newPassword)) return res.status(400).json({ error: ERR.password });
+    Object.assign(user, hashPassword(b.newPassword));
+    user.tokens = [];
+    save();
+    res.json({ ok: true, username: user.username });
+  });
+  router.post('/recover/question', rateLimit, (req, res) => {
+    const user = db.users[normUser((req.body || {}).username)];
+    if (!user) return res.status(404).json({ error: 'No existe una cuenta con ese usuario.' });
+    if (!user.recovery) return res.status(404).json({ error: ERR.noRecovery });
+    res.json({ question: QUESTIONS[user.recovery.q] });
+  });
+  // Máximo 5 respuestas equivocadas por cuenta cada hora.
+  const fails = new Map();
+  router.post('/recover', rateLimit, (req, res) => {
+    const b = req.body || {};
+    const username = normUser(b.username);
+    const user = db.users[username];
+    if (!user) return res.status(404).json({ error: 'No existe una cuenta con ese usuario.' });
+    if (!user.recovery) return res.status(404).json({ error: ERR.noRecovery });
+    const now = Date.now();
+    const f = fails.get(username);
+    if (f && now < f.until && f.n >= 5) return res.status(429).json({ error: ERR.tooMany });
+    if (!checkAnswer(user, b.answer)) {
+      const entry = f && now < f.until ? f : { n: 0, until: now + 3600000 };
+      entry.n++;
+      fails.set(username, entry);
+      return res.status(401).json({ error: ERR.answer });
+    }
+    if (!validPassword(b.newPassword)) return res.status(400).json({ error: ERR.password });
+    fails.delete(username);
+    Object.assign(user, hashPassword(b.newPassword));
+    user.tokens = []; // cierra las sesiones abiertas en otros celulares
+    res.json({ token: issueToken(user), profile: publicProfile(user) });
+  });
 
   // Todo el perfil es editable: nombre, avatar, usuario y contraseña.
   router.put('/me', auth, rateLimit, (req, res) => {
@@ -287,7 +375,14 @@ module.exports = function mountAccounts(app, { cleanName, cleanAvatar }) {
       }
     }
 
+    let recovery = null;
+    if (b.question !== undefined || b.answer) {
+      recovery = makeRecovery(b.question, b.answer);
+      if (!recovery) return res.status(400).json({ error: ERR.recovery });
+    }
+
     // 2) Aplicar
+    if (recovery) u.recovery = recovery;
     if (newUsername) {
       const old = u.username;
       delete db.users[old];
@@ -364,4 +459,28 @@ module.exports.canJoinPrivate = (owner, username) => {
   return Boolean(o && (o.friends || []).includes(username));
 };
 module.exports.accountsAvailable = () => available;
+
+// ─── Otros datos que deben sobrevivir a un reinicio (misma base de datos o archivo) ───
+const extraFile = (key) => path.join(DATA_DIR, `${key.replace(/[^a-z0-9_-]/gi, '')}.json`);
+module.exports.loadExtra = async (key) => {
+  if (pool) {
+    const res = await pool.query('SELECT value FROM pictionary_store WHERE key = $1', [key]);
+    return res.rows[0] ? res.rows[0].value : null;
+  }
+  try { return JSON.parse(fs.readFileSync(extraFile(key), 'utf8')); } catch { return null; }
+};
+module.exports.saveExtra = async (key, value) => {
+  const json = JSON.stringify(value);
+  if (pool) {
+    await pool.query(
+      `INSERT INTO pictionary_store (key, value, updated_at) VALUES ($1, $2::jsonb, now())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, [key, json]);
+    return;
+  }
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  const file = extraFile(key);
+  fs.writeFileSync(`${file}.tmp`, json);
+  fs.renameSync(`${file}.tmp`, file);
+};
+module.exports.onShutdown = (fn) => shutdownHooks.push(fn);
 

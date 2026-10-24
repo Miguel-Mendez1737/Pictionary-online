@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.21.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.22.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -391,3 +391,14 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   - **Pata de perro:** no se puede retroceder pasando por encima de un bloqueo.
   - **Una sola ficha en la cárcel:** con un par sale usando la mitad, y la otra mitad se corre con esa ficha o con otra que esté en juego.
   - **Soplar:** no se puede soplar a quien, con un par, tenía la opción de sacar fichas de la cárcel en lugar de comer.
+
+## v1.22.0: recuperar contraseña, ciudades emblemáticas y menos repeticiones
+- **🔑 Recuperar la contraseña** con una pregunta de seguridad:
+  - Al crear la cuenta se elige una pregunta y se escribe la respuesta. La respuesta se guarda cifrada y se compara sin mayúsculas ni tildes.
+  - En "Iniciar sesión" está el enlace "¿Olvidaste tu contraseña?": escribes tu usuario, respondes tu pregunta y pones una contraseña nueva.
+  - Quien tenía cuenta antes ve un aviso para configurar su pregunta en "Editar perfil".
+  - Para evitar abusos, se permiten máximo 5 respuestas equivocadas por hora.
+- **🛠️ Restablecer contraseñas (administrador):** con la variable `ADMIN_USERS` en Render (tu usuario), aparece un botón para poner una contraseña nueva a un jugador que no tiene pregunta de seguridad.
+- **🏙️ Ciudades famosas:** solo 65 ciudades con algo muy conocido para dibujar. El que dibuja ve una pista, por ejemplo "París → 💡 Torre Eiffel".
+- **🎲 Aleatorio corregido:** antes, si una palabra estaba en dos temas (por ejemplo "Barbie" en Películas y en Marcas), arriba podía salir el tema equivocado. Ahora primero se sortea el tema y luego una palabra de ese tema.
+- **No repetir:** la memoria de palabras, preguntas y letras que ya salieron se guarda en la base de datos. Antes se borraba cada vez que Render dormía el servidor y por eso se repetían.

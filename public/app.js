@@ -564,7 +564,7 @@
     let data = {};
     try { data = await res.json(); } catch { /* sin cuerpo */ }
     if (!res.ok) {
-      if (res.status === 401 && url !== '/api/login') setAccount(null);
+      if (res.status === 401 && url !== '/api/login' && !url.startsWith('/api/recover')) setAccount(null);
       throw new Error(data.error || 'Ocurrió un error. Intenta de nuevo.');
     }
     return data;
@@ -589,13 +589,16 @@
     $('#view-account').hidden = view !== 'account';
     $('#register-form').hidden = view !== 'guest';
     $('#login-form').hidden = view !== 'login';
-    ['#register-error', '#login-error', '#account-error'].forEach((id) => { $(id).textContent = ''; });
+    $('#recover-form').hidden = view !== 'recover';
+    ['#register-error', '#login-error', '#account-error', '#recover-error'].forEach((id) => { $(id).textContent = ''; });
     if (view === 'account' && state.account) {
       const box = $('#account-avatar');
       box.innerHTML = '';
       box.append(avatarEl(state.account.avatar, 'xl'));
       $('#account-hello').textContent = `¡Hola, ${state.account.name}!`;
       $('#account-user').textContent = `Tu usuario: @${state.account.username}`;
+      $('#account-recovery-warn').hidden = Boolean(state.account.recoveryQuestion);
+      $('#account-admin-reset').hidden = !state.account.admin;
       refreshFriendsCount();
     }
     if (view === 'guest') {
@@ -635,6 +638,73 @@
       if (e.key === 'Enter') { e.preventDefault(); roomInput.focus(); }
     });
     $('#go-login').addEventListener('click', () => showRegisterView('login'));
+
+    // 🛟 Preguntas de seguridad (para recuperar la contraseña)
+    fetch('/api/recover/questions').then((r) => r.json()).then(({ questions }) => {
+      state.recoveryQuestions = questions || [];
+      document.querySelectorAll('.recovery-question').forEach((sel) => {
+        sel.innerHTML = '<option value="">Elige una pregunta…</option>'
+          + state.recoveryQuestions.map((q, i) => `<option value="${i}">${q}</option>`).join('');
+      });
+    }).catch(() => { /* sin conexión: se intenta al recargar */ });
+    $('#account-recovery-warn').addEventListener('click', () => { openProfile(); $('#profile-recovery').open = true; });
+    // 🛠️ Solo el administrador: restablecer la contraseña de un jugador.
+    $('#account-admin-reset').addEventListener('click', async () => {
+      const username = (prompt('Usuario del jugador que olvidó su contraseña:') || '').trim();
+      if (!username) return;
+      const newPassword = prompt(`Nueva contraseña para @${username} (mínimo 6 caracteres). Díselo al jugador:`) || '';
+      if (!newPassword) return;
+      try {
+        const res = await api('POST', '/api/admin/reset', { username, newPassword });
+        toast(`🛠️ Listo: @${res.username} ya puede entrar con la nueva contraseña.`, 'success');
+      } catch (ex) { toast(ex.message, 'warn'); }
+    });
+
+    // 🔑 ¿Olvidaste tu contraseña?
+    $('#go-recover').addEventListener('click', () => {
+      $('#recover-username').value = $('#login-username').value.trim();
+      $('#recover-step2').hidden = true;
+      showRegisterView('recover');
+    });
+    $('#recover-back').addEventListener('click', () => showRegisterView('login'));
+    $('#recover-find').addEventListener('click', async () => {
+      const err = $('#recover-error');
+      err.textContent = '';
+      const username = $('#recover-username').value.trim();
+      if (!username) { err.textContent = 'Escribe tu usuario.'; return; }
+      try {
+        const res = await api('POST', '/api/recover/question', { username });
+        $('#recover-question').textContent = `🛟 ${res.question}`;
+        $('#recover-step2').hidden = false;
+        $('#recover-answer').focus();
+      } catch (ex) {
+        $('#recover-step2').hidden = true;
+        err.textContent = ex.message;
+      }
+    });
+    $('#recover-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = $('#recover-error');
+      err.textContent = '';
+      if ($('#recover-step2').hidden) { $('#recover-find').click(); return; }
+      $('#recover-btn').disabled = true;
+      try {
+        const res = await api('POST', '/api/recover', {
+          username: $('#recover-username').value.trim(),
+          answer: $('#recover-answer').value,
+          newPassword: $('#recover-password').value
+        });
+        setAccount(res.profile, res.token);
+        $('#recover-answer').value = '';
+        $('#recover-password').value = '';
+        showRegisterView('account');
+        toast('🔑 ¡Listo! Tu contraseña cambió y ya entraste.', 'success');
+      } catch (ex) {
+        err.textContent = ex.message;
+      } finally {
+        $('#recover-btn').disabled = false;
+      }
+    });
     $('#go-register').addEventListener('click', () => showRegisterView('guest'));
 
     // Nuevo jugador (y, si llenó usuario y contraseña, crea su cuenta)
@@ -649,8 +719,17 @@
       document.activeElement.blur();
       $('#join-btn').disabled = true;
       if (username || password) {
+        const question = $('#reg-question').value;
+        const answer = $('#reg-answer').value.trim();
+        if (question === '' || answer.length < 2) {
+          err.textContent = '🛟 Elige una pregunta de seguridad y escribe tu respuesta: así podrás recuperar tu contraseña si la olvidas.';
+          $('#save-account').open = true;
+          $('#join-btn').disabled = false;
+          return;
+        }
         try {
-          const res = await api('POST', '/api/register', { username, password, name, avatar: state.avatar });
+          const res = await api('POST', '/api/register', { username, password, name, avatar: state.avatar, question: Number(question), answer });
+          $('#reg-answer').value = '';
           setAccount(res.profile, res.token);
           $('#reg-password').value = '';
           toast('💾 ¡Cuenta creada! La próxima vez entras directo.', 'success');
@@ -850,6 +929,11 @@
     $('#profile-current').value = '';
     $('#profile-new').value = '';
     $('#profile-error').textContent = '';
+    $('#profile-answer').value = '';
+    const rq = state.account && state.account.recoveryQuestion;
+    $('#profile-question').value = rq && state.recoveryQuestions ? String(state.recoveryQuestions.indexOf(rq)) : '';
+    $('#profile-recovery-state').textContent = rq ? '✅' : '⚠️ sin configurar';
+    $('#profile-recovery').open = false;
     $('#editor-modal').append($('#avatar-editor'));
     renderAvatarEditor();
     $('#profile-modal').classList.remove('hidden');
@@ -881,6 +965,12 @@
         if ($('#profile-new').value) {
           body.currentPassword = $('#profile-current').value;
           body.newPassword = $('#profile-new').value;
+        }
+        const answer = $('#profile-answer').value.trim();
+        if (answer) {
+          if ($('#profile-question').value === '') { err.textContent = '🛟 Elige una pregunta de seguridad.'; saveBtn.disabled = false; return; }
+          body.question = Number($('#profile-question').value);
+          body.answer = answer;
         }
         const res = await api('PUT', '/api/me', body);
         setAccount(res.profile);
@@ -1438,7 +1528,7 @@
     const chars = room.word ? [...room.word] : room.mask;
     const letters = room.mask.filter((c) => c !== ' ').length;
     if (room.phase === 'reveal') caption.textContent = 'La palabra era';
-    else if (amDrawer()) caption.textContent = '✏️ Dibuja esto';
+    else if (amDrawer()) caption.textContent = room.drawHint ? `💡 ${room.drawHint}` : '✏️ Dibuja esto';
     else if (me && me.guessed) caption.textContent = '✅ ¡Adivinaste!';
     else caption.textContent = `🔤 ${letters} letras`;
 
@@ -1822,7 +1912,7 @@
     // Aviso (y vibración) cuando empieza tu turno de dibujar.
     const newTurn = room.phase === 'drawing' && (state.lastPhase !== 'drawing' || state.lastDrawerId !== room.drawerId);
     if (newTurn && amDrawer()) {
-      toast(`🎨 ¡Te toca dibujar: ${room.word}!`, 'success');
+      toast(`🎨 ¡Te toca dibujar: ${room.word}!${room.drawHint ? ` 💡 ${room.drawHint}` : ''}`, 'success');
       vibrate([80, 60, 80]);
     }
     state.lastPhase = room.phase;
