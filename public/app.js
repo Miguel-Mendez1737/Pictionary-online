@@ -509,7 +509,7 @@
         panel.append(thumbGroup('Tipo de cabello', 'hair', S.hair, 'hair'), swatchGroup('Color de cabello', 'hairColor', S.hairColor));
         break;
       case 'eyes':
-        panel.append(thumbGroup('Tipo de ojos', 'eyes', S.eyes, 'eyes'), swatchGroup('Color de ojos', 'eyeColor', S.eyeColor));
+        panel.append(thumbGroup('Tipo de ojos', 'eyes', S.eyes, 'eyes'), swatchGroup('Color de ojos', 'eyeColor', S.eyeColor), thumbGroup('Cejas', 'brows', S.brows, 'eyes'));
         break;
       case 'glasses':
         panel.append(thumbGroup('Tipo de lentes', 'glasses', S.glasses, 'glasses'));

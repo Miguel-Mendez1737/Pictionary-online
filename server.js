@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3000;
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 12;
 // Avatar personalizable: cantidad de opciones de cada rasgo (debe coincidir con public/app.js).
-const AVATAR_LIMITS = { skin: 6, hair: 8, hairColor: 8, eyes: 6, eyeColor: 6, lips: 6, beard: 6, bg: 8, shirt: 4, shirtColor: 10, stripeColor: 10, glasses: 5, glassesColor: 10, lens: 7 };
+const AVATAR_LIMITS = { skin: 10, hair: 14, hairColor: 14, brows: 5, eyes: 10, eyeColor: 8, lips: 8, beard: 10, bg: 8, shirt: 4, shirtColor: 10, stripeColor: 10, glasses: 10, glassesColor: 10, lens: 7 };
 
 // Puntaje: 10 puntos por adivinar la palabra del turno. Los puntos se acumulan
 // mientras el jugador siga conectado (aunque se jueguen varias partidas) y

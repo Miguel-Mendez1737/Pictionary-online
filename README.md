@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.23.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.24.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -407,3 +407,14 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **🧑‍🎨 Avatares estilo anime:** ojos grandes con brillos y delineado, cabello con degradado, mechones en punta y brillo, mejillas sonrojadas, cara con barbilla en punta y bocas pequeñas. Se mantienen las mismas opciones, así que los avatares guardados siguen funcionando.
 - **Portada más sobria:** tarjeta oscura con el nombre en letra clásica y la lista de juegos. Se quitaron los dibujos animados que flotaban.
 - **➕ Agregar amigos durante la partida:** junto a cada jugador que tiene cuenta aparece ➕, y al tocarlo queda como amigo (🤝). Aparece en el lobby, en la lista de jugadores del Garabato y del Parchís, y en el podio al final de cada juego.
+
+## v1.24.0: avatares más humanos y con más opciones
+- **Rostro más humano:** cara con mandíbula (más marcada en hombres), orejas con detalle, nariz con sombra, labios con forma, pliegue del párpado, iris con degradado, piel con volumen y cuello con sombra.
+- **Más opciones** (los avatares guardados no cambian):
+  - **Piel:** 10 tonos (nuevos: Porcelana, Oliva, Canela y Ébano).
+  - **Cabello:** 14 peinados (nuevos: Ondulado, Raya al lado, Coleta, Trenzas, Afro y Hacia atrás) y 14 colores (nuevos: Castaño claro, Rubio platino, Caoba, Gris, Morado y Verde).
+  - **Cejas** (opción nueva): Naturales, Gruesas, Finas, Arqueadas y Rectas.
+  - **Ojos:** 10 tipos, entre ellos 3 estilo anime (Anime brillantes, Anime y Anime serios) y Rasgados. Hay 8 colores (nuevos: Miel y Violeta).
+  - **Barba:** 9 tipos (nuevos: Larga, Patillas, Chivo y Bigote fino).
+  - **Lentes ópticos:** 9 tipos (nuevos: Rectangulares, Media montura, Sin montura, Hexagonales y Ovalados), con cristales transparentes o de color.
+  - **Labios:** 8 tipos (nuevos: Labios finos y Sonrisa de lado).
