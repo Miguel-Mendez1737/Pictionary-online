@@ -25,7 +25,9 @@ const PORT = process.env.PORT || 3000;
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 12;
 // Avatar personalizable: cantidad de opciones de cada rasgo (debe coincidir con public/app.js).
-const AVATAR_LIMITS = { skin: 10, hair: 14, hairColor: 14, brows: 5, eyes: 10, eyeColor: 8, lips: 8, beard: 10, bg: 8, shirt: 4, shirtColor: 10, stripeColor: 10, glasses: 10, glassesColor: 10, lens: 7 };
+const AVATAR_LIMITS = { skin: 10, hair: 20, hairColor: 20, brows: 5, eyes: 10, eyeColor: 8, lips: 8, beard: 14, bg: 8, shirt: 4, shirtColor: 10, stripeColor: 10, glasses: 14, glassesColor: 10, lens: 7, face: 6, hat: 9, hatColor: 10, acc: 8 };
+// Valor cuando un avatar guardado antes no trae ese rasgo (igual que en avatar.js).
+const AVATAR_MISSING = { shirtColor: () => 7, hatColor: () => 1, brows: (g) => (g === 'm' ? 3 : 0), acc: (g) => (g === 'm' ? 1 : 0) };
 
 // Puntaje: 10 puntos por adivinar la palabra del turno. Los puntos se acumulan
 // mientras el jugador siga conectado (aunque se jueguen varias partidas) y
@@ -142,7 +144,7 @@ function cleanAvatar(a) {
   const out = { g: a && a.g === 'm' ? 'm' : 'h' };
   for (const [key, count] of Object.entries(AVATAR_LIMITS)) {
     const v = parseInt(a && a[key], 10);
-    out[key] = Number.isInteger(v) ? clamp(v, 0, count - 1) : 0;
+    out[key] = Number.isInteger(v) ? clamp(v, 0, count - 1) : (AVATAR_MISSING[key] ? AVATAR_MISSING[key](out.g) : 0);
   }
   if (out.g === 'm') out.beard = 0;
   return out;

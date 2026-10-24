@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.25.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.26.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -426,3 +426,13 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   - sombras suaves con efecto 3D en los lados de la cara, debajo de la barbilla, alrededor de los ojos, al costado de la nariz y debajo del labio;
   - brillos en los pómulos, la frente, la punta de la nariz, los labios y el cabello;
   - rubor difuminado, cuello con sombra y playera con volumen.
+
+## v1.26.0: forma de cara, gorras, accesorios y más estilos
+- **Forma de la cara** (en "Sexo y piel"): Normal, Ovalada, Cuadrada, Redonda, Alargada y Corazón.
+- **Pestaña nueva 🧢 Accesorios:**
+  - **Gorras y sombreros:** Gorra, Gorra al revés, Gorro de lana con pompón, Sombrero, Boina, Sombrero vueltiao, Bandana y Diadema. Tienen 10 colores.
+  - **Accesorios:** Aretes pequeños, Argollas, Perlas, Aretes largos, Piercing en la nariz, Audífonos y Collar.
+- **Cabello:** 20 peinados (nuevos: Pixie, Rastas, Copete, Dos moños, Rapado a los lados y Media melena) y 20 colores (nuevos: Rojo fuego, Turquesa, Lila, Miel, Negro azulado y Blanco).
+- **Barba:** 13 tipos (nuevos: Corta, Herradura, Imperial y Mosca).
+- **Lentes:** 13 tipos (nuevos: Grandes, De lectura, Deportivos y Corazón).
+- Los avatares guardados no cambian. Las mujeres conservan sus aretes pequeños, que ahora se pueden quitar o cambiar.

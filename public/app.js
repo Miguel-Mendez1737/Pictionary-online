@@ -423,7 +423,8 @@
     { id: 'glasses', icon: '🕶️', label: 'Lentes' },
     { id: 'mouth', icon: '👄', label: 'Labios' },
     { id: 'beard', icon: '🧔', label: 'Barba', onlyMen: true },
-    { id: 'shirt', icon: '👕', label: 'Playera' }
+    { id: 'shirt', icon: '👕', label: 'Playera' },
+    { id: 'acc', icon: '🧢', label: 'Accesorios' }
   ];
 
   function setAvatar(patch) {
@@ -525,6 +526,11 @@
         panel.append(thumbGroup('Playera', 'shirt', S.shirt, 'shirt'), swatchGroup('Color', 'shirtColor', S.shirtColor));
         if (a.shirt > 0) panel.append(swatchGroup('Color de las rayas', 'stripeColor', S.stripeColor));
         break;
+      case 'acc':
+        panel.append(thumbGroup('Gorra o sombrero', 'hat', S.hat, 'hat'));
+        if (a.hat > 0 || a.acc === 4 || a.acc === 6 || a.acc === 7) panel.append(swatchGroup('Color de la gorra y los accesorios', 'hatColor', S.hatColor));
+        panel.append(thumbGroup('Accesorios', 'acc', S.acc, 'acc'));
+        break;
       default: {
         const sex = el('div', 'editor-group');
         sex.append(el('span', 'editor-label', 'Sexo'));
@@ -546,7 +552,7 @@
           seg.append(b);
         });
         sex.append(seg);
-        panel.append(sex, swatchGroup('Color de piel', 'skin', S.skin), swatchGroup('Fondo', 'bg', S.bg));
+        panel.append(sex, thumbGroup('Forma de la cara', 'face', S.face, 'face'), swatchGroup('Color de piel', 'skin', S.skin), swatchGroup('Fondo', 'bg', S.bg));
       }
     }
   }

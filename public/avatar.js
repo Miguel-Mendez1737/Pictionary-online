@@ -36,7 +36,13 @@
     { name: 'Caoba', c: '#7a2e22' },
     { name: 'Gris', c: '#7b7e86' },
     { name: 'Morado', c: '#8a5bd6' },
-    { name: 'Verde', c: '#3fae7a' }
+    { name: 'Verde', c: '#3fae7a' },
+    { name: 'Rojo fuego', c: '#d42a1f' },
+    { name: 'Turquesa', c: '#1fb5b0' },
+    { name: 'Lila', c: '#c39be8' },
+    { name: 'Miel', c: '#c58b3a' },
+    { name: 'Negro azulado', c: '#1d2540' },
+    { name: 'Blanco', c: '#f1f1f1' }
   ];
   const EYE_COLORS = [
     { name: 'Café', c: '#6b3e1f' },
@@ -72,12 +78,17 @@
   ];
   const SHIRT_TYPES = ['Lisa', 'Rayas', 'Rayitas', 'Verticales'];
   const HAIR_TYPES = ['Calvo', 'Corto', 'Rapado', 'Rizado', 'Largo', 'Moño', 'Melena', 'Cresta',
-    'Ondulado', 'Raya al lado', 'Coleta', 'Trenzas', 'Afro', 'Hacia atrás'];
+    'Ondulado', 'Raya al lado', 'Coleta', 'Trenzas', 'Afro', 'Hacia atrás',
+    'Pixie', 'Rastas', 'Copete', 'Dos moños', 'Rapado a los lados', 'Media melena'];
+  const FACE_TYPES = ['Normal', 'Ovalada', 'Cuadrada', 'Redonda', 'Alargada', 'Corazón'];
+  const HAT_TYPES = ['Sin gorra', 'Gorra', 'Gorra al revés', 'Gorro de lana', 'Sombrero', 'Boina', 'Sombrero vueltiao', 'Bandana', 'Diadema'];
+  const ACC_TYPES = ['Ninguno', 'Aretes pequeños', 'Argollas', 'Perlas', 'Aretes largos', 'Piercing en la nariz', 'Audífonos', 'Collar'];
   const BROW_TYPES = ['Naturales', 'Gruesas', 'Finas', 'Arqueadas', 'Rectas'];
   const EYE_TYPES = ['Normales', 'Grandes', 'Almendrados', 'Con pestañas', 'Felices', 'Guiño',
     'Anime brillantes', 'Anime', 'Anime serios', 'Rasgados'];
   const GLASSES_TYPES = ['Sin lentes', 'Redondos', 'Cuadrados', 'Aviador', 'Ojo de gato',
-    'Rectangulares', 'Media montura', 'Sin montura', 'Hexagonales', 'Ovalados'];
+    'Rectangulares', 'Media montura', 'Sin montura', 'Hexagonales', 'Ovalados',
+    'Grandes', 'De lectura', 'Deportivos', 'Corazón'];
   const FRAME_COLORS = [
     { name: 'Negro', c: '#23243a' },
     { name: 'Carey', c: '#7a4a2a' },
@@ -102,19 +113,20 @@
   ];
   const LIP_TYPES = ['Sonrisa', 'Risa', 'Labios gruesos', 'Serio', 'Sorpresa', 'Lengua', 'Labios finos', 'Sonrisa de lado'];
   const BEARD_TYPES = ['Sin barba', 'Completa', 'Candado', 'Bigote', 'De 3 días', 'Bigote y candado',
-    'Larga', 'Patillas', 'Chivo', 'Bigote fino'];
+    'Larga', 'Patillas', 'Chivo', 'Bigote fino', 'Corta', 'Herradura', 'Imperial', 'Mosca'];
 
   const SPEC = {
     g: [{ id: 'h', name: 'Hombre' }, { id: 'm', name: 'Mujer' }],
     skin: SKIN, hair: HAIR_TYPES, hairColor: HAIR_COLORS, brows: BROW_TYPES, eyes: EYE_TYPES,
     eyeColor: EYE_COLORS, lips: LIP_TYPES, beard: BEARD_TYPES, bg: BG,
     shirt: SHIRT_TYPES, shirtColor: SHIRT_COLORS, stripeColor: SHIRT_COLORS,
-    glasses: GLASSES_TYPES, glassesColor: FRAME_COLORS, lens: LENSES
+    glasses: GLASSES_TYPES, glassesColor: FRAME_COLORS, lens: LENSES,
+    face: FACE_TYPES, hat: HAT_TYPES, hatColor: SHIRT_COLORS, acc: ACC_TYPES
   };
 
   const DEFAULTS = {
-    h: { g: 'h', skin: 1, hair: 1, hairColor: 1, brows: 0, eyes: 0, eyeColor: 0, lips: 0, beard: 0, bg: 3, shirt: 0, shirtColor: 7, stripeColor: 0, glasses: 0, glassesColor: 0, lens: 0 },
-    m: { g: 'm', skin: 1, hair: 4, hairColor: 2, brows: 3, eyes: 3, eyeColor: 0, lips: 2, beard: 0, bg: 4, shirt: 0, shirtColor: 9, stripeColor: 0, glasses: 0, glassesColor: 0, lens: 0 }
+    h: { g: 'h', skin: 1, hair: 1, hairColor: 1, brows: 0, eyes: 0, eyeColor: 0, lips: 0, beard: 0, bg: 3, shirt: 0, shirtColor: 7, stripeColor: 0, glasses: 0, glassesColor: 0, lens: 0, face: 0, hat: 0, hatColor: 1, acc: 0 },
+    m: { g: 'm', skin: 1, hair: 4, hairColor: 2, brows: 3, eyes: 3, eyeColor: 0, lips: 2, beard: 0, bg: 4, shirt: 0, shirtColor: 9, stripeColor: 0, glasses: 0, glassesColor: 0, lens: 0, face: 0, hat: 0, hatColor: 1, acc: 1 }
   };
 
   const clampInt = (v, n) => {
@@ -142,6 +154,11 @@
     out.glasses = clampInt(a.glasses, GLASSES_TYPES.length);
     out.glassesColor = clampInt(a.glassesColor, FRAME_COLORS.length);
     out.lens = clampInt(a.lens, LENSES.length);
+    out.face = clampInt(a.face, FACE_TYPES.length);
+    out.hat = clampInt(a.hat, HAT_TYPES.length);
+    out.hatColor = a.hatColor === undefined ? 1 : clampInt(a.hatColor, SHIRT_COLORS.length);
+    // Antes las mujeres llevaban aretes pequeños siempre: se conservan.
+    out.acc = a.acc === undefined ? (g === 'm' ? 1 : 0) : clampInt(a.acc, ACC_TYPES.length);
     // Avatares guardados antes de v1.6: "Con lentes" era un tipo de ojos.
     if (a.glasses === undefined && parseInt(a.eyes, 10) === 5) { out.eyes = 0; out.glasses = 1; }
     return out;
@@ -154,7 +171,7 @@
     return normalize({
       g,
       skin: pick(SKIN.length),
-      hair: g === 'm' ? any([3, 4, 5, 6, 8, 10, 11, 12]) : any([0, 1, 2, 3, 7, 8, 9, 12, 13]),
+      hair: g === 'm' ? any([3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 17, 19]) : any([0, 1, 2, 3, 7, 8, 9, 12, 13, 15, 16, 18]),
       hairColor: Math.random() < 0.8 ? any([0, 1, 2, 3, 4, 5, 8, 9, 10, 11]) : pick(HAIR_COLORS.length),
       brows: pick(BROW_TYPES.length),
       eyes: g === 'm' ? any([0, 1, 2, 3, 4, 6, 7]) : any([0, 1, 2, 4, 7, 8, 9]),
@@ -167,7 +184,11 @@
       stripeColor: pick(SHIRT_COLORS.length),
       glasses: Math.random() < 0.35 ? 1 + pick(GLASSES_TYPES.length - 1) : 0,
       glassesColor: pick(FRAME_COLORS.length),
-      lens: Math.random() < 0.7 ? 0 : pick(LENSES.length)
+      lens: Math.random() < 0.7 ? 0 : pick(LENSES.length),
+      face: pick(FACE_TYPES.length),
+      hat: Math.random() < 0.25 ? 1 + pick(HAT_TYPES.length - 1) : 0,
+      hatColor: pick(SHIRT_COLORS.length),
+      acc: Math.random() < (g === 'm' ? 0.8 : 0.25) ? 1 + pick(ACC_TYPES.length - 1) : 0
     });
   }
 
@@ -208,6 +229,14 @@
         return `<path d="M25 46 C24 20 76 20 75 46 L74 55 L26 55 Z" fill="${fill}"/>${braid(25)}${braid(75)}`;
       }
       case 12: return `<circle cx="50" cy="40" r="31" fill="${fill}"/><circle cx="24" cy="54" r="12" fill="${fill}"/><circle cx="76" cy="54" r="12" fill="${fill}"/>`; // afro
+      case 14: case 16: case 18: return `<path d="M26 46 C25 22 75 22 74 46 L73 52 L27 52 Z" fill="${fill}"/>`; // pixie, copete, rapado a los lados
+      case 15: { // rastas largas
+        let out = `<path d="M25 46 C24 20 76 20 75 46 L74 54 L26 54 Z" fill="${fill}"/>`;
+        [22, 27, 32, 68, 73, 78].forEach((x, i) => { out += `<rect x="${x - 2.6}" y="40" width="5.2" height="${40 + (i % 3) * 5}" rx="2.6" fill="${fill}"/>`; });
+        return out;
+      }
+      case 17: return `<circle cx="32" cy="22" r="9" fill="${fill}"/><circle cx="68" cy="22" r="9" fill="${fill}"/><path d="M26 46 C25 22 75 22 74 46 L73 52 L27 52 Z" fill="${fill}"/>`; // dos moños
+      case 19: return `<path d="M24 45 C22 18 78 18 76 45 L77 76 Q64 80 50 80 Q36 80 23 76 Z" fill="${fill}"/>`; // media melena
       default: return '';
     }
   }
@@ -256,6 +285,27 @@
       case 12: // afro: frente
         return `<path d="M26 44 C24 24 38 14 50 14 C62 14 76 24 74 44 C70 36 61 32 50 32 C39 32 30 36 26 44 Z" fill="${fill}"/>`
           + `<g fill="none" stroke="${dark}" stroke-width=".6" opacity=".5"><path d="M33 26 q2 -2 4 0"/><path d="M45 20 q2 -2 4 0"/><path d="M58 22 q2 -2 4 0"/><path d="M66 30 q2 -2 4 0"/><path d="M38 33 q2 -2 4 0"/><path d="M55 30 q2 -2 4 0"/></g>`;
+      case 14: // pixie: corto con flequillo de lado
+        return `<path d="M26 52 C23 25 38 17 52 17 C66 17 77 26 73 47 C70 39 64 34 57 33 C49 36 40 40 32 47 C30 49 28 51 26 52 Z" fill="${fill}"/>`
+          + strands('M57 33 Q50 25 40 22 M48 37 Q42 30 33 31 M66 36 Q66 28 62 23', dark) + shine('M42 22 Q52 18 62 22');
+      case 15: { // rastas: frente
+        let out = `<path d="M27 46 C26 26 39 20 50 20 C61 20 74 26 73 46 C70 37 63 32 50 31 C37 32 30 37 27 46 Z" fill="${fill}"/>`;
+        [36, 44, 56, 64].forEach((x) => { out += `<rect x="${x - 2.4}" y="24" width="4.8" height="${x === 44 || x === 56 ? 15 : 19}" rx="2.4" fill="${fill}"/>`; });
+        return out + strands('M33 32 L33 44 M40 28 L40 40 M60 28 L60 40 M67 32 L67 44', dark, 0.5);
+      }
+      case 16: // copete (pompadour)
+        return `<path d="M28 44 C26 24 33 11 50 11 C65 11 76 19 72 44 C70 34 62 30 50 30 C40 30 32 34 28 44 Z" fill="${fill}"/>`
+          + strands('M34 32 Q38 18 52 14 M44 30 Q48 19 60 16 M56 30 Q62 22 68 22', dark) + shine('M40 17 Q52 12 62 16');
+      case 17: // dos moños: frente con raya en medio
+        return `<path d="M27 47 C26 27 38 20 50 20 C62 20 74 27 73 47 C71 38 65 33 57 31 Q53 30 50 25 Q47 30 43 31 C35 33 29 38 27 47 Z" fill="${fill}"/>`
+          + strands('M28 22 Q32 16 37 20 M63 20 Q68 16 72 22', dark) + shine('M38 26 Q44 22 49 22');
+      case 18: // rapado a los lados, largo arriba
+        return `<path d="M28 44 C29 30 34 26 38 26 L62 26 C66 26 71 30 72 44 C69 38 66 35 62 34 L38 34 C34 35 31 38 28 44 Z" fill="${fill}" opacity=".4"/>`
+          + `<path d="M34 34 C32 20 42 15 52 15 C64 15 72 21 69 35 C64 30 57 28 49 28.5 C43 29 38 31 34 34 Z" fill="${fill}"/>`
+          + strands('M38 30 Q44 20 56 18 M48 28.5 Q54 21 64 22', dark) + shine('M42 19 Q52 15 62 19');
+      case 19: // media melena con raya en medio
+        return `<path d="M25 58 C21 28 35 18 50 18 C65 18 79 28 75 58 C73 46 69 38 61 32 Q54 30 50 25 Q46 30 39 32 C31 38 27 46 25 58 Z" fill="${fill}"/>`
+          + strands('M50 25 Q42 30 33 42 M50 25 Q58 30 67 42', dark) + shine('M37 26 Q44 21 49 21');
       case 13: // hacia atrás (engominado)
         return `<path d="M28 45 C26 25 38 18 50 18 C62 18 74 25 72 45 C70 36 64 30 50 29.5 C36 30 30 36 28 45 Z" fill="${fill}"/>`
           + strands('M33 37 Q36 25 46 20 M42 31 Q45 23 54 20 M52 30 Q56 23 64 23 M61 31 Q66 28 69 35', dark, 0.8) + shine('M40 22 Q50 18 60 22');
@@ -264,7 +314,7 @@
   }
 
   // Con qué peinados el cabello deja sombra en la frente.
-  const BANG_SHADOW = new Set([1, 4, 5, 6, 8, 9, 10, 11, 13]);
+  const BANG_SHADOW = new Set([1, 4, 5, 6, 8, 9, 10, 11, 13, 14, 16, 17, 18, 19]);
 
   // ─── Cejas ───────────────────────────────────────────────────────────────
   function brows(type, c, anime) {
@@ -372,6 +422,10 @@
       case 7: return g('<rect x="34.4" y="45.6" width="13.4" height="9.4" rx="3.6" stroke-width=".35"/><rect x="52.2" y="45.6" width="13.4" height="9.4" rx="3.6" stroke-width=".35"/>', 'M47.8 48.6 Q50 47.6 52.2 48.6', 0.9); // sin montura
       case 8: return g('<path d="M37 44.8 L45 44.8 L48.4 50 L45 55.2 L37 55.2 L33.6 50 Z"/><path d="M55 44.8 L63 44.8 L66.4 50 L63 55.2 L55 55.2 L51.6 50 Z"/>', 'M48.4 49 Q50 48 51.6 49', 1.4); // hexagonales
       case 9: return g('<ellipse cx="41" cy="50" rx="7" ry="5.2"/><ellipse cx="59" cy="50" rx="7" ry="5.2"/>', 'M48 49.4 Q50 48.2 52 49.4', 1.3); // ovalados
+      case 10: return g('<rect x="32.4" y="42.6" width="16" height="14" rx="5"/><rect x="51.6" y="42.6" width="16" height="14" rx="5"/>', 'M48.4 48 Q50 46.8 51.6 48', 1.5); // grandes
+      case 11: return g('<path d="M34 50 L48 50 Q47.6 56 41 56 Q34.4 56 34 50 Z"/><path d="M52 50 L66 50 Q65.6 56 59 56 Q52.4 56 52 50 Z"/>', 'M48 50.6 Q50 49.6 52 50.6', 1.2); // de lectura (media luna)
+      case 12: return g('<path d="M31 45 Q50 41.4 69 45 Q69.6 52 64 54.4 Q57 56 52 52 Q50 50.6 48 52 Q43 56 36 54.4 Q30.4 52 31 45 Z"/>', 'M48.6 46 L51.4 46', 1.4); // deportivos
+      case 13: return g('<path d="M41 55.6 C35 51 33 48.6 34 46 C35 43.6 38.6 43.4 41 46 C43.4 43.4 47 43.6 48 46 C49 48.6 47 51 41 55.6 Z"/><path d="M59 55.6 C53 51 51 48.6 52 46 C53 43.6 56.6 43.4 59 46 C61.4 43.4 65 43.6 66 46 C67 48.6 65 51 59 55.6 Z"/>', 'M48 47.4 Q50 46.4 52 47.4', 1.3); // corazón
       default: return g('<circle cx="41" cy="50" r="6.6"/><circle cx="59" cy="50" r="6.6"/>', 'M47.6 49.5 Q50 48 52.4 49.5'); // redondos
     }
   }
@@ -394,6 +448,62 @@
       case 7: return `<path d="M27.6 44 L31.6 44 L32 58 Q29.4 57 28.4 53 Z" fill="${c}"/><path d="M72.4 44 L68.4 44 L68 58 Q70.6 57 71.6 53 Z" fill="${c}"/>`; // patillas
       case 8: return `<path d="M46 70 Q50 71.4 54 70 Q53.4 78 50 82 Q46.6 78 46 70 Z" fill="${c}"/>`; // chivo
       case 9: return `<path d="M44 63.4 Q47 61.8 50 62.8 Q53 61.8 56 63.4 Q53 63 50 63.6 Q47 63 44 63.4 Z" fill="${c}"/>`; // bigote fino
+      case 10: return texture(0.72) + mustache; // corta
+      case 11: return mustache + `<path d="M42.6 63 L45 63.6 L45.4 75 L43 74.6 Z" fill="${c}"/><path d="M57.4 63 L55 63.6 L54.6 75 L57 74.6 Z" fill="${c}"/>`; // herradura
+      case 12: return mustache + `<path d="M48.4 69.6 L51.6 69.6 L50 73.4 Z" fill="${c}"/>`; // imperial
+      case 13: return `<path d="M48.4 69.6 L51.6 69.6 L50 73 Z" fill="${c}"/>`; // mosca
+      default: return '';
+    }
+  }
+
+  // ─── Gorras y sombreros (encima del cabello) ───────────────────────────
+  function hat(type, c) {
+    const d = shade(c, 0.78);
+    const l = shade(c, 1.18);
+    switch (type) {
+      case 1: return `<path d="M25.6 41 C24.6 18 75.4 18 74.4 41 Q50 35 25.6 41 Z" fill="${c}"/>` // gorra
+        + `<path d="M50 19.6 L50 36 M38 22 Q36 30 36.6 38 M62 22 Q64 30 63.4 38" stroke="${d}" stroke-width=".7" fill="none"/>`
+        + `<circle cx="50" cy="19.8" r="1.6" fill="${d}"/>`
+        + `<path d="M24.4 41 Q50 34 75.6 41 Q81 44.4 72 46 Q50 41.4 28 46 Q19 44.4 24.4 41 Z" fill="${d}"/>`;
+      case 2: return `<path d="M25.6 41 C24.6 18 75.4 18 74.4 41 Q50 36 25.6 41 Z" fill="${c}"/>` // gorra al revés
+        + `<path d="M50 19.6 L50 36" stroke="${d}" stroke-width=".7"/><circle cx="50" cy="19.8" r="1.6" fill="${d}"/>`
+        + `<path d="M42 39.4 Q50 37.4 58 39.4 L58 41.8 Q50 40 42 41.8 Z" fill="${d}"/><path d="M22 36 Q19 31 24 28 L27 33 Z" fill="${d}"/>`;
+      case 3: { // gorro de lana con pompón
+        let ribs = '';
+        for (let x = 27; x <= 73; x += 3.2) ribs += `<path d="M${x} 36.4 L${x} 42.6" stroke="${d}" stroke-width=".6"/>`;
+        return `<path d="M25.4 41 C24 14 76 14 74.6 41 Z" fill="${c}"/><circle cx="50" cy="13" r="5.4" fill="${l}"/>`
+          + `<path d="M24 36 Q50 30.4 76 36 L76.4 43.4 Q50 37.6 23.6 43.4 Z" fill="${d}"/>${ribs}`;
+      }
+      case 4: return `<path d="M8 35 Q50 24 92 35 Q50 44 8 35 Z" fill="${d}"/>` // sombrero
+        + `<path d="M30 34 C29 13 71 13 70 34 Q50 29 30 34 Z" fill="${c}"/><path d="M42 16 Q50 20 58 16" stroke="${d}" stroke-width="1.2" fill="none"/>`
+        + `<path d="M30.4 30 Q50 25 69.6 30 L70 34 Q50 29 30 34 Z" fill="#23243a"/>`;
+      case 5: return `<path d="M23 36 C20 22 58 11 78 22 C84 28 74 36 60 36.6 Q40 38.6 23 36 Z" fill="${c}"/>` // boina
+        + `<path d="M24 35 Q50 39 74 33" stroke="${d}" stroke-width="1.6" fill="none"/><circle cx="58" cy="16.4" r="1.6" fill="${d}"/>`;
+      case 6: { // sombrero vueltiao (blanco y negro)
+        let rings = '';
+        [16, 21, 26].forEach((y) => { rings += `<path d="M${33 + (y - 16) * 0.2} ${y} Q50 ${y - 3} ${67 - (y - 16) * 0.2} ${y}" stroke="#23243a" stroke-width="1.5" fill="none"/>`; });
+        return `<path d="M8 35 Q50 24 92 35 Q50 45 8 35 Z" fill="#f4efe1"/><path d="M14 34.6 Q50 26 86 34.6 M20 36.4 Q50 29 80 36.4" stroke="#23243a" stroke-width="1" fill="none" stroke-dasharray="3 2"/>`
+          + `<path d="M31 33 C30 11 70 11 69 33 Q50 28.6 31 33 Z" fill="#f4efe1"/>${rings}`;
+      }
+      case 7: return `<path d="M25 38 Q50 31 75 38 L75.4 43 Q50 36 24.6 43 Z" fill="${c}"/>` // bandana
+        + `<path d="M75 39 Q82 38 84 43 Q80 44 76 42 Z M75 41 Q80 46 79 50 Q76 47 74.6 43 Z" fill="${d}"/>`
+        + `<g fill="${l}" opacity=".7"><circle cx="38" cy="38.4" r=".8"/><circle cx="50" cy="35.4" r=".8"/><circle cx="62" cy="38" r=".8"/></g>`;
+      case 8: return `<path d="M26.4 40 Q50 18 73.6 40" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/>`; // diadema
+      default: return '';
+    }
+  }
+
+  // ─── Accesorios: aretes, piercing, audífonos (en la cabeza) ───────────
+  function accHead(type, c) {
+    switch (type) {
+      case 1: return `<circle cx="25.4" cy="57.6" r="1.5" fill="#e9c35a"/><circle cx="74.6" cy="57.6" r="1.5" fill="#e9c35a"/>`;
+      case 2: return `<circle cx="25.6" cy="60" r="2.6" fill="none" stroke="#e1b84a" stroke-width="1"/><circle cx="74.4" cy="60" r="2.6" fill="none" stroke="#e1b84a" stroke-width="1"/>`;
+      case 3: return `<circle cx="25.4" cy="58" r="1.8" fill="#f6f3ec"/><circle cx="74.6" cy="58" r="1.8" fill="#f6f3ec"/><circle cx="25" cy="57.4" r=".6" fill="#fff"/><circle cx="74.2" cy="57.4" r=".6" fill="#fff"/>`;
+      case 4: return `<path d="M25.4 57.4 L25.4 61.6 M74.6 57.4 L74.6 61.6" stroke="#e1b84a" stroke-width=".7"/><path d="M25.4 61.4 L27 64.6 L25.4 67.6 L23.8 64.6 Z M74.6 61.4 L76.2 64.6 L74.6 67.6 L73 64.6 Z" fill="${c}"/>`;
+      case 5: return `<circle cx="53.4" cy="59.6" r="1" fill="none" stroke="#c9ccd6" stroke-width=".6"/>`;
+      case 6: return `<path d="M24 50 C22 14 78 14 76 50" stroke="#2b2d3c" stroke-width="3" fill="none"/>`
+        + `<rect x="19.6" y="45" width="7.6" height="13" rx="3.6" fill="#2b2d3c"/><rect x="72.8" y="45" width="7.6" height="13" rx="3.6" fill="#2b2d3c"/>`
+        + `<rect x="21" y="47" width="2.4" height="9" rx="1.2" fill="${c}"/><rect x="76.6" y="47" width="2.4" height="9" rx="1.2" fill="${c}"/>`;
       default: return '';
     }
   }
@@ -404,7 +514,8 @@
   // los recortes ya consideran esa escala.
   const CROPS = {
     full: '0 0 100 100', eyes: '32 34.5 36 21', mouth: '36 47.3 28 18',
-    beard: '24 38 52 44', hair: '14 4 72 72', shirt: '18 36 64 64', glasses: '29 31 42 24'
+    beard: '24 38 52 44', hair: '14 4 72 72', shirt: '18 36 64 64', glasses: '29 31 42 24',
+    face: '18 10 64 66', hat: '6 0 88 60', acc: '10 10 80 80'
   };
   let uid = 0;
 
@@ -449,9 +560,19 @@
     const anime = a.eyes >= 6 && a.eyes <= 8;
     FX = id;
     // Cara: mandíbula más marcada en hombres, más suave en mujeres.
-    const face = a.g === 'm'
+    // Forma de la cara: "Normal" depende del sexo (mandíbula más marcada en hombres).
+    const FACES = [
+      null,
+      'M30 44 C30 28 39 22 50 22 C61 22 70 28 70 44 C70 58 66 69 60.5 74.6 C57 77.8 53.5 79.2 50 79.2 C46.5 79.2 43 77.8 39.5 74.6 C34 69 30 58 30 44 Z', // ovalada
+      'M27.6 44 C27.6 29 38 23 50 23 C62 23 72.4 29 72.4 44 L72.4 64 C72.4 69.6 70 72.6 65.4 75 C60.4 77.6 55.4 78.2 50 78.2 C44.6 78.2 39.6 77.6 34.6 75 C30 72.6 27.6 69.6 27.6 64 Z', // cuadrada
+      'M26.4 48 C26.4 30 37 23.4 50 23.4 C63 23.4 73.6 30 73.6 48 C73.6 64 64 76.6 50 76.6 C36 76.6 26.4 64 26.4 48 Z', // redonda
+      'M29.6 44 C29.6 28 38.6 21.5 50 21.5 C61.4 21.5 70.4 28 70.4 44 C70.4 58 68 68 63 74 C59 78.6 54.6 80 50 80 C45.4 80 41 78.6 37 74 C32 68 29.6 58 29.6 44 Z', // alargada
+      'M27.4 45 C27.4 29 38 22.5 50 22.5 C62 22.5 72.6 29 72.6 45 C72.6 55 69 63 63.6 69.4 C58.6 75 54 78.2 50 78.2 C46 78.2 41.4 75 36.4 69.4 C31 63 27.4 55 27.4 45 Z' // corazón
+    ];
+    const face = FACES[a.face] || (a.g === 'm'
       ? 'M28.6 46 C28.6 30 38 23 50 23 C62 23 71.4 30 71.4 46 C71.4 57 68 65 62.6 71 C58 75.6 54 78 50 78 C46 78 42 75.6 37.4 71 C32 65 28.6 57 28.6 46 Z'
-      : 'M28 46 C28 30 38 23 50 23 C62 23 72 30 72 46 C72 55.5 70.5 62 67 67 C63 73.6 56.5 78.5 50 78.5 C43.5 78.5 37 73.6 33 67 C29.5 62 28 55.5 28 46 Z';
+      : 'M28 46 C28 30 38 23 50 23 C62 23 72 30 72 46 C72 55.5 70.5 62 67 67 C63 73.6 56.5 78.5 50 78.5 C43.5 78.5 37 73.6 33 67 C29.5 62 28 55.5 28 46 Z');
+    const hatC = SHIRT_COLORS[a.hatColor].c;
 
     return `<svg class="av-svg" viewBox="${CROPS[crop] || CROPS.full}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 <defs>
@@ -469,6 +590,7 @@
 <path d="M42.5 64 L57.5 64 L58 84 Q50 88 42 84 Z" fill="${skinShade}"/>
 <path d="M41.6 66 Q50 80 58.4 66 L58.4 78 Q50 84 41.6 78 Z" fill="${skinDeep}" opacity=".55" filter="url(#${id}s2)"/>
 ${shirt(a, id)}
+${a.acc === 7 ? `<path d="M41 77 Q50 89 59 77" stroke="#e1b84a" stroke-width=".9" fill="none"/><circle cx="50" cy="84.2" r="1.8" fill="${hatC}" stroke="#e1b84a" stroke-width=".6"/>` : ''}
 <g class="av-head"><g transform="translate(50 43) scale(.9) translate(-50 -48)">
 ${hairBack(a.hair, hairFill)}
 <path d="M29 46 Q23.6 44.6 23.8 51.4 Q24.4 57.6 30 57.6 Z" fill="${skinShade}"/><path d="M71 46 Q76.4 44.6 76.2 51.4 Q75.6 57.6 70 57.6 Z" fill="${skinShade}"/>
@@ -490,7 +612,7 @@ ${hairBack(a.hair, hairFill)}
     <path d="M51.2 48 L51.2 55" stroke="#fff" stroke-width="1.4" opacity=".22"/>
   </g>
 </g>
-${a.g === 'm' ? `<circle cx="25.4" cy="57.6" r="1.5" fill="#e9c35a"/><circle cx="74.6" cy="57.6" r="1.5" fill="#e9c35a"/>` : ''}
+${a.acc >= 1 && a.acc <= 5 ? accHead(a.acc, hatC) : ''}
 <g filter="url(#${id}s2)"><ellipse cx="36" cy="60" rx="5" ry="2.8" fill="#f07a8a" opacity="${anime ? 0.4 : 0.24}"/><ellipse cx="64" cy="60" rx="5" ry="2.8" fill="#f07a8a" opacity="${anime ? 0.4 : 0.24}"/></g>
 ${beard(a.beard, hairC)}
 <ellipse cx="50" cy="57.4" rx="3.1" ry="2.2" fill="${skinShade}" opacity=".7" filter="url(#${id}s1)"/>
@@ -502,7 +624,9 @@ ${eyes(a.eyes, `url(#${id}i)`, '#231a22', skinDeep, id, a.g === 'm')}
 ${brows(a.brows, browColor, anime)}
 ${glasses(a.glasses, FRAME_COLORS[a.glassesColor].c, LENSES[a.lens].c)}
 ${hairFront(a.hair, hairFill, hairC)}
-${a.hair === 0 ? `<ellipse cx="44" cy="30" rx="7" ry="3" fill="#fff" opacity=".2"/>` : ''}
+${a.hair === 0 && !a.hat ? `<ellipse cx="44" cy="30" rx="7" ry="3" fill="#fff" opacity=".2"/>` : ''}
+${a.acc === 6 ? accHead(6, hatC) : ''}
+${hat(a.hat, hatC)}
 </g></g>
 </svg>`;
   }
