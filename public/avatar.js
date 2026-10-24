@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Avatar personalizable en SVG (estilo humano, con opción de ojos anime)
+   Avatar personalizable en SVG (estilo humano tipo avatar de redes sociales, con opción de ojos anime)
    Rasgos: sexo, color de piel, tipo y color de cabello, cejas, tipo y color
    de ojos (realistas o anime), labios, barba, lentes ópticos o de sol (marco
    de colores; cristales transparentes o de color), playera y fondo.
@@ -181,7 +181,8 @@
   // ─── Cabello ─────────────────────────────────────────────────────────────
   // fill = degradado del cabello; dark = color para los mechones.
   const strands = (d, dark, w = 0.7) => `<path d="${d}" stroke="${dark}" stroke-width="${w}" fill="none" stroke-linecap="round" opacity=".55"/>`;
-  const shine = (d) => `<path d="${d}" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".22"/>`;
+  let FX = ''; // id del filtro de desenfoque del avatar que se está dibujando
+  const shine = (d) => `<path d="${d}" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".32" filter="url(#${FX}s1)"/>`;
 
   function hairBack(type, fill) {
     switch (type) {
@@ -279,23 +280,24 @@
 
   // ─── Ojos ────────────────────────────────────────────────────────────────
   // Realistas (0-5, 9) y estilo anime (6-8). La clase av-eyes permite el parpadeo.
-  function eyes(type, irisFill, line, lid, id) {
+  function eyes(type, irisFill, line, lid, id, fem) {
     const one = (x, k) => {
       const out = x < 50 ? -1 : 1; // lado exterior
       // Ojo humano: forma de almendra, iris recortado por los párpados y pliegue.
-      const human = (w = 5.2, h = 3.6, ir = 2.75, tilt = 0, lashes = false, crease = true) => {
+      const human = (w = 6.1, h = 4.5, ir = 3.35, tilt = 0, lashes = fem, crease = true) => {
         const cid = `${id}e${k}`;
-        const shape = `M${x - w} 50.2 Q${x - w * 0.15} ${50.2 - h * 1.05 - tilt} ${x + w} ${50 - tilt * out * 0.6} Q${x + w * 0.1} ${50.2 + h * 0.85} ${x - w} 50.2 Z`;
+        const shape = `M${x - w} 50.2 Q${x - w * 0.15} ${50.2 - h * 1.7 - tilt} ${x + w} ${50 - tilt * out * 0.6} Q${x + w * 0.1} ${50.2 + h * 1.3} ${x - w} 50.2 Z`;
         return `<clipPath id="${cid}"><path d="${shape}"/></clipPath>`
           + `<path d="${shape}" fill="#fbfbfd"/>`
           + `<g clip-path="url(#${cid})"><circle cx="${x + out * 0.2}" cy="49.9" r="${ir}" fill="${irisFill}"/>`
+          + `<circle cx="${x + out * 0.2}" cy="49.9" r="${ir - 0.25}" fill="none" stroke="#000" stroke-width=".5" opacity=".35"/>`
           + `<circle cx="${x + out * 0.2}" cy="49.9" r="${ir * 0.42}" fill="#120c10"/>`
-          + `<path d="M${x - w} 48.2 Q${x} ${46 - h * 0.3} ${x + w} 48.2 L${x + w} 46 L${x - w} 46 Z" fill="#000" opacity=".12"/></g>`
-          + `<circle cx="${x + 0.9}" cy="48.9" r=".75" fill="#fff"/>`
-          + `<path d="M${x - w - 0.3} 50.2 Q${x - w * 0.15} ${50.2 - h * 1.05 - tilt - 0.3} ${x + w + 0.3} ${49.9 - tilt * out * 0.6}" stroke="${line}" stroke-width="${lashes ? 1.6 : 1.15}" fill="none" stroke-linecap="round"/>`
-          + (crease ? `<path d="M${x - w * 0.85} ${47.6 - h * 0.35} Q${x} ${45.2 - h * 0.4} ${x + w * 0.9} ${47.4 - h * 0.35}" stroke="${lid}" stroke-width=".7" fill="none" opacity=".55" stroke-linecap="round"/>` : '')
-          + `<path d="M${x - w * 0.7} ${50.2 + h * 0.62} Q${x} ${50.2 + h * 0.95} ${x + w * 0.75} ${50.2 + h * 0.55}" stroke="${lid}" stroke-width=".55" fill="none" opacity=".45"/>`
-          + (lashes ? `<g stroke="${line}" stroke-width=".9" stroke-linecap="round"><path d="M${x + out * w} ${49.8 - tilt} l${out * 1.6} -1.2"/><path d="M${x + out * w * 0.7} ${48.2 - h * 0.25} l${out * 1.1} -1.5"/><path d="M${x + out * w * 0.35} ${47.4 - h * 0.3} l${out * 0.6} -1.6"/></g>` : '');
+          + `<path d="M${x - w} ${49 - h * 0.4} Q${x} ${46 - h * 0.7} ${x + w} ${49 - h * 0.4} L${x + w} 40 L${x - w} 40 Z" fill="#000" opacity=".14"/></g>`
+          + `<circle cx="${x + 1}" cy="48.8" r=".85" fill="#fff"/><circle cx="${x - 1.1}" cy="51.1" r=".4" fill="#fff" opacity=".8"/>`
+          + `<path d="M${x - w - 0.3} 50.2 Q${x - w * 0.15} ${50.2 - h * 1.7 - tilt - 0.3} ${x + w + 0.3} ${49.9 - tilt * out * 0.6}" stroke="${line}" stroke-width="${lashes ? 1.7 : 1.25}" fill="none" stroke-linecap="round"/>`
+          + (crease ? `<path d="M${x - w * 0.85} ${47.8 - h * 0.62} Q${x} ${45.4 - h * 0.7} ${x + w * 0.9} ${47.6 - h * 0.62}" stroke="${lid}" stroke-width=".7" fill="none" opacity=".55" stroke-linecap="round"/>` : '')
+          + `<path d="M${x - w * 0.7} ${50.2 + h * 0.85} Q${x} ${50.2 + h * 1.3} ${x + w * 0.75} ${50.2 + h * 0.8}" stroke="${lid}" stroke-width=".55" fill="none" opacity=".45"/>`
+          + (lashes ? `<g stroke="${line}" stroke-width=".55" stroke-linecap="round" fill="none"><path d="M${x + out * w} ${49.9 - tilt} q${out * 1.2} -.2 ${out * 1.9} -1.3"/><path d="M${x + out * w * 0.8} ${48.4 - h * 0.55} q${out * 0.9} -.5 ${out * 1.3} -1.7"/><path d="M${x + out * w * 0.5} ${47.2 - h * 0.7} q${out * 0.5} -.6 ${out * 0.7} -1.7"/><path d="M${x + out * w * 0.15} ${46.9 - h * 0.78} q${out * 0.2} -.7 ${out * 0.2} -1.6"/></g>` : '');
       };
       // Ojo anime: grande, iris alto con degradado y dos brillos.
       const anime = (rx, ry, irx, iry, sparkle) => `<ellipse cx="${x}" cy="50.3" rx="${rx}" ry="${ry}" fill="#fff"/>`
@@ -309,9 +311,9 @@
       const closed = `<path d="M${x - 5} 51 Q${x} 46.6 ${x + 5} 51" stroke="${line}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
         + `<path d="M${x - 4} 47.2 Q${x} 45.4 ${x + 4} 47.2" stroke="${lid}" stroke-width=".6" fill="none" opacity=".5"/>`;
       switch (type) {
-        case 1: return human(5.8, 4.3, 3.1); // grandes
-        case 2: return human(5.4, 3, 2.5, 1.1); // almendrados
-        case 3: return human(5.2, 3.7, 2.75, 0.4, true); // con pestañas
+        case 1: return human(6.6, 5.2, 3.7); // grandes
+        case 2: return human(6.2, 3.6, 3, 1.1); // almendrados
+        case 3: return human(6.1, 4.5, 3.35, 0.4, true); // con pestañas
         case 4: return closed; // felices
         case 5: return x > 50 ? closed : human(); // guiño
         case 6: return anime(6, 7, 4.9, 6, true); // anime brillantes
@@ -320,7 +322,7 @@
           return `<path d="M${x - 6} 51.6 Q${x - 1} 45.8 ${x + 6} ${out > 0 ? 48.8 : 51} Q${x} 55 ${x - 6} 51.6 Z" fill="#fff"/>`
             + `<circle cx="${x}" cy="51" r="3" fill="${irisFill}"/><circle cx="${x}" cy="51.2" r="1.4" fill="#160e1a"/><circle cx="${x + 1}" cy="49.8" r=".8" fill="#fff"/>`
             + `<path d="M${x - 6.6} 51.2 Q${x - 1} 45 ${x + 6.8} ${out > 0 ? 48.4 : 50.6}" stroke="${line}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-        case 9: return human(5.3, 2.5, 2.4, 0.7, false, false); // rasgados (sin pliegue)
+        case 9: return human(6, 3, 2.8, 0.7, fem, false); // rasgados (sin pliegue)
         default: return human(); // normales
       }
     };
@@ -398,7 +400,7 @@
 
   // ─── Avatar completo ────────────────────────────────────────────────────
   // crop: muestra solo una parte (para las miniaturas del editor).
-  // La cabeza se dibuja reducida (82 %) para dejar ver cuello y hombros;
+  // La cabeza se dibuja reducida (90 %) para dejar ver cuello y hombros;
   // los recortes ya consideran esa escala.
   const CROPS = {
     full: '0 0 100 100', eyes: '32 34.5 36 21', mouth: '36 47.3 28 18',
@@ -427,7 +429,8 @@
     const collar = a.g === 'm' ? 'M40.5 78.5 Q50 88 59.5 78.5' : 'M39.5 77.5 Q50 88 60.5 77.5';
     // Pliegues para dar volumen.
     const folds = `<path d="M24 92 Q28 86 33 84 M76 92 Q72 86 67 84" stroke="${shade(main, 0.75)}" stroke-width=".8" fill="none" opacity=".5"/>`;
-    return `<path d="${body}" fill="${main}"/>${stripes}${folds}<path d="${collar}" fill="none" stroke="${shade(main, 0.74)}" stroke-width="2.4" stroke-linecap="round"/>`;
+    const volume = `<path d="${body}" fill="url(#${id}t)"/><path d="M36 80 Q50 92 64 80" stroke="#000" stroke-width="3" fill="none" opacity=".16" filter="url(#${id}s1)"/>`;
+    return `<path d="${body}" fill="${main}"/>${stripes}${folds}${volume}<path d="${collar}" fill="none" stroke="${shade(main, 0.74)}" stroke-width="2.4" stroke-linecap="round"/>`;
   }
 
   function render(input, crop = 'full') {
@@ -444,6 +447,7 @@
     const iris = EYE_COLORS[a.eyeColor].c;
     const hairFill = `url(#${id}h)`;
     const anime = a.eyes >= 6 && a.eyes <= 8;
+    FX = id;
     // Cara: mandíbula más marcada en hombres, más suave en mujeres.
     const face = a.g === 'm'
       ? 'M28.6 46 C28.6 30 38 23 50 23 C62 23 71.4 30 71.4 46 C71.4 57 68 65 62.6 71 C58 75.6 54 78 50 78 C46 78 42 75.6 37.4 71 C32 65 28.6 57 28.6 46 Z'
@@ -456,29 +460,45 @@
   <radialGradient id="${id}k" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="${shade(skin, 1.06)}"/><stop offset=".7" stop-color="${skin}"/><stop offset="1" stop-color="${skinShade}"/></radialGradient>
   <radialGradient id="${id}b" cx=".5" cy=".35" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
   <clipPath id="${id}f"><path d="${face}"/></clipPath>
+  <filter id="${id}s1" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.1"/></filter>
+  <filter id="${id}s2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter>
+  <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".12"/></linearGradient>
 </defs>
 <rect x="0" y="0" width="100" height="100" fill="${bg.c}"/>
 <rect x="0" y="0" width="100" height="100" fill="url(#${id}b)"/>
 <path d="M42.5 64 L57.5 64 L58 84 Q50 88 42 84 Z" fill="${skinShade}"/>
-<path d="M42.6 73 Q50 79 57.4 73 L57.6 68 Q50 75 42.4 68 Z" fill="${skinDeep}" opacity=".45"/>
+<path d="M41.6 66 Q50 80 58.4 66 L58.4 78 Q50 84 41.6 78 Z" fill="${skinDeep}" opacity=".55" filter="url(#${id}s2)"/>
 ${shirt(a, id)}
-<g class="av-head"><g transform="translate(50 44) scale(.82) translate(-50 -48)">
+<g class="av-head"><g transform="translate(50 43) scale(.9) translate(-50 -48)">
 ${hairBack(a.hair, hairFill)}
 <path d="M29 46 Q23.6 44.6 23.8 51.4 Q24.4 57.6 30 57.6 Z" fill="${skinShade}"/><path d="M71 46 Q76.4 44.6 76.2 51.4 Q75.6 57.6 70 57.6 Z" fill="${skinShade}"/>
 <path d="M27.4 48.6 Q25.8 51.4 28 55" stroke="${skinDeep}" stroke-width=".7" fill="none" opacity=".6"/><path d="M72.6 48.6 Q74.2 51.4 72 55" stroke="${skinDeep}" stroke-width=".7" fill="none" opacity=".6"/>
 <path d="${face}" fill="url(#${id}k)"/>
 <g clip-path="url(#${id}f)">
-  <path d="M28 54 Q31 66 40 73 M72 54 Q69 66 60 73" stroke="${skinShade}" stroke-width="3.4" fill="none" opacity=".45"/>
-  ${BANG_SHADOW.has(a.hair) ? `<path d="M24 36 L76 36 L76 43 Q63 46 50 44.6 Q37 46 24 43 Z" fill="${skinDeep}" opacity=".22"/>` : ''}
+  <g filter="url(#${id}s2)">
+    <path d="M22 38 Q26 66 44 82 L18 82 Z" fill="${skinDeep}" opacity=".38"/><path d="M78 38 Q74 66 56 82 L82 82 Z" fill="${skinDeep}" opacity=".38"/>
+    <ellipse cx="50" cy="81" rx="15" ry="5" fill="${skinDeep}" opacity=".4"/>
+    <ellipse cx="36.5" cy="55.5" rx="5.5" ry="2.6" fill="#fff" opacity=".2"/><ellipse cx="63.5" cy="55.5" rx="5.5" ry="2.6" fill="#fff" opacity=".2"/>
+    <ellipse cx="50" cy="33" rx="12" ry="5" fill="#fff" opacity=".2"/>
+    ${BANG_SHADOW.has(a.hair) ? `<path d="M22 34 L78 34 L78 42 Q63 46 50 44.6 Q37 46 22 42 Z" fill="${skinDeep}" opacity=".4"/>` : ''}
+  </g>
+  <g filter="url(#${id}s1)">
+    <ellipse cx="40.5" cy="46.6" rx="6.2" ry="2.2" fill="${skinDeep}" opacity=".28"/><ellipse cx="59.5" cy="46.6" rx="6.2" ry="2.2" fill="${skinDeep}" opacity=".28"/>
+    <path d="M48.2 47.5 Q47.2 54 46.4 57.4" stroke="${skinDeep}" stroke-width="1.8" fill="none" opacity=".4"/>
+    <ellipse cx="50" cy="59.4" rx="3.8" ry="1.3" fill="${skinDeep}" opacity=".35"/>
+    <ellipse cx="50" cy="70.6" rx="4.2" ry="1.4" fill="${skinDeep}" opacity=".3"/>
+    <path d="M51.2 48 L51.2 55" stroke="#fff" stroke-width="1.4" opacity=".22"/>
+  </g>
 </g>
 ${a.g === 'm' ? `<circle cx="25.4" cy="57.6" r="1.5" fill="#e9c35a"/><circle cx="74.6" cy="57.6" r="1.5" fill="#e9c35a"/>` : ''}
-<ellipse cx="36.5" cy="59.5" rx="4.4" ry="2.4" fill="#f08a96" opacity="${anime ? 0.32 : 0.16}"/><ellipse cx="63.5" cy="59.5" rx="4.4" ry="2.4" fill="#f08a96" opacity="${anime ? 0.32 : 0.16}"/>
+<g filter="url(#${id}s2)"><ellipse cx="36" cy="60" rx="5" ry="2.8" fill="#f07a8a" opacity="${anime ? 0.4 : 0.24}"/><ellipse cx="64" cy="60" rx="5" ry="2.8" fill="#f07a8a" opacity="${anime ? 0.4 : 0.24}"/></g>
 ${beard(a.beard, hairC)}
-<path d="M48.6 50.6 Q48 55.4 47 57.6" stroke="${skinDeep}" stroke-width=".7" fill="none" opacity=".5" stroke-linecap="round"/>
-<path d="M46.4 58.4 Q47.2 60.2 49 59.6 Q50 60.6 51 59.6 Q52.8 60.2 53.6 58.4" stroke="${skinDeep}" stroke-width=".85" fill="none" stroke-linecap="round"/>
-<ellipse cx="50.4" cy="57.4" rx="1.3" ry=".8" fill="#fff" opacity=".22"/>
+<ellipse cx="50" cy="57.4" rx="3.1" ry="2.2" fill="${skinShade}" opacity=".7" filter="url(#${id}s1)"/>
+<path d="M46.6 58.2 Q47.2 59.9 48.9 59.5 M53.4 58.2 Q52.8 59.9 51.1 59.5" stroke="${skinDeep}" stroke-width=".9" fill="none" stroke-linecap="round"/>
+<ellipse cx="50.6" cy="56.6" rx="1.4" ry=".9" fill="#fff" opacity=".35" filter="url(#${id}s1)"/>
 ${mouth(a.lips, lip, skin)}
-${eyes(a.eyes, `url(#${id}i)`, '#231a22', skinDeep, id)}
+${[0, 2, 3, 6].includes(a.lips) ? `<ellipse cx="51" cy="66.8" rx="2.2" ry=".7" fill="#fff" opacity=".45" filter="url(#${id}s1)"/>` : ''}
+${eyes(a.eyes, `url(#${id}i)`, '#231a22', skinDeep, id, a.g === 'm')}
 ${brows(a.brows, browColor, anime)}
 ${glasses(a.glasses, FRAME_COLORS[a.glassesColor].c, LENSES[a.lens].c)}
 ${hairFront(a.hair, hairFill, hairC)}

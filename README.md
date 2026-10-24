@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.24.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.25.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -418,3 +418,11 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
   - **Barba:** 9 tipos (nuevos: Larga, Patillas, Chivo y Bigote fino).
   - **Lentes ópticos:** 9 tipos (nuevos: Rectangulares, Media montura, Sin montura, Hexagonales y Ovalados), con cristales transparentes o de color.
   - **Labios:** 8 tipos (nuevos: Labios finos y Sonrisa de lado).
+
+## v1.25.0: avatares con estilo de redes sociales
+- **Estilo inspirado en los avatares de redes sociales** (sin copiar ningún diseño):
+  - cabeza más grande en proporción al cuerpo;
+  - ojos más abiertos, con dos brillos, anillo oscuro en el iris y pestañas finas y curvas en las mujeres;
+  - sombras suaves con efecto 3D en los lados de la cara, debajo de la barbilla, alrededor de los ojos, al costado de la nariz y debajo del labio;
+  - brillos en los pómulos, la frente, la punta de la nariz, los labios y el cabello;
+  - rubor difuminado, cuello con sombra y playera con volumen.
