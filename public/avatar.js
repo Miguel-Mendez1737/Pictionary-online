@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Avatar personalizable en SVG
+   Avatar personalizable en SVG (estilo anime japonés)
    Rasgos: sexo, color de piel, tipo y color de cabello, tipo y color de ojos,
    tipo de labios, barba, lentes (marco de colores; cristales transparentes
    o de color), playera (lisa o de rayas, dos colores) y fondo.
@@ -153,74 +153,114 @@
   // Oscurece un color hex (para sombras, nariz y labios).
   function shade(hex, f) {
     const n = parseInt(hex.slice(1), 16);
-    const ch = (x) => Math.max(0, Math.min(255, Math.round(x * f)));
+    // f > 1 aclara (los colores muy oscuros también: se suma un poco de luz).
+    const ch = (x) => Math.max(0, Math.min(255, Math.round(f > 1 ? x * f + (f - 1) * 60 : x * f)));
     return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => ch(x).toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // ─── Piezas ─────────────────────────────────────────────────────────────
-  function hairBack(type, c) {
+  // ─── Piezas (estilo anime) ──────────────────────────────────────────────
+  // Cabello: degradado (más claro arriba), mechones en punta y un brillo
+  // tipo "anillo de luz". Las piezas usan los degradados definidos en render().
+  const SHINE = (op = 0.45) => `<path d="M34 29 Q50 22 66 29" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-dasharray="7 3 4 3" opacity="${op}"/>`;
+
+  function hairBack(type, fill) {
     switch (type) {
+      case 1: return `<path d="M25 46 C24 22 76 22 75 46 L74 54 L26 54 Z" fill="${fill}"/>`; // corto: volumen detrás
       case 3: { // rizado: rizos detrás de la cabeza
         let out = '';
-        for (let i = 0; i <= 10; i++) {
-          const a = Math.PI * (0.95 + i * 0.11);
-          out += `<circle cx="${(50 + 27 * Math.cos(a)).toFixed(1)}" cy="${(47 + 27 * Math.sin(a)).toFixed(1)}" r="8.5" fill="${c}"/>`;
+        for (let i = 0; i <= 12; i++) {
+          const a = Math.PI * (0.92 + i * 0.097);
+          out += `<circle cx="${(50 + 28 * Math.cos(a)).toFixed(1)}" cy="${(47 + 28 * Math.sin(a)).toFixed(1)}" r="8" fill="${fill}"/>`;
         }
-        return out + `<circle cx="24" cy="58" r="7" fill="${c}"/><circle cx="76" cy="58" r="7" fill="${c}"/>`;
+        return out + `<circle cx="23" cy="60" r="7" fill="${fill}"/><circle cx="77" cy="60" r="7" fill="${fill}"/>`;
       }
-      case 4: return `<path d="M25 44 C25 18 75 18 75 44 L79 84 C70 89 30 89 21 84 Z" fill="${c}"/>`; // largo
-      case 6: return `<path d="M24 46 C24 19 76 19 76 46 L77 67 C68 72 32 72 23 67 Z" fill="${c}"/>`; // melena
+      case 4: // largo: cae por la espalda con puntas
+        return `<path d="M24 44 C21 17 79 17 76 44 L80 82 L75 79 L73 89 L66 83 L61 92 L55 85 L50 93 L45 85 L39 92 L34 83 L27 89 L25 79 L20 82 Z" fill="${fill}"/>`;
+      case 5: return `<path d="M25 46 C24 22 76 22 75 46 L74 54 L26 54 Z" fill="${fill}"/>`;
+      case 6: // melena (bob) con puntas hacia adentro
+        return `<path d="M22 46 C22 17 78 17 78 46 L79 68 Q76 73 71 69 L68 74 Q50 77 32 74 L29 69 Q24 73 21 68 Z" fill="${fill}"/>`;
       default: return '';
     }
   }
 
-  function hairFront(type, c) {
+  function hairFront(type, fill, base) {
+    const dark = shade(base, 0.72);
+    const strands = (d) => `<path d="${d}" stroke="${dark}" stroke-width=".8" fill="none" stroke-linecap="round" opacity=".7"/>`;
     switch (type) {
-      case 1: return `<path d="M27 47 C25 25 40 20 50 20 C62 20 76 26 73 47 C70 37 63 32 50 32 C38 32 30 37 27 47 Z" fill="${c}"/>`;
-      case 2: return `<path d="M28 43 C30 27 41 23 50 23 C59 23 70 27 72 43 C68 35 60 31 50 31 C40 31 32 35 28 43 Z" fill="${c}" opacity=".85"/>`;
-      case 3: {
+      case 1: // corto: flequillo en puntas
+        return `<path d="M25 49 C23 25 36 17 50 17 C64 17 77 25 75 49 L72 41 L69 47 L65 36 L60 44 L55 33 L50 43 L44 33 L40 44 L35 36 L31 47 L28 41 Z" fill="${fill}"/>`
+          + strands('M44 33 L42 25 M55 33 L56 25 M35 36 L36 29') + SHINE();
+      case 2: // rapado: casi al ras, con textura
+        return `<path d="M28 44 C29 27 40 22 50 22 C60 22 71 27 72 44 C68 35 60 31 50 31 C40 31 32 35 28 44 Z" fill="${fill}" opacity=".88"/>`
+          + `<path d="M33 33 Q50 25 67 33" stroke="#fff" stroke-width="1.2" fill="none" opacity=".25"/>`;
+      case 3: { // rizado
         let out = '';
-        const pts = [[29, 40], [33, 31], [40, 25], [50, 22], [60, 25], [67, 31], [71, 40], [44, 30], [56, 30]];
-        pts.forEach(([x, y]) => { out += `<circle cx="${x}" cy="${y}" r="7" fill="${c}"/>`; });
+        const pts = [[28, 41], [32, 32], [39, 26], [47, 22], [55, 22], [62, 26], [68, 32], [72, 41], [43, 31], [57, 31], [50, 29]];
+        pts.forEach(([x, y]) => { out += `<circle cx="${x}" cy="${y}" r="6.6" fill="${fill}"/><path d="M${x - 3} ${y - 1} q3 -3 5 0" stroke="#fff" stroke-width=".9" fill="none" opacity=".35"/>`; });
         return out;
       }
-      case 4: return `<path d="M26 52 C23 24 40 19 50 19 C64 19 78 27 74 52 C71 41 63 33 53 31 C46 37 36 42 26 52 Z" fill="${c}"/>`;
-      case 5: return `<circle cx="50" cy="17" r="9" fill="${c}"/><path d="M27 46 C26 27 40 22 50 22 C61 22 74 27 73 46 C69 37 61 33 50 33 C39 33 31 37 27 46 Z" fill="${c}"/>`;
-      case 6: return `<path d="M25 50 C23 25 39 19 50 19 C62 19 77 25 75 50 C73 43 72 39 70 37 C59 40 41 40 30 37 C28 39 27 43 25 50 Z" fill="${c}"/>`;
-      case 7: return `<path d="M29 42 C31 29 41 25 50 25 C59 25 69 29 71 42 C67 36 60 33 50 33 C40 33 33 36 29 42 Z" fill="${c}" opacity=".4"/><path d="M44 31 C43 19 47 11 50 8 C53 11 57 19 56 31 C53 32 47 32 44 31 Z" fill="${c}"/>`;
+      case 4: // largo: flequillo de lado y mechones a los lados de la cara
+        return `<path d="M23 60 C19 24 37 16 50 16 C65 16 81 24 77 60 L74 50 L73 64 L70 42 L64 34 L60 43 L54 31 L48 41 L41 32 L36 42 L32 37 L30 52 L27 66 Z" fill="${fill}"/>`
+          + strands('M54 31 L57 22 M41 32 L43 23 M70 42 L69 30') + SHINE();
+      case 5: // moño alto
+        return `<circle cx="50" cy="14" r="9.5" fill="${fill}"/><path d="M44 13 Q50 8 56 13" stroke="#fff" stroke-width="1.4" fill="none" opacity=".4"/>`
+          + `<path d="M26 47 C25 26 39 20 50 20 C61 20 75 26 74 47 L71 40 L66 43 L62 34 L56 40 L50 32 L44 40 L38 34 L34 43 L29 40 Z" fill="${fill}"/>` + SHINE(0.4);
+      case 6: // melena con flequillo recto (hime)
+        return `<path d="M23 52 C21 23 38 17 50 17 C62 17 79 23 77 52 L74 52 L73 40 L68 42 L63 40 L57 42 L50 40 L43 42 L37 40 L32 42 L27 40 L26 52 Z" fill="${fill}"/>`
+          + strands('M37 40 L38 28 M50 40 L50 27 M63 40 L62 28') + SHINE();
+      case 7: // cresta en punta
+        return `<path d="M29 42 C31 29 41 25 50 25 C59 25 69 29 71 42 C67 36 60 33 50 33 C40 33 33 36 29 42 Z" fill="${fill}" opacity=".45"/>`
+          + `<path d="M42 32 L40 15 L46 22 L50 6 L54 22 L60 15 L58 32 Q50 34 42 32 Z" fill="${fill}"/>`;
       default: return '';
     }
   }
 
-  function eyes(type, irisColor, lineColor) {
+  // Sombra que el flequillo proyecta sobre la frente.
+  const BANG_SHADOW = new Set([1, 4, 5, 6]);
+
+  // Ojos grandes estilo anime: delineado grueso arriba, iris con degradado,
+  // pupila y dos brillos. La clase av-eyes permite el parpadeo (CSS).
+  function eyes(type, irisFill, lineColor) {
     const one = (x) => {
+      const out = x < 50 ? -1 : 1; // lado exterior del ojo
+      const open = (rx, ry, irx, iry) => `<ellipse cx="${x}" cy="50.5" rx="${rx}" ry="${ry}" fill="#fff"/>`
+        + `<ellipse cx="${x + out * 0.3}" cy="51" rx="${irx}" ry="${iry}" fill="${irisFill}"/>`
+        + `<ellipse cx="${x + out * 0.3}" cy="51.6" rx="${irx * 0.45}" ry="${iry * 0.5}" fill="#160e1a"/>`
+        + `<ellipse cx="${x + 1.6}" cy="${51 - iry * 0.45}" rx="1.6" ry="1.3" fill="#fff"/>`
+        + `<circle cx="${x - 1.4}" cy="${51 + iry * 0.5}" r=".7" fill="#fff" opacity=".85"/>`
+        + `<path d="M${x - rx - 0.8} ${50.5 - ry * 0.35} Q${x} ${50.5 - ry - 1.6} ${x + rx + 0.8} ${50.5 - ry * 0.35}" stroke="${lineColor}" stroke-width="2.1" fill="none" stroke-linecap="round"/>`
+        + `<path d="M${x + out * (rx + 0.6)} ${50.5 - ry * 0.4} l${out * 1.8} -1.6" stroke="${lineColor}" stroke-width="1.5" stroke-linecap="round"/>`
+        + `<path d="M${x - rx * 0.6} ${50.5 + ry + 0.5} Q${x} ${50.5 + ry + 1.2} ${x + rx * 0.6} ${50.5 + ry + 0.5}" stroke="${lineColor}" stroke-width=".7" fill="none" opacity=".5" stroke-linecap="round"/>`;
       switch (type) {
-        case 1: return `<ellipse cx="${x}" cy="50" rx="5.2" ry="5.8" fill="#fff"/><circle cx="${x}" cy="50.6" r="3.6" fill="${irisColor}"/><circle cx="${x}" cy="50.6" r="1.8" fill="#111"/><circle cx="${x + 1.4}" cy="49" r="1.2" fill="#fff"/>`;
-        case 2: return `<ellipse cx="${x}" cy="50.5" rx="5" ry="2.9" fill="#fff"/><circle cx="${x}" cy="50.5" r="2.3" fill="${irisColor}"/><circle cx="${x}" cy="50.5" r="1.1" fill="#111"/><path d="M${x - 5.6} 50 Q${x} 46 ${x + 5.6} 50" stroke="${lineColor}" stroke-width="1.1" fill="none"/>`;
-        case 4: return `<path d="M${x - 4.5} 51.5 Q${x} 46.5 ${x + 4.5} 51.5" stroke="${lineColor}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-        case 5: return x > 50 // guiño: el ojo derecho cerrado
-          ? `<path d="M${x - 4.5} 50.5 Q${x} 53.5 ${x + 4.5} 50.5" stroke="${lineColor}" stroke-width="2" fill="none" stroke-linecap="round"/>`
-          : `<ellipse cx="${x}" cy="50" rx="4.3" ry="4.4" fill="#fff"/><circle cx="${x}" cy="50.4" r="2.8" fill="${irisColor}"/><circle cx="${x}" cy="50.4" r="1.3" fill="#111"/><circle cx="${x + 1}" cy="49.2" r=".8" fill="#fff"/>`;
-        default: return `<ellipse cx="${x}" cy="50" rx="4.3" ry="4.4" fill="#fff"/><circle cx="${x}" cy="50.4" r="2.8" fill="${irisColor}"/><circle cx="${x}" cy="50.4" r="1.3" fill="#111"/><circle cx="${x + 1}" cy="49.2" r=".8" fill="#fff"/>`;
+        case 1: return open(6, 7.2, 4.9, 6.2) + `<circle cx="${x - 2}" cy="48.6" r=".8" fill="#fff"/>`; // grandes (shōjo)
+        case 2: // almendrados: más finos y afilados
+          return `<path d="M${x - 6} 51.5 Q${x - 1} 45.6 ${x + 6} ${out > 0 ? 49 : 51} Q${x} 55.5 ${x - 6} 51.5 Z" fill="#fff"/>`
+            + `<circle cx="${x}" cy="51" r="3.1" fill="${irisFill}"/><circle cx="${x}" cy="51.3" r="1.5" fill="#160e1a"/><circle cx="${x + 1.1}" cy="49.8" r=".9" fill="#fff"/>`
+            + `<path d="M${x - 6.6} 51.2 Q${x - 1} 44.8 ${x + 6.8} ${out > 0 ? 48.6 : 50.6}" stroke="${lineColor}" stroke-width="2.1" fill="none" stroke-linecap="round"/>`;
+        case 3: // con pestañas largas
+          return open(5.4, 6.4, 4.3, 5.4)
+            + `<g stroke="${lineColor}" stroke-width="1.2" stroke-linecap="round"><path d="M${x + out * 5.6} 47.6 l${out * 2.4} -1.4"/><path d="M${x + out * 4.4} 45.6 l${out * 1.8} -2"/><path d="M${x + out * 2.6} 44.4 l${out * 1} -2.2"/></g>`;
+        case 4: // felices (^ ^)
+          return `<path d="M${x - 5} 52.5 Q${x} 45.5 ${x + 5} 52.5" stroke="${lineColor}" stroke-width="2.3" fill="none" stroke-linecap="round"/>`;
+        case 5: return x > 50 // guiño
+          ? `<path d="M${x - 5} 50 L${x + 4.5} 52 L${x - 4} 54" stroke="${lineColor}" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+          : open(5.4, 6.4, 4.3, 5.4);
+        default: return open(5.4, 6.4, 4.3, 5.4); // normales
       }
     };
-    let out = `<g class="av-eyes">${one(41)}${one(59)}</g>`;
-    if (type === 3) { // pestañas
-      out += `<g stroke="${lineColor}" stroke-width="1.2" stroke-linecap="round" fill="none">
-        <path d="M37 47.5 L35 45.5"/><path d="M39 46.2 L38 43.8"/><path d="M63 47.5 L65 45.5"/><path d="M61 46.2 L62 43.8"/></g>`;
-    }
-    return out;
+    return `<g class="av-eyes">${one(40.5)}${one(59.5)}</g>`;
   }
 
+  // Bocas pequeñas, al estilo anime.
   function mouth(type, lipColor) {
     const dark = '#5a2230';
     switch (type) {
-      case 1: return `<path d="M42 62 Q50 72 58 62 Z" fill="${dark}"/><path d="M43 62.4 Q50 64.6 57 62.4 L56.3 64 Q50 65.8 43.7 64 Z" fill="#fff"/>`;
-      case 2: return `<path d="M42 63 Q46 59.6 50 61.6 Q54 59.6 58 63 Q50 64.6 42 63 Z" fill="${shade(lipColor, 0.85)}"/><path d="M42 63 Q50 64.6 58 63 Q55 69.5 50 69.5 Q45 69.5 42 63 Z" fill="${lipColor}"/>`;
-      case 3: return `<path d="M44.5 64 L55.5 64" stroke="${dark}" stroke-width="1.8" stroke-linecap="round"/>`;
-      case 4: return `<ellipse cx="50" cy="64.5" rx="3.2" ry="4" fill="${dark}"/>`;
-      case 5: return `<path d="M43 62 Q50 70 57 62 Z" fill="${dark}"/><path d="M47 65 Q50 71 53 65 Z" fill="#ff7a8a"/>`;
-      default: return `<path d="M43.5 62.5 Q50 68.5 56.5 62.5" stroke="${dark}" stroke-width="1.9" fill="none" stroke-linecap="round"/>`;
+      case 1: return `<path d="M44.5 64 Q50 65 55.5 64 Q54.5 70.5 50 70.5 Q45.5 70.5 44.5 64 Z" fill="${dark}"/><ellipse cx="50" cy="68.6" rx="3.2" ry="1.6" fill="#ff8a98"/>`; // risa
+      case 2: return `<path d="M45 64.6 Q47.5 62.6 50 63.6 Q52.5 62.6 55 64.6 Q50 65.6 45 64.6 Z" fill="${shade(lipColor, 0.85)}"/><path d="M45 64.6 Q50 65.6 55 64.6 Q53 68.4 50 68.4 Q47 68.4 45 64.6 Z" fill="${lipColor}"/><path d="M48 66.6 Q50 67.2 52 66.6" stroke="#fff" stroke-width=".7" opacity=".5" fill="none"/>`; // labios
+      case 3: return `<path d="M47 65.4 L53 65.4" stroke="${dark}" stroke-width="1.5" stroke-linecap="round"/>`; // serio
+      case 4: return `<ellipse cx="50" cy="66" rx="2.4" ry="3" fill="${dark}"/>`; // sorpresa
+      case 5: return `<path d="M45 64.2 Q50 68 55 64.2" stroke="${dark}" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M50.5 65.6 Q51 70 53.4 69.6 Q55.2 69 54 65.2 Z" fill="#ff7a8a"/>`; // lengua
+      default: return `<path d="M46 64.6 Q50 67.6 54 64.6" stroke="${dark}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`; // sonrisa
     }
   }
 
@@ -292,26 +332,42 @@
     const bg = BG[a.bg];
     const skinShade = shade(skin, 0.86);
     const lip = a.skin >= 4 ? shade(skin, 0.7) : '#d0566e';
-    const browColor = a.hair === 0 && a.hairColor === 5 ? '#9a9aa0' : hairC;
+    const browColor = a.hair === 0 && a.hairColor === 5 ? '#9a9aa0' : shade(hairC, 0.85);
+    const id = `av${(uid++).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const iris = EYE_COLORS[a.eyeColor].c;
+    const hairFill = `url(#${id}h)`;
+    // Cara anime: frente ancha y barbilla en punta suave.
+    const face = 'M27 47 C27 30 37 24 50 24 C63 24 73 30 73 47 C73 59 69 67 62 72.5 C57 76.5 53 78 50 78 C47 78 43 76.5 38 72.5 C31 67 27 59 27 47 Z';
 
     return `<svg class="av-svg" viewBox="${CROPS[crop] || CROPS.full}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+<defs>
+  <linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(hairC, 1.35)}"/><stop offset=".45" stop-color="${hairC}"/><stop offset="1" stop-color="${shade(hairC, 0.7)}"/></linearGradient>
+  <linearGradient id="${id}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(iris, 0.55)}"/><stop offset=".55" stop-color="${iris}"/><stop offset="1" stop-color="${shade(iris, 1.45)}"/></linearGradient>
+  <radialGradient id="${id}b" cx=".5" cy=".35" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <clipPath id="${id}f"><path d="${face}"/></clipPath>
+</defs>
 <rect x="0" y="0" width="100" height="100" fill="${bg.c}"/>
+<rect x="0" y="0" width="100" height="100" fill="url(#${id}b)"/>
 <rect x="42.5" y="58" width="15" height="28" rx="6" fill="${skinShade}"/>
+<path d="M42.5 78 Q50 83 57.5 78 L57.5 74 Q50 79 42.5 74 Z" fill="${shade(skin, 0.75)}" opacity=".5"/>
 ${shirt(a)}
 <g class="av-head"><g transform="translate(50 44) scale(.82) translate(-50 -48)">
-${hairBack(a.hair, hairC)}
-<circle cx="27" cy="52" r="5" fill="${skinShade}"/><circle cx="73" cy="52" r="5" fill="${skinShade}"/>
-<ellipse cx="50" cy="50" rx="23" ry="26" fill="${skin}"/>
-${a.g === 'm' ? `<circle cx="27" cy="57.5" r="1.6" fill="#f2c94c"/><circle cx="73" cy="57.5" r="1.6" fill="#f2c94c"/>` : ''}
-<ellipse cx="38" cy="58" rx="3.6" ry="2" fill="#ff8fa3" opacity=".28"/><ellipse cx="62" cy="58" rx="3.6" ry="2" fill="#ff8fa3" opacity=".28"/>
+${hairBack(a.hair, hairFill)}
+<path d="M27.5 47 Q23 47 23.6 52.5 Q24.4 57.5 29 57" fill="${skinShade}"/><path d="M72.5 47 Q77 47 76.4 52.5 Q75.6 57.5 71 57" fill="${skinShade}"/>
+<path d="${face}" fill="${skin}"/>
+${BANG_SHADOW.has(a.hair) ? `<g clip-path="url(#${id}f)"><path d="M24 38 L76 38 L76 46 Q63 50 50 47.5 Q37 50 24 46 Z" fill="${shade(skin, 0.8)}" opacity=".38"/></g>` : ''}
+${a.g === 'm' ? `<circle cx="25.6" cy="57.5" r="1.6" fill="#f2c94c"/><circle cx="74.4" cy="57.5" r="1.6" fill="#f2c94c"/>` : ''}
+<g opacity=".55"><ellipse cx="36.5" cy="60" rx="4.2" ry="2.2" fill="#ff8fa3" opacity=".55"/><ellipse cx="63.5" cy="60" rx="4.2" ry="2.2" fill="#ff8fa3" opacity=".55"/>
+<path d="M34 61 l1.6 -2.4 M36.4 61 l1.6 -2.4 M38.8 61 l1.6 -2.4 M60 61 l1.6 -2.4 M62.4 61 l1.6 -2.4 M64.8 61 l1.6 -2.4" stroke="#f06f86" stroke-width=".7" stroke-linecap="round"/></g>
 ${beard(a.beard, hairC)}
-<path d="M50 52 Q47.6 57.5 50.4 58.6" stroke="${shade(skin, 0.7)}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<path d="M50.6 57.4 L49.6 59.8 L51 60" stroke="${shade(skin, 0.68)}" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 ${mouth(a.lips, lip)}
-${eyes(a.eyes, EYE_COLORS[a.eyeColor].c, '#23243a')}
-<path d="M35.5 43.5 Q41 40.6 46.5 43" stroke="${browColor}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-<path d="M53.5 43 Q59 40.6 64.5 43.5" stroke="${browColor}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+${eyes(a.eyes, `url(#${id}i)`, '#23182a')}
+<path d="M34.5 41.8 Q40 39.6 45.6 41.6" stroke="${browColor}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<path d="M54.4 41.6 Q60 39.6 65.5 41.8" stroke="${browColor}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
 ${glasses(a.glasses, FRAME_COLORS[a.glassesColor].c, LENSES[a.lens].c)}
-${hairFront(a.hair, hairC)}
+${hairFront(a.hair, hairFill, hairC)}
+${a.hair === 0 ? `<ellipse cx="44" cy="31" rx="7" ry="3" fill="#fff" opacity=".22"/>` : ''}
 </g></g>
 </svg>`;
   }

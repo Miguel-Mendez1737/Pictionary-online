@@ -518,6 +518,8 @@ window.ParchisGame = function ParchisGame(ctx) {
         el('span', 'seat-name', `${pl ? pl.name : 'Salió'}${s.id === state.me ? ' (tú)' : ''}`),
         el('span', 'seat-goal', `👑 ${done}/${s.pieces.length}`),
         el('span', 'seat-pts', `${pl ? pl.score : 0} pts`));
+      const add = ctx.addFriendButton && ctx.addFriendButton(pl);
+      if (add) li.append(add);
       list.append(li);
     });
     const watchers = room.players.filter((x) => !p.seats.some((s) => s.id === x.id));

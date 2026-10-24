@@ -207,7 +207,7 @@
       node.append(span);
     });
   }
-  document.querySelectorAll('.logo-word').forEach(animateTitle);
+  document.querySelectorAll('.logo-word:not(.logo-plain)').forEach(animateTitle);
 
   // ─── Pantalla de inicio: objetos animados al azar ──────────────────────────
   // Cada vez que se abre la app aparecen objetos distintos: algo que vuela,
@@ -228,6 +228,7 @@
 
   function buildHero() {
     const stage = $('#hero-stage');
+    if (!stage) return; // la portada sobria no lleva objetos animados
     if (!stage) return;
     stage.innerHTML = '';
     const pick = (list, n) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
@@ -578,6 +579,7 @@
       return;
     }
     state.account = profile;
+    refreshFriendsCount(); // para saber a quién ya agregaste como amigo
     state.avatar = Avatar.normalize(profile.avatar);
     storage.set('pictionary:avatar', JSON.stringify(state.avatar));
     storage.set('pictionary:name', profile.name);
@@ -857,6 +859,8 @@
 
   // ─── Mis amigos (para las salas privadas) ──────────────────────────────────
   function renderFriends(list) {
+    state.friendSet = new Set(list.map((f) => f.username));
+    if (state.room) renderAddFriendButtons();
     const ul = $('#friend-list');
     ul.innerHTML = '';
     $('#friends-count').textContent = String(list.length);
@@ -1291,6 +1295,40 @@
     location.href = location.pathname;
   }));
 
+  // ➕ Botón para agregar como amigo a otro jugador que tenga cuenta.
+  // Aparece en el lobby, en la lista de jugadores de la partida y en el podio.
+  function addFriendButton(p) {
+    if (!state.account || !p || !p.username || p.id === state.me || p.username === state.account.username) return null;
+    const isFriend = state.friendSet && state.friendSet.has(p.username);
+    const b = el('button', `add-friend${isFriend ? ' is-friend' : ''}`, isFriend ? '🤝' : '➕');
+    b.type = 'button';
+    b.dataset.username = p.username;
+    b.title = isFriend ? `@${p.username} ya es tu amigo` : `Agregar a @${p.username} como amigo`;
+    b.setAttribute('aria-label', b.title);
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (b.classList.contains('is-friend')) { toast(`🤝 @${p.username} ya es tu amigo.`); return; }
+      b.disabled = true;
+      try {
+        const res = await api('POST', '/api/friends', { username: p.username });
+        renderFriends(res.friends);
+        toast(`🤝 ${p.name} (@${p.username}) ahora es tu amigo: podrá entrar a tus salas privadas.`, 'success');
+        vibrate(15);
+      } catch (ex) {
+        toast(ex.message, 'warn');
+      } finally { b.disabled = false; }
+    });
+    return b;
+  }
+  // Actualiza los botones ya dibujados (cuando cambia la lista de amigos).
+  function renderAddFriendButtons() {
+    document.querySelectorAll('.add-friend').forEach((b) => {
+      const isFriend = state.friendSet && state.friendSet.has(b.dataset.username);
+      b.classList.toggle('is-friend', Boolean(isFriend));
+      b.textContent = isFriend ? '🤝' : '➕';
+    });
+  }
+
   function renderPlayerList(listEl, room, { scores = false } = {}) {
     listEl.innerHTML = '';
     const players = scores ? [...room.players].sort((a, b) => b.score - a.score) : room.players;
@@ -1328,6 +1366,8 @@
         badges.append(mic);
       }
       li.append(badges);
+      const add = addFriendButton(p);
+      if (add) li.append(add);
       listEl.append(li);
     });
   }
@@ -1823,7 +1863,10 @@
       const p = room.ranking[pos];
       if (!p) return;
       const col = el('div', `podium-col place-${pos + 1}`);
-      col.append(avatarEl(p.avatar, pos === 0 ? 'lg' : 'md'), el('span', 'podium-name', p.name), el('span', 'podium-score', `${p.score} pts`), el('div', 'podium-step', medals[pos]));
+      col.append(avatarEl(p.avatar, pos === 0 ? 'lg' : 'md'), el('span', 'podium-name', p.name), el('span', 'podium-score', `${p.score} pts`));
+      const add = addFriendButton(p);
+      if (add) col.append(add);
+      col.append(el('div', 'podium-step', medals[pos]));
       podium.append(col);
     });
     box.append(podium);
@@ -1832,6 +1875,8 @@
       room.ranking.slice(3).forEach((p, i) => {
         const li = el('li');
         li.append(el('span', null, `#${i + 4} ${p.name}`), el('span', null, `${p.score} pts`));
+        const add = addFriendButton(p);
+        if (add) li.append(add);
         rest.append(li);
       });
       box.append(rest);
@@ -1848,7 +1893,7 @@
   }
 
   // ─── Basta y Parchís (cada uno en su propio archivo) ───
-  const gameCtx = { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, isHost, renderPlayerList, gameOverCard, clockText };
+  const gameCtx = { $, el, avatarEl, socket, state, toast, vibrate, sfx, speech, announce, isHost, renderPlayerList, gameOverCard, clockText, addFriendButton };
   const bastaUI = window.BastaGame(gameCtx);
   const parchisUI = window.ParchisGame(gameCtx);
   const triviaUI = window.TriviaGame(gameCtx);

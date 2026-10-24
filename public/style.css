@@ -798,6 +798,48 @@ body.kb-open .game { --canvas-h: calc(var(--app-h) * .40); }
 .hero-obj.pop { animation: obj-pop .45s cubic-bezier(.2, .9, .3, 1.6); }
 @keyframes obj-pop { 40% { transform: scale(1.6) rotate(-12deg); } 100% { transform: scale(1); } }
 
+/* ─── Portada sobria (más para adultos) ─── */
+.add-friend {
+  flex: none; width: 32px; height: 32px; margin-left: 4px;
+  display: inline-grid; place-items: center;
+  border-radius: 50%; border: 1.5px solid var(--accent); background: var(--accent-soft);
+  font-size: .9rem; cursor: pointer; padding: 0;
+}
+.add-friend.is-friend { border-color: transparent; background: transparent; }
+.add-friend:active { transform: scale(.9); }
+.podium-col .add-friend { margin: 4px auto 0; }
+.hero.hero-serious {
+  height: auto; margin: 0 0 14px; padding: 30px 18px 24px;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(201, 162, 39, .18), transparent 55%),
+    linear-gradient(160deg, #1b1f2e 0%, #252b40 60%, #1d2233 100%);
+  color: #e9ebf2;
+  box-shadow: 0 14px 34px rgba(16, 19, 30, .28);
+}
+.hero-serious .brand { padding: 0; }
+.hero-serious .logo-online {
+  animation: none; transform: none; box-shadow: none;
+  background: none; color: #c9a227;
+  font-size: .82rem; font-weight: 700; letter-spacing: .32em; text-transform: uppercase;
+  padding: 0; margin-bottom: 4px;
+}
+.hero-serious .logo-word {
+  font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-style: italic;
+  font-size: clamp(2.2rem, 11vw, 3rem); letter-spacing: .01em; color: #fff;
+}
+.hero-serious .subtitle { margin: 12px 0 0; font-weight: 500; font-size: .95rem; color: #b8bdd0; text-align: center; }
+.hero-games {
+  list-style: none; margin: 16px 0 0; padding: 14px 0 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+}
+.hero-games li {
+  font-size: .8rem; font-weight: 600; color: #d7dae6;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1);
+}
+
 /* Carril de arriba: algo que vuela de izquierda a derecha */
 .lane-fly { top: 8px; left: -60px; font-size: 38px; animation: fly var(--dur, 11s) linear infinite; animation-delay: var(--delay, 0s); }
 @keyframes fly { from { left: -60px; } to { left: calc(100% + 60px); } }
@@ -846,12 +888,12 @@ body.kb-open .game { --canvas-h: calc(var(--app-h) * .40); }
   display: flex; align-items: center; justify-content: center; gap: 6px;
   width: 100%; min-height: 48px; margin: 0 0 12px;
   font: inherit; font-weight: 800;
-  border: 2px dashed var(--accent);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, .75);
-  color: var(--accent-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
   cursor: pointer;
-  animation: install-pulse 2.4s ease-in-out infinite;
 }
 .install-btn[hidden] { display: none; }
 @keyframes install-pulse { 50% { box-shadow: 0 0 0 6px var(--blob-1); } }

@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.22.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.23.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -402,3 +402,8 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **🏙️ Ciudades famosas:** solo 65 ciudades con algo muy conocido para dibujar. El que dibuja ve una pista, por ejemplo "París → 💡 Torre Eiffel".
 - **🎲 Aleatorio corregido:** antes, si una palabra estaba en dos temas (por ejemplo "Barbie" en Películas y en Marcas), arriba podía salir el tema equivocado. Ahora primero se sortea el tema y luego una palabra de ese tema.
 - **No repetir:** la memoria de palabras, preguntas y letras que ya salieron se guarda en la base de datos. Antes se borraba cada vez que Render dormía el servidor y por eso se repetían.
+
+## v1.23.0: avatares estilo anime, portada sobria y agregar amigos en la partida
+- **🧑‍🎨 Avatares estilo anime:** ojos grandes con brillos y delineado, cabello con degradado, mechones en punta y brillo, mejillas sonrojadas, cara con barbilla en punta y bocas pequeñas. Se mantienen las mismas opciones, así que los avatares guardados siguen funcionando.
+- **Portada más sobria:** tarjeta oscura con el nombre en letra clásica y la lista de juegos. Se quitaron los dibujos animados que flotaban.
+- **➕ Agregar amigos durante la partida:** junto a cada jugador que tiene cuenta aparece ➕, y al tocarlo queda como amigo (🤝). Aparece en el lobby, en la lista de jugadores del Garabato y del Parchís, y en el podio al final de cada juego.

@@ -321,7 +321,8 @@ function publicPlayers(room) {
   return room.order
     .map((id) => room.players.get(id))
     .filter(Boolean)
-    .map(({ id, name, avatar, score, guessed, voice, muted, connected }) => ({ id, name, avatar, score, guessed, voice, muted, connected }));
+    // username: solo los que tienen cuenta (para poder agregarlos como amigos).
+    .map(({ id, name, avatar, score, guessed, voice, muted, connected, username }) => ({ id, name, avatar, score, guessed, voice, muted, connected, username: username || null }));
 }
 
 function ranking(room) {
