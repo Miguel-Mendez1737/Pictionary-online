@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.26.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.27.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -436,3 +436,6 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Barba:** 13 tipos (nuevos: Corta, Herradura, Imperial y Mosca).
 - **Lentes:** 13 tipos (nuevos: Grandes, De lectura, Deportivos y Corazón).
 - Los avatares guardados no cambian. Las mujeres conservan sus aretes pequeños, que ahora se pueden quitar o cambiar.
+
+## v1.27.0: Naturaleza y clima en lugar de Instrumentos musicales
+- **Garabato:** se quitó el tema 🎵 Instrumentos musicales. En su lugar está **🌋 Naturaleza y clima**, con 80 palabras como arcoíris, tornado, aurora boreal, eclipse, iceberg, girasol o copo de nieve. Ninguna se repite con otros temas.

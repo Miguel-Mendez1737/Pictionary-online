@@ -266,25 +266,27 @@ module.exports = {
       'Corbata', 'Maletín', 'Planta de oficina', 'Ventilador', 'Aire acondicionado'
     ]
   },
-  instrumentos: {
-    label: 'Instrumentos musicales',
-    emoji: '🎵',
-    colors: ['#7048e8', '#e8590c'], // colores de la interfaz con este tema
+  naturaleza: {
+    label: 'Naturaleza y clima',
+    emoji: '🌋',
+    colors: ['#2f9e44', '#1971c2'], // colores de la interfaz con este tema
     words: [
-      'Guitarra', 'Guitarra eléctrica', 'Bajo', 'Violín', 'Viola',
-      'Violonchelo', 'Contrabajo', 'Arpa', 'Piano', 'Teclado',
-      'Órgano', 'Acordeón', 'Armónica', 'Flauta', 'Flauta dulce',
-      'Clarinete', 'Oboe', 'Fagot', 'Saxofón', 'Trompeta',
-      'Trombón', 'Tuba', 'Corno francés', 'Gaita', 'Batería',
-      'Tambor', 'Bombo', 'Platillos', 'Bongós', 'Congas',
-      'Timbales', 'Pandero', 'Maracas', 'Güiro', 'Claves',
-      'Castañuelas', 'Triángulo', 'Xilófono', 'Marimba', 'Campana',
-      'Cascabeles', 'Cajón peruano', 'Ukulele', 'Mandolina', 'Banjo',
-      'Charango', 'Cuatro venezolano', 'Requinto', 'Guitarrón', 'Vihuela',
-      'Arpa jarocha', 'Quena', 'Zampoña', 'Ocarina', 'Silbato',
-      'Kazoo', 'Sitar', 'Didgeridoo', 'Gong', 'Cencerro',
-      'Sintetizador', 'Micrófono', 'Bocina', 'Atril', 'Batuta',
-      'Metrónomo', 'Partitura', 'Púa', 'Baquetas', 'Arco de violín'
+      'Lava', 'Arcoíris', 'Tornado', 'Huracán', 'Relámpago',
+      'Rayo', 'Trueno', 'Lluvia', 'Nieve', 'Granizo',
+      'Niebla', 'Nube', 'Sol', 'Luna llena', 'Estrella',
+      'Estrella fugaz', 'Eclipse', 'Cometa', 'Planeta', 'Galaxia',
+      'Hielo', 'Rocío', 'Bahía', 'Mar', 'Ola',
+      'Pétalo', 'Enredadera', 'Duna', 'Oasis', 'Inundación',
+      'Sequía', 'Planeta Tierra', 'Glaciar', 'Iceberg', 'Llovizna',
+      'Cañón', 'Valle', 'Pradera', 'Pantano', 'Arrecife',
+      'Coral', 'Árbol', 'Palmera', 'Pino', 'Cactus',
+      'Flor', 'Girasol', 'Rosa', 'Tulipán', 'Hoja',
+      'Hongo', 'Roca', 'Arena', 'Piedra', 'Cristal de hielo',
+      'Copo de nieve', 'Charco', 'Viento', 'Tormenta', 'Terremoto',
+      'Tsunami', 'Avalancha', 'Incendio forestal', 'Atardecer', 'Amanecer',
+      'Noche estrellada', 'Aurora boreal', 'Géiser', 'Musgo', 'Raíz',
+      'Semilla', 'Tronco', 'Rama', 'Bellota', 'Piña de pino',
+      'Trébol', 'Helecho', 'Neblina', 'Gota de agua', 'Remolino'
     ]
   },
   marcas: {
