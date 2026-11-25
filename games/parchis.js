@@ -48,7 +48,7 @@ const RULES = [
   { id: 'exact', label: 'Llegada exacta al cielo', desc: 'Para coronar necesitas el número exacto.', def: true },
   { id: 'threePenalty', label: 'Tres seguidos: a la cárcel', desc: 'Con tres 6 o tres pares seguidos, la última ficha que moviste vuelve a la cárcel.', def: true },
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
-  { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas. También se puede retroceder desde la salida (la ficha queda detrás de ella) y, si así llega exacto a la entrada de su cielo, corona.', def: true },
+  { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas. También se puede retroceder desde la salida (la ficha queda detrás de ella) y, si con una o varias patas de perro llega a la entrada de su cielo, puede coronar.', def: true },
   { id: 'pataSplit', label: 'Pata de perro repartida', desc: 'Con la pata de perro puedes retroceder 2 con una ficha y 1 con otra, o los 3 con la misma ficha.', def: true },
   { id: 'soplar', label: 'Soplar', desc: 'Si alguien pudo comer (con un dado o con la suma) y no lo hizo, los demás pueden tocar 🌬️ Soplar antes de que tire el siguiente jugador: la app lo revisa y, si es cierto, esa ficha se va a la cárcel.', def: false },
   { id: 'oneSum', label: 'Una ficha: mueve la suma', desc: '2 dados: si solo tienes una ficha corriendo por el tablero, mueves la suma de los dos dados de corrido (no puedes comer con un solo dado). Si la suma no cabe, puedes usar un dado.', def: true },
@@ -544,15 +544,16 @@ module.exports = function createParchis(h) {
     const seen = new Set();
     seat.pieces.forEach((from, i) => {
       if (from === JAIL || from > lastTrack || seat.lanes[i] !== null || seen.has(from)) return;
-      // ☁️ Si retrocediendo llega exacto a la entrada de su propio cielo (5 casillas
-      // antes de la salida), la ficha corona.
+      // ☁️ Si retrocediendo desde su salida llega (o pasa) a la entrada de su propio
+      // cielo (5 casillas antes de la salida), la ficha puede coronar. Puede tomar
+      // varias patas de perro: la ficha se queda detrás de la salida entre una y otra.
       const target = lin(from) - amount;
-      const crowns = target === -(MAX_BEHIND + 1);
+      const crowns = target <= -(MAX_BEHIND + 1) && from <= 0;
       if (target < -MAX_BEHIND && !crowns) return;
       const to = fromLin(target);
       // 🧱 Al retroceder tampoco se puede pasar sobre un bloqueo (ni caer en él).
       const wallAt = (k) => { const a = absOf(seat.arm, k); return occupantsAt(room, a).length >= 2 && safe.has(a); };
-      for (let L = lin(from) - 1; L > target; L--) if (has(room, 'barriers') && wallAt(fromLin(L))) return;
+      for (let L = lin(from) - 1; L > Math.max(target, -(MAX_BEHIND + 1)); L--) if (has(room, 'barriers') && wallAt(fromLin(L))) return;
       if (crowns) {
         seen.add(from);
         moves.push({ piece: i, from, to: B(room).goal, lane: null, capture: [], kind: 'back', die: 0, amount });
