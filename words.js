@@ -266,27 +266,25 @@ module.exports = {
       'Corbata', 'Maletín', 'Planta de oficina', 'Ventilador', 'Aire acondicionado'
     ]
   },
-  naturaleza: {
-    label: 'Naturaleza y clima',
-    emoji: '🌋',
-    colors: ['#2f9e44', '#1971c2'], // colores de la interfaz con este tema
+  cuerpo: {
+    label: 'Partes del cuerpo',
+    emoji: '🫀',
+    colors: ['#e8590c', '#c2255c'], // colores de la interfaz con este tema
     words: [
-      'Lava', 'Arcoíris', 'Tornado', 'Huracán', 'Relámpago',
-      'Rayo', 'Trueno', 'Lluvia', 'Nieve', 'Granizo',
-      'Niebla', 'Nube', 'Sol', 'Luna llena', 'Estrella',
-      'Estrella fugaz', 'Eclipse', 'Cometa', 'Planeta', 'Galaxia',
-      'Hielo', 'Rocío', 'Bahía', 'Mar', 'Ola',
-      'Pétalo', 'Enredadera', 'Duna', 'Oasis', 'Inundación',
-      'Sequía', 'Planeta Tierra', 'Glaciar', 'Iceberg', 'Llovizna',
-      'Cañón', 'Valle', 'Pradera', 'Pantano', 'Arrecife',
-      'Coral', 'Árbol', 'Palmera', 'Pino', 'Cactus',
-      'Flor', 'Girasol', 'Rosa', 'Tulipán', 'Hoja',
-      'Hongo', 'Roca', 'Arena', 'Piedra', 'Cristal de hielo',
-      'Copo de nieve', 'Charco', 'Viento', 'Tormenta', 'Terremoto',
-      'Tsunami', 'Avalancha', 'Incendio forestal', 'Atardecer', 'Amanecer',
-      'Noche estrellada', 'Aurora boreal', 'Géiser', 'Musgo', 'Raíz',
-      'Semilla', 'Tronco', 'Rama', 'Bellota', 'Piña de pino',
-      'Trébol', 'Helecho', 'Neblina', 'Gota de agua', 'Remolino'
+      'Cabeza', 'Cara', 'Ojo', 'Oreja', 'Nariz',
+      'Boca', 'Labios', 'Diente', 'Lengua', 'Ceja',
+      'Pestaña', 'Frente', 'Mejilla', 'Barbilla', 'Cuello',
+      'Hombro', 'Brazo', 'Codo', 'Muñeca', 'Mano',
+      'Dedo', 'Pulgar', 'Uña', 'Palma de la mano', 'Puño',
+      'Pecho', 'Espalda', 'Ombligo', 'Barriga', 'Cintura',
+      'Cadera', 'Pierna', 'Rodilla', 'Tobillo', 'Pie',
+      'Talón', 'Dedo del pie', 'Pantorrilla', 'Muslo', 'Corazón',
+      'Cerebro', 'Pulmones', 'Estómago', 'Hueso', 'Calavera',
+      'Esqueleto', 'Columna vertebral', 'Garganta', 'Músculo', 'Bíceps',
+      'Venas', 'Sangre', 'Piel', 'Pelo', 'Barba',
+      'Lunar', 'Peca', 'Arruga', 'Huella digital', 'Nudillo',
+      'Axila', 'Nuca', 'Mandíbula', 'Párpado', 'Pupila',
+      'Riñón', 'Hígado', 'Intestinos', 'Muela', 'Encías'
     ]
   },
   marcas: {
