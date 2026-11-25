@@ -16,6 +16,7 @@ const MAX_SEATS = 10;
 const HAND = 7;
 const RULES = [
   { id: 'stack', label: 'Acumular +2 y +4', desc: 'Si te tiran un +2 (o +4) y tienes otro, lo puedes poner encima y el siguiente roba la suma.', def: false },
+  { id: 'stackMix', label: 'Sumar +2 y +4 sin importar el color', desc: 'Se acumulan mezclados: un +2 encima de un +4 y un +4 encima de un +2, de cualquier color. El siguiente roba la suma (activa también "Acumular").', def: true },
   { id: 'drawUntil', label: 'Robar hasta poder jugar', desc: 'Si no puedes jugar, robas cartas hasta que salga una que sí puedas tirar.', def: false },
   { id: 'catchCall', label: '¡ONE! obligatorio', desc: 'Al quedarte con una carta debes tocar "¡ONE!". Si no, los demás pueden atraparte y robas 2.', def: true },
   { id: 'wild4Free', label: '+4 libre', desc: 'El +4 se puede tirar aunque tengas cartas del color en juego (si se apaga, solo cuando no tienes ese color).', def: true }
@@ -130,13 +131,17 @@ module.exports = function createCartas(h) {
     beginTurn(room);
   }
 
+  // "Sumar +2 y +4" implica que se puede acumular.
+  const stacking = (room) => has(room, 'stack') || has(room, 'stackMix');
+
   // ¿Se puede tirar esta carta?
   function canPlay(room, seat, card) {
     const c = C(room);
     const t = top(room);
     if (c.pendingDraw > 0) {
       // Con cartas acumuladas solo se puede responder con +2/+4 (si la regla lo permite).
-      if (!has(room, 'stack')) return false;
+      if (!stacking(room)) return false;
+      if (has(room, 'stackMix')) return card.value === '+2' || card.value === '+4'; // cualquier color
       if (t.value === '+2') return card.value === '+2' || card.value === '+4';
       if (t.value === '+4') return card.value === '+4';
       return false;
@@ -205,7 +210,7 @@ module.exports = function createCartas(h) {
     }
     if (card.value === '+2' || card.value === '+4') {
       c.pendingDraw += card.value === '+2' ? 2 : 4;
-      if (!has(room, 'stack')) {
+      if (!stacking(room)) {
         const victimIdx = nextIndex(room, c.turn);
         const victim = c.seats[victimIdx];
         draw(room, victim, c.pendingDraw);
