@@ -162,6 +162,9 @@ function loadMemories() {
       }
       (m.t || []).forEach((x) => cur.trivia.add(x));
       (m.l || []).forEach((x) => cur.letters.add(x));
+    cur.teased = cur.teased || {};
+    for (const [t, list] of Object.entries(m.r || {})) cur.teased[t] = new Set([...(cur.teased[t] || []), ...list]);
+    if (!cur.cycle && Array.isArray(m.c)) cur.cycle = m.c;
       cur.at = Math.max(cur.at || 0, m.at || 0);
       memories.set(k, cur);
     }
@@ -204,7 +207,9 @@ function serializeMemories() {
     at: m.at || 0,
     w: Object.fromEntries(Object.entries(m.words).map(([t, set]) => [t, [...set]])),
     t: [...m.trivia],
-    l: [...m.letters]
+    l: [...m.letters],
+    r: Object.fromEntries(Object.entries(m.teased || {}).map(([t, set]) => [t, [...set]])),
+    c: m.cycle || []
   }]));
 }
 function saveMemories() {
@@ -256,7 +261,7 @@ function createRoom(code) {
     order: [],                  // orden de turnos (orden de llegada)
     hostId: null,
     phase: 'lobby',             // lobby | spinning | drawing | reveal | gameOver
-    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, ...basta.defaults(), ...trivia.defaults(), ...parchis.defaults(), ...cartas.defaults() },
+    settings: { game: 'garabato', theme: null, rounds: 3, drawTime: TURN_SECONDS, muteDrawer: true, guessDelay: true, ...basta.defaults(), ...trivia.defaults(), ...parchis.defaults(), ...cartas.defaults() },
     round: 0,
     drawnThisRound: new Set(),
     drawerId: null,
@@ -354,6 +359,7 @@ function snapshotFor(room, playerId) {
     drawHint: playerId === room.drawerId && room.word && THEMES[room.wordThemeId] && THEMES[room.wordThemeId].hints
       ? THEMES[room.wordThemeId].hints[room.word] || null : null,
     mask: room.word && room.phase !== 'spinning' ? maskWord(room) : null,
+    guessLockMs: guessLockLeft(room),
     // En el tema aleatorio se dice a qué tema pertenece la palabra (pista para adivinar).
     wordTheme: room.word && room.phase !== 'spinning' && room.settings.theme === 'aleatorio' && THEMES[room.wordThemeId]
       ? `${THEMES[room.wordThemeId].emoji} ${THEMES[room.wordThemeId].label}` : null,
@@ -418,22 +424,40 @@ function seenWords(room, theme = room.settings.theme) {
   return mem.words[theme];
 }
 
+// Palabras que ya se vieron como "relleno" en la ruleta: se dejan para el final,
+// porque el dibujante de ese turno ya las conoce.
+function teasedWords(room, theme) {
+  const mem = memoryOf(room);
+  mem.teased = mem.teased || {};
+  if (!mem.teased[theme]) mem.teased[theme] = new Set();
+  return mem.teased[theme];
+}
+
 function pickWord(room) {
   let theme = room.settings.theme;
   // 🎲 Aleatorio: primero se sortea el tema (de los que aún tienen palabras sin salir)
   // y luego una palabra de ese tema. Así el tema que se muestra es el de la palabra.
+  // 🎲 Aleatorio: cada turno sale de un tema distinto; no se repite tema hasta
+  // haber pasado por todos.
   if (theme === 'aleatorio') {
+    const mem = memoryOf(room);
     const ids = Object.keys(THEMES).filter((id) => id !== 'aleatorio');
-    const fresh = ids.filter((id) => THEMES[id].words.some((w) => !seenWords(room, id).has(w)));
-    const pool = fresh.length ? fresh : ids;
+    mem.cycle = (mem.cycle || []).filter((id) => ids.includes(id));
+    if (mem.cycle.length >= ids.length) mem.cycle = [];
+    const pool = ids.filter((id) => !mem.cycle.includes(id));
     theme = pool[Math.floor(Math.random() * pool.length)];
+    mem.cycle.push(theme);
   }
   room.wordThemeId = theme;
   const list = THEMES[theme].words;
   const seen = seenWords(room, theme);
-  let available = list.filter((w) => !seen.has(w));
+  const teased = teasedWords(room, theme);
+  // Primero las que nadie ha visto; luego las que solo salieron de relleno en la ruleta.
+  let available = list.filter((w) => !seen.has(w) && !teased.has(w));
+  if (available.length === 0) available = list.filter((w) => !seen.has(w));
   if (available.length === 0) {
     seen.clear(); // ya salieron todas: se empieza de nuevo
+    teased.clear();
     available = list;
   }
   const word = available[Math.floor(Math.random() * available.length)];
@@ -493,11 +517,27 @@ function nextTurn(room) {
 
   // 🎡 Ruleta: la palabra secreta + otras del mismo tema, en orden aleatorio.
   // Se prefieren palabras que aún no han salido en la partida.
-  const pool = THEMES[room.settings.theme].words.filter((w) => w !== room.word);
-  const used = seenWords(room);
-  const fresh = shuffle(pool.filter((w) => !used.has(w)));
-  const seen = shuffle(pool.filter((w) => used.has(w)));
-  const others = [...fresh, ...seen].slice(0, WHEEL_SIZE - 1);
+  // De relleno se prefieren palabras que YA salieron: así la ruleta no le adelanta
+  // al dibujante palabras que le pueden tocar adivinar después.
+  const decoysFrom = (themeId, n) => {
+    const pool = THEMES[themeId].words.filter((w) => w !== room.word);
+    const used = seenWords(room, themeId);
+    const teased = teasedWords(room, themeId);
+    const old = shuffle(pool.filter((w) => used.has(w)));
+    const shown = shuffle(pool.filter((w) => !used.has(w) && teased.has(w)));
+    const fresh = shuffle(pool.filter((w) => !used.has(w) && !teased.has(w)));
+    const picked = [...old, ...shown, ...fresh].slice(0, n);
+    picked.forEach((w) => { if (!used.has(w)) teased.add(w); });
+    return picked;
+  };
+  let others;
+  if (room.settings.theme === 'aleatorio') {
+    // 🎲 En la ruleta, una palabra de cada tema (sin repetir tema).
+    const ids = shuffle(Object.keys(THEMES).filter((id) => id !== 'aleatorio' && id !== room.wordThemeId));
+    others = ids.slice(0, WHEEL_SIZE - 1).flatMap((id) => decoysFrom(id, 1));
+  } else {
+    others = decoysFrom(room.settings.theme, WHEEL_SIZE - 1);
+  }
   const items = shuffle([room.word, ...others]);
   room.wheel = { items, target: items.indexOf(room.word), spin: null, autoAt: Date.now() + WHEEL_AUTO_SPIN_MS };
   room.phase = 'spinning';
@@ -520,11 +560,16 @@ function spinWheel(room) {
   room.wheelTimeout = setTimeout(() => startDrawing(room), WHEEL_SPIN_MS + WHEEL_PAUSE_MS);
 }
 
+const GUESS_DELAY_MS = 10000;
+const guessLockLeft = (room) => (room.phase === 'drawing' && room.settings.guessDelay && room.drawStartedAt
+  ? Math.max(0, room.drawStartedAt + GUESS_DELAY_MS - Date.now()) : 0);
+
 function startDrawing(room) {
   if (room.phase !== 'spinning') return;
   clearTimers(room);
   room.phase = 'drawing';
   room.wheel = null;
+  room.drawStartedAt = Date.now();
   systemMsg(room, `✏️ ${room.players.get(room.drawerId)?.name || 'El dibujante'} está dibujando.`);
   syncRoom(room);
   room.timer = setInterval(() => tick(room), 1000);
@@ -799,6 +844,7 @@ io.on('connection', (socket) => {
     if (s && ROUND_OPTIONS.includes(Number(s.rounds))) room.settings.rounds = Number(s.rounds);
     if (s && TIME_OPTIONS.includes(Number(s.drawTime))) room.settings.drawTime = Number(s.drawTime);
     if (s && typeof s.muteDrawer === 'boolean') room.settings.muteDrawer = s.muteDrawer;
+    if (s && typeof s.guessDelay === 'boolean') room.settings.guessDelay = s.guessDelay;
     syncRoom(room);
   });
 
@@ -828,6 +874,11 @@ io.on('connection', (socket) => {
     if (room.phase === 'drawing') {
       if (player.id === room.drawerId) {
         return socket.emit('chat:system', { text: 'Estás dibujando: no puedes escribir en el chat.', kind: 'warn' });
+      }
+      // ⏳ Regla: nadie responde en los primeros 10 s, para que se alcance a dibujar algo.
+      const wait = guessLockLeft(room);
+      if (wait > 0 && !player.guessed) {
+        return socket.emit('chat:system', { text: `⏳ Espera ${Math.ceil(wait / 1000)} s para responder: deja que empiece el dibujo.`, kind: 'warn' });
       }
       if (player.guessed) {
         // Quien ya acertó solo habla con el dibujante y con otros que acertaron.

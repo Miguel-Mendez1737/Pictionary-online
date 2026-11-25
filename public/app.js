@@ -1019,6 +1019,8 @@
   // ─── 2. Lobby ──────────────────────────────────────────────────────────────
   const roundsSelect = $('#rounds-select');
   const muteDrawerInput = $('#mute-drawer');
+  const guessDelayInput = $('#guess-delay');
+  guessDelayInput.addEventListener('change', () => sendSettings({ guessDelay: guessDelayInput.checked }));
 
   const themeSelect = $('#theme-select');
   themeSelect.addEventListener('change', () => { if (themeSelect.value) { vibrate(10); sendSettings({ theme: themeSelect.value }); } });
@@ -1424,6 +1426,8 @@
     timeSelect.disabled = !host;
     $('#rule-time').textContent = longTimeText(room.settings.drawTime);
     muteDrawerInput.checked = room.settings.muteDrawer;
+    guessDelayInput.checked = room.settings.guessDelay !== false;
+    guessDelayInput.disabled = !host;
     roundsSelect.disabled = !host;
     muteDrawerInput.disabled = !host;
 
@@ -1922,11 +1926,31 @@
     $('#guess-hint').classList.toggle('visible', room.phase === 'drawing' && !drawer && !(me && me.guessed));
     canvas.classList.toggle('can-draw', drawer);
 
-    chatInput.disabled = drawer;
-    if (drawer && document.activeElement === chatInput) chatInput.blur();
-    chatInput.placeholder = drawer ? 'Estás dibujando… 🎨'
-      : me && me.guessed && room.phase === 'drawing' ? 'Ya adivinaste: chatea con quienes acertaron'
-      : 'Escribe tu respuesta…';
+    // ⏳ Los primeros 10 s del dibujo el teclado está bloqueado para quien adivina.
+    const locked = room.phase === 'drawing' && !drawer && !(me && me.guessed) && room.guessLockMs > 0;
+    clearInterval(state.lockTimer);
+    if (locked) {
+      const openAt = Date.now() + room.guessLockMs;
+      const tickLock = () => {
+        const left = Math.ceil((openAt - Date.now()) / 1000);
+        if (left <= 0) {
+          clearInterval(state.lockTimer);
+          chatInput.disabled = false;
+          chatInput.placeholder = 'Escribe tu respuesta…';
+          return;
+        }
+        chatInput.placeholder = `⏳ Podrás responder en ${left} s…`;
+      };
+      state.lockTimer = setInterval(tickLock, 250);
+      tickLock();
+    }
+    chatInput.disabled = drawer || locked;
+    if ((drawer || locked) && document.activeElement === chatInput) chatInput.blur();
+    if (!locked) {
+      chatInput.placeholder = drawer ? 'Estás dibujando… 🎨'
+        : me && me.guessed && room.phase === 'drawing' ? 'Ya adivinaste: chatea con quienes acertaron'
+        : 'Escribe tu respuesta…';
+    }
   }
 
   function render() {
