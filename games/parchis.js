@@ -48,7 +48,8 @@ const RULES = [
   { id: 'exact', label: 'Llegada exacta al cielo', desc: 'Para coronar necesitas el número exacto.', def: true },
   { id: 'threePenalty', label: 'Tres seguidos: a la cárcel', desc: 'Con tres 6 o tres pares seguidos, la última ficha que moviste vuelve a la cárcel.', def: true },
   { id: 'threeCrown', label: 'Tres pares sacan una ficha', desc: 'Con tres 6 o tres pares seguidos coronas la ficha que elijas (reemplaza a "Tres seguidos: a la cárcel").', def: false },
-  { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas con una de tus fichas.', def: true },
+  { id: 'pataPerro', label: 'Pata de perro 🐾', desc: '2 dados: si sacas 2 y 1, en lugar de avanzar retrocedes 3 casillas. También se puede retroceder desde la salida (la ficha queda detrás de ella) y, si así llega exacto a la entrada de su cielo, corona.', def: true },
+  { id: 'pataSplit', label: 'Pata de perro repartida', desc: 'Con la pata de perro puedes retroceder 2 con una ficha y 1 con otra, o los 3 con la misma ficha.', def: true },
   { id: 'soplar', label: 'Soplar', desc: 'Si alguien pudo comer (con un dado o con la suma) y no lo hizo, los demás pueden tocar 🌬️ Soplar antes de que tire el siguiente jugador: la app lo revisa y, si es cierto, esa ficha se va a la cárcel.', def: false },
   { id: 'oneSum', label: 'Una ficha: mueve la suma', desc: '2 dados: si solo tienes una ficha corriendo por el tablero, mueves la suma de los dos dados de corrido (no puedes comer con un solo dado). Si la suma no cabe, puedes usar un dado.', def: true },
   { id: 'robarCielo', label: 'Robar cielo', desc: 'Si al pasar por la entrada de un rival el número da exacto para caer sobre una ficha suya en su pasillo, entras, te la comes y coronas por ese mismo cielo. Mientras el ladrón siga en ese pasillo, el dueño o cualquier otro jugador con el número exacto se lo puede comer.', def: false }
@@ -67,6 +68,14 @@ const POINTS_GOAL = 10;
 const POINTS_WIN = 30;
 const BONUS_CAPTURE = 20;
 const BONUS_GOAL = 10;
+
+// Pasos de una ficha: -1 = cárcel; 0.. = desde su salida. Con la pata de perro una
+// ficha puede quedar DETRÁS de su salida: -2, -3, -4, -5 = 1, 2, 3, 4 casillas antes.
+// lin() convierte eso en una recta continua (…, -2, -1, 0, 1…) y fromLin() lo regresa.
+const JAIL = -1;
+const MAX_BEHIND = 4;
+const lin = (s) => (s <= -2 ? s + 1 : s);
+const fromLin = (l) => (l < 0 ? l - 1 : l);
 
 // Medidas del tablero según la cantidad de brazos.
 function boardFor(arms) {
@@ -87,7 +96,7 @@ function boardFor(arms) {
     entryOf,
     exitOf,
     safe,
-    absOf: (arm, steps) => (exitOf(arm) + steps) % track
+    absOf: (arm, steps) => (((exitOf(arm) + lin(steps)) % track) + track) % track
   };
 }
 
@@ -215,7 +224,7 @@ module.exports = function createParchis(h) {
     for (const seat of P(room).seats) {
       if (seat.gone) continue;
       seat.pieces.forEach((steps, i) => {
-        if (steps >= 0 && steps <= lastTrack && absOf(seat.arm, steps) === abs) list.push({ seat, i });
+        if (steps !== JAIL && steps <= lastTrack && absOf(seat.arm, steps) === abs) list.push({ seat, i });
       });
     }
     return list;
@@ -262,9 +271,9 @@ module.exports = function createParchis(h) {
 
     const seen = new Set();
     seat.pieces.forEach((from, i) => {
-      if (from < 0 || from >= goal) return;
+      if (from === JAIL || from >= goal) return;
       const lane = laneOf(seat, i);
-      let to = from + amount;
+      let to = fromLin(lin(from) + amount);
       if (to > goal) {
         if (has(room, 'exact')) return;
         to = goal;
@@ -288,7 +297,8 @@ module.exports = function createParchis(h) {
         }
       };
       trySteal(from);
-      for (let k = from + 1; k <= to && !blocked; k++) {
+      for (let L = lin(from) + 1; L <= lin(to) && !blocked; L++) {
+        const k = fromLin(L);
         const landing = k === to;
         if (k <= lastTrack) {
           const abs = absOf(seat.arm, k);
@@ -358,6 +368,7 @@ module.exports = function createParchis(h) {
     p.roll = p.dice === 2 && !lastOneDie(room, seat) ? [d(), d()] : [d()];
     p.rollId++;
     p.blocked = false;
+    p.back = false;
     if (p.soplable && p.soplable.seatIdx !== p.turn) p.soplable = null; // ya tiró otro: no se puede soplar
     p.bonus = [];
     p.bonusAmount = null;
@@ -378,7 +389,7 @@ module.exports = function createParchis(h) {
         }
       } else if (has(room, 'threePenalty')) {
         const lm = p.lastMoved;
-        if (lm && lm.seat === seat && seat.pieces[lm.i] >= 0 && seat.pieces[lm.i] < goal) {
+        if (lm && lm.seat === seat && seat.pieces[lm.i] !== JAIL && seat.pieces[lm.i] < goal) {
           seat.pieces[lm.i] = -1;
           seat.lanes[lm.i] = null;
           log(room, `😵 ${name} sacó tres ${p.dice === 2 ? 'pares' : '6'} seguidos: su última ficha vuelve a la cárcel.`);
@@ -398,8 +409,10 @@ module.exports = function createParchis(h) {
 
     // 🐾 Pata de perro: con 2 y 1 una ficha retrocede 3 casillas.
     if (p.dice === 2 && has(room, 'pataPerro') && [...p.roll].sort().join() === '1,2') {
-      p.pending = [3];
-      p.legal = backMoves(room, seat, 3);
+      // Repartida: un dado de 2 y otro de 1 hacia atrás (en la misma ficha o en dos).
+      p.back = true;
+      p.pending = has(room, 'pataSplit') ? [2, 1] : [3];
+      p.legal = backAll(room, seat);
       if (!p.legal.length) {
         log(room, `🐾 ${name} sacó pata de perro (2 y 1), pero no tiene fichas para retroceder.`);
         p.pending = [];
@@ -481,7 +494,7 @@ module.exports = function createParchis(h) {
     }
     if (offender.id === player.id) return reply(false, 'No te puedes soplar a ti mismo 😅');
     const { goal } = B(room);
-    const i = s.pieces.find((k) => offender.pieces[k] >= 0 && offender.pieces[k] < goal);
+    const i = s.pieces.find((k) => offender.pieces[k] !== JAIL && offender.pieces[k] < goal);
     p.soplable = null;
     if (i === undefined) {
       reply(false, 'Esa ficha ya no está en juego: no se puede soplar.');
@@ -515,24 +528,43 @@ module.exports = function createParchis(h) {
     return afterMoves(room);
   }
 
-  // Fichas que pueden retroceder (solo en el circuito, sin pasar antes de su salida).
+  // Jugadas de la pata de perro con los dados que faltan (cada una dice qué dado usa).
+  function backAll(room, seat) {
+    const p = P(room);
+    const list = [];
+    p.pending.forEach((amount, die) => backMoves(room, seat, amount).forEach((m) => list.push({ ...m, die })));
+    return list;
+  }
+
+  // Fichas que pueden retroceder: solo en el circuito. Desde la salida también se
+  // retrocede: la ficha queda hasta 4 casillas detrás de ella.
   function backMoves(room, seat, amount) {
     const { lastTrack, absOf, safe } = B(room);
     const moves = [];
     const seen = new Set();
     seat.pieces.forEach((from, i) => {
-      if (from < amount || from > lastTrack || seat.lanes[i] !== null || seen.has(from)) return;
-      const to = from - amount;
+      if (from === JAIL || from > lastTrack || seat.lanes[i] !== null || seen.has(from)) return;
+      // ☁️ Si retrocediendo llega exacto a la entrada de su propio cielo (5 casillas
+      // antes de la salida), la ficha corona.
+      const target = lin(from) - amount;
+      const crowns = target === -(MAX_BEHIND + 1);
+      if (target < -MAX_BEHIND && !crowns) return;
+      const to = fromLin(target);
       // 🧱 Al retroceder tampoco se puede pasar sobre un bloqueo (ni caer en él).
       const wallAt = (k) => { const a = absOf(seat.arm, k); return occupantsAt(room, a).length >= 2 && safe.has(a); };
-      for (let k = from - 1; k > to; k--) if (has(room, 'barriers') && wallAt(k)) return;
+      for (let L = lin(from) - 1; L > target; L--) if (has(room, 'barriers') && wallAt(fromLin(L))) return;
+      if (crowns) {
+        seen.add(from);
+        moves.push({ piece: i, from, to: B(room).goal, lane: null, capture: [], kind: 'back', die: 0, amount });
+        return;
+      }
       if (wallAt(to)) return;
       const abs = absOf(seat.arm, to);
       const occ = occupantsAt(room, abs);
       const rivals = occ.filter((o) => o.seat !== seat);
       const capture = rivals.length && !(has(room, 'safes') && safe.has(abs)) ? rivals.map((o) => ref(room, o)) : [];
       seen.add(from);
-      moves.push({ piece: i, from, to, lane: null, capture, kind: 'back', die: 0 });
+      moves.push({ piece: i, from, to, lane: null, capture, kind: 'back', die: 0, amount });
     });
     return moves;
   }
@@ -551,7 +583,7 @@ module.exports = function createParchis(h) {
     const p = P(room);
     const { goal } = B(room);
     return p.dice === 2 && has(room, 'oneSum') && p.pending.length === 2
-      && seat.pieces.filter((x) => x >= 0 && x < goal).length === 1;
+      && seat.pieces.filter((x) => x !== JAIL && x < goal).length === 1;
   }
 
   function legalAll(room, seat) {
@@ -635,11 +667,10 @@ module.exports = function createParchis(h) {
     seat.pieces[m.piece] = m.to;
     seat.lanes[m.piece] = m.lane === null || m.lane === seat.arm ? null : m.lane;
     p.lastMoved = { seat, i: m.piece };
-    if (m.kind === 'back') p.pending = [];
-    else if (dieIdx === 2) p.pending = []; // robar cielo con la suma: usa los dos dados
+    if (dieIdx === 2) p.pending = []; // robar cielo con la suma: usa los dos dados
     else if (dieIdx >= 0) p.pending.splice(dieIdx, 1);
     // 🔒 Última ficha a 6 casillas o menos del cielo: el otro dado se bloquea (automático).
-    if (p.pending.length && lastOneDie(room, seat)) {
+    if (p.pending.length && !p.back && lastOneDie(room, seat)) {
       const left = goal - seat.pieces.find((x) => x < goal);
       log(room, `🔒 Última ficha de ${name} a ${left} ${left === 1 ? 'casilla' : 'casillas'} del cielo: el otro dado se bloquea.`);
       p.pending = [];
@@ -696,7 +727,7 @@ module.exports = function createParchis(h) {
     }
     p.bonusAmount = null;
     if (p.pending.length) {
-      p.legal = legalAll(room, seat);
+      p.legal = p.back ? backAll(room, seat) : legalAll(room, seat);
       if (p.legal.length) return stageMove(room, 'move');
       p.pending = [];
     }
@@ -711,7 +742,7 @@ module.exports = function createParchis(h) {
   function nextSeat(room) {
     const p = P(room);
     if (!p || room.phase !== 'parchis') return;
-    Object.assign(p, { streak: 0, tries: 0, roll: [], pending: [], bonus: [], bonusAmount: null, legal: [], repeatRoll: false, chances: [], ate: false });
+    Object.assign(p, { streak: 0, tries: 0, roll: [], pending: [], bonus: [], bonusAmount: null, legal: [], repeatRoll: false, chances: [], ate: false, back: false });
     for (let n = 1; n <= p.seats.length; n++) {
       const idx = (p.turn + n) % p.seats.length;
       if (!p.seats[idx].gone) { p.turn = idx; break; }

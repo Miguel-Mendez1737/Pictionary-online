@@ -88,7 +88,9 @@ window.ParchisGame = function ParchisGame(ctx) {
 
   // Posición de una ficha. lane = pasillo por el que sube (el propio o uno robado).
   function pieceCenter(arm, steps, i, lane) {
-    if (steps < 0) return G.homeSpot(arm, i);
+    if (steps === -1) return G.homeSpot(arm, i);
+    // Detrás de su salida (por la pata de perro): -2 = 1 casilla antes, -3 = 2…
+    if (steps < -1) return G.trackCenter((((G.exitOf(arm) + steps + 1) % G.track) + G.track) % G.track);
     if (steps >= G.goal) return G.goalSpot(lane === null || lane === undefined ? arm : lane, i);
     if (steps > G.lastTrack) return G.corridorCenter(lane === null || lane === undefined ? arm : lane, steps - G.lastTrack);
     return G.trackCenter((G.exitOf(arm) + steps) % G.track);
@@ -198,7 +200,7 @@ window.ParchisGame = function ParchisGame(ctx) {
       seat.pieces.forEach((steps, i) => {
         const [x, y] = pieceCenter(seat.arm, steps, i, seat.lanes[i]);
         posOf.set(`${si}-${i}`, [x, y]);
-        if (steps < 0 || steps >= G.goal) return;
+        if (steps === -1 || steps >= G.goal) return;
         const key = `${x.toFixed(2)},${y.toFixed(2)}`;
         if (!stacks.has(key)) stacks.set(key, []);
         stacks.get(key).push(`${si}-${i}`);
@@ -341,14 +343,16 @@ window.ParchisGame = function ParchisGame(ctx) {
       if (p.stage === 'crown') return `👑 ${name} sacó tres seguidos y elige qué ficha coronar…`;
       if (p.stage === 'bonus') return `${name} usa su premio de ${p.bonusAmount} casillas…`;
       if (p.stage === 'wait') return `${name} sacó ${shown}.`;
-      if (p.legal.some((m) => m.kind === 'back')) return `🐾 ¡Pata de perro! ${name} retrocede 3…`;
+      if (p.legal.some((m) => m.kind === 'back')) return `🐾 ¡Pata de perro! ${name} está retrocediendo…`;
       return `${name} está moviendo (${shown})…`;
     }
     if (p.stage === 'roll') return `👉 ¡Te toca! Toca ${two ? 'los dados' : 'el dado'} para tirar.`;
     if (p.stage === 'crown') return '👑 ¡Tres seguidos! Toca la ficha que quieres coronar.';
     if (p.stage === 'bonus') return moves.length > 1 ? `🎁 Premio: elige una ficha para avanzar ${p.bonusAmount}.` : `🎁 Premio: avanzas ${p.bonusAmount}…`;
     if (p.stage === 'move' && p.legal.some((m) => m.kind === 'back')) {
-      return p.legal.length > 1 ? '🐾 ¡Pata de perro! (2 y 1): toca la ficha que retrocede 3 casillas.' : '🐾 ¡Pata de perro! Tu ficha retrocede 3…';
+      const crown = p.legal.some((m) => m.kind === 'back' && m.to >= G.goal) ? ' ☁️ ¡Una ficha puede coronar retrocediendo!' : '';
+      if (p.pending.length === 2) return `🐾 ¡Pata de perro! Toca un dado (2 o 1) y la ficha que retrocede: repártelo en dos fichas o usa los dos con la misma.${crown}`;
+      return p.legal.length > 1 ? `🐾 ¡Pata de perro! Toca la ficha que retrocede ${p.pending[0]}.${crown}` : `🐾 ¡Pata de perro! Tu ficha retrocede ${p.pending[0]}…`;
     }
     if (p.stage === 'move' && p.sumOnly) {
       const sum = (p.pending[0] || 0) + (p.pending[1] || 0);

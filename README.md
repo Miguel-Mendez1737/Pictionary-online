@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.27.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.28.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -442,3 +442,8 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 
 ## v1.27.1: Partes del cuerpo
 - **Garabato:** el tema 🌋 Naturaleza y clima se cambió por **🫀 Partes del cuerpo**, con 70 palabras: de ojo, codo u ombligo a esqueleto, huella digital o columna vertebral. Ninguna se repite con otros temas.
+
+## v1.28.0: pata de perro repartida, desde la salida y coronando
+- **🐾 Pata de perro repartida** (regla nueva, activada por defecto): con 2 y 1 se retrocede 2 con una ficha y 1 con otra, o los 3 con la misma ficha. Se toca el dado y luego la ficha.
+- **Desde la salida también se retrocede:** la ficha queda hasta 4 casillas detrás de su salida y desde ahí avanza normal.
+- **☁️ Coronar con la pata de perro:** si una ficha que está detrás de su salida retrocede exacto hasta la entrada de su propio cielo (5 casillas antes de la salida), corona.
