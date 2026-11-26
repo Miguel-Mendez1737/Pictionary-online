@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.30.0 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.30.1 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -458,3 +458,6 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 - **Menos repeticiones:** la ruleta llenaba sus casillas de relleno con palabras que aún no habían salido. Así el dibujante conocía de antemano palabras que después le tocaba adivinar y respondía sin esperar el dibujo. Ahora el relleno usa primero palabras que ya salieron. Las que se vieron como relleno quedan al final de la fila para salir como palabra del turno.
 - **⏳ Regla nueva "Responder solo después de 10 segundos"** (activada por defecto; el anfitrión la puede apagar en el lobby). Al empezar el dibujo, el teclado de quien adivina queda bloqueado 10 s con cuenta regresiva. El servidor también rechaza respuestas antes de tiempo.
 - **🎲 Aleatorio:** cada turno sale de un tema distinto, sin repetir tema hasta pasar por todos. En la ruleta aparece una palabra de cada tema.
+
+## v1.30.1: el juego se llama Parchís
+- En la portada, en el lobby, dentro del juego y en los mensajes de ganador ahora dice **Parchís**, también cuando se juega con 2 dados. Antes decía "Parqués".

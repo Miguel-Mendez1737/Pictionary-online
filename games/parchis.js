@@ -167,7 +167,7 @@ module.exports = function createParchis(h) {
     assignColors(room);
     const names = room.parchis.seats.map((s) => `${room.players.get(s.id).name} (${COLORS[s.colorIdx].name})`).join(', ');
     const watchers = room.order.length - n;
-    const mode = room.parchis.dice === 2 ? 'Parqués con 2 dados' : 'Parchís con 1 dado';
+    const mode = room.parchis.dice === 2 ? 'Parchís con 2 dados' : 'Parchís con 1 dado';
     systemMsg(room, `🎲 ¡Comienza el ${mode}! ${pieces} fichas cada uno. Juegan: ${names}.${watchers > 0 ? ' Los demás miran la partida.' : ''}`, 'success');
     beginStage(room, 'roll');
   }
@@ -760,11 +760,11 @@ module.exports = function createParchis(h) {
     if (player) player.score += POINTS_WIN;
     const name = nameOf(room, seat);
     log(room, `🏆 ¡${name} ganó!`);
-    systemMsg(room, `🏆 ¡${name} ganó el ${p.dice === 2 ? 'Parqués' : 'Parchís'}! (+${POINTS_WIN} puntos)`, 'success');
+    systemMsg(room, `🏆 ¡${name} ganó el Parchís! (+${POINTS_WIN} puntos)`, 'success');
     io.to(room.code).emit('parchis:event', { kind: 'win', text: `¡${name} ganó!`, id: seat.id });
     syncRoom(room);
     schedule(room, END_MS, () => {
-      room.resultTitle = `🎲 ¡${name} ganó el ${p.dice === 2 ? 'Parqués' : 'Parchís'}!`;
+      room.resultTitle = `🎲 ¡${name} ganó el Parchís!`;
       endGame(room);
     });
   }

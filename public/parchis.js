@@ -415,7 +415,7 @@ window.ParchisGame = function ParchisGame(ctx) {
     const curPlayer = cur && playerOf(cur.id);
     const myTurn = cur && cur.id === state.me && p.stage !== 'over';
     const mySeat = p.seats.find((s) => s.id === state.me);
-    $('#parchis-title').textContent = p.dice === 2 ? '🎲🎲 Parqués' : '🎲 Parchís';
+    $('#parchis-title').textContent = p.dice === 2 ? '🎲🎲 Parchís' : '🎲 Parchís';
     $('#parchis-sub').textContent = mySeat ? `Juegas con ${mySeat.color.name.toLowerCase()}` : '👀 Estás mirando la partida';
     const moves = myTurn ? movesFor(p) : [];
 
