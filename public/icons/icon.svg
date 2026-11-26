@@ -27,4 +27,14 @@
   <rect x="264" y="264" width="200" height="200" rx="40" fill="url(#t4)"/>
   <circle cx="364" cy="364" r="66" fill="#fff" opacity=".16"/>
   <text x="364" y="404" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="120" fill="#fff">?</text>
+  <!-- 5. Basta: mano en el centro -->
+  <circle cx="256" cy="256" r="74" fill="#1b1f2e"/>
+  <circle cx="256" cy="256" r="62" fill="#fcc419" stroke="#fff" stroke-width="6"/>
+  <g transform="translate(256 262)" fill="#2b2d3c">
+    <rect x="-27" y="-44" width="11" height="40" rx="5.5"/>
+    <rect x="-13" y="-52" width="11" height="48" rx="5.5"/>
+    <rect x="1" y="-50" width="11" height="46" rx="5.5"/>
+    <rect x="15" y="-42" width="11" height="40" rx="5.5"/>
+    <path d="M-28 -10 L26 -10 L26 14 C26 32 14 40 0 40 C-16 40 -26 32 -30 18 L-42 -4 C-45 -10 -38 -15 -33 -10 L-28 -4 Z"/>
+  </g>
 </svg>
