@@ -1546,6 +1546,20 @@
     palette.append(b);
   });
   setColor(state.tool.color);
+  // 🌈 Botón arcoíris: muestra u oculta los colores (se recuerda en este celular).
+  const rainbowBtn = $('#rainbow-btn');
+  const showColors = (on) => {
+    palette.hidden = !on;
+    rainbowBtn.setAttribute('aria-pressed', String(on));
+    rainbowBtn.classList.toggle('active', on);
+  };
+  showColors(storage.get('pictionary:colors') !== 'off');
+  rainbowBtn.addEventListener('click', () => {
+    const on = palette.hidden;
+    showColors(on);
+    storage.set('pictionary:colors', on ? 'on' : 'off');
+    vibrate(8);
+  });
 
   $('#eraser-btn').addEventListener('click', (e) => {
     state.tool.eraser = !state.tool.eraser;
