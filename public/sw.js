@@ -1,9 +1,9 @@
 // Service worker mínimo: permite instalar la app y abre la interfaz aunque la
 // red falle un momento. Siempre intenta la red primero, así cada cambio del
 // servidor llega de inmediato. El tiempo real (Socket.io) nunca pasa por aquí.
-const CACHE = 'pictionary-v48';
+const CACHE = 'pictionary-v49';
 const FLAGS = 'garabato-banderas-v1'; // caché aparte: sobrevive a las actualizaciones
-const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/avatar.js', '/basta.js', '/parchis.js', '/trivia.js', '/cartas.js', '/app-info.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon.svg'];
+const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/avatar.js', '/basta.js', '/parchis.js', '/trivia.js', '/cartas.js', '/app-info.js', '/manifest.webmanifest', '/icons/icon-192.png?v=5', '/icons/icon.svg?v=5'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.31.1 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.31.2 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -467,3 +467,7 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 
 ## v1.31.1: el logo con los 5 juegos
 - Al logo de los cuatro cuadros se le agregó en el centro un círculo amarillo con la mano de ✋ **Basta**. Así aparecen los 5 juegos.
+
+## v1.31.2: el ícono instalado se actualiza solo
+- Las direcciones de los íconos llevan una marca de versión. Así el celular detecta el logo nuevo y cambia el ícono de la app instalada sin tener que reinstalarla.
+- La barra superior y la pantalla de carga de la app instalada usan el tono oscuro del logo.
