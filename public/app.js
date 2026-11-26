@@ -1518,15 +1518,13 @@
     document.querySelectorAll('.tool.size').forEach((b) => b.classList.toggle('active', b === btn));
     vibrate(8);
   }));
-  // 🎨 Colores para dibujar
+  // 🎨 Colores para dibujar: siempre a la vista, se eligen con un toque.
+  // Arriba los colores fuertes y abajo los claros.
   const DRAW_COLORS = [
-    '#111111', '#868e96', '#ffffff', '#8d5524', '#f4c095',
-    '#e03131', '#ff8787', '#f76707', '#ffa94d', '#fcc419',
-    '#fff3a3', '#2f9e44', '#8ce99a', '#0b7285', '#3bc9db',
-    '#1c4ed8', '#74c0fc', '#7048e8', '#e64980', '#ffc9de'
+    '#111111', '#e03131', '#f76707', '#fcc419', '#2f9e44', '#1c4ed8', '#7048e8', '#e64980', '#8d5524', '#ffffff',
+    '#868e96', '#ff8787', '#ffa94d', '#fff3a3', '#8ce99a', '#74c0fc', '#3bc9db', '#0b7285', '#f4c095', '#ffc9de'
   ];
-  const palette = $('#color-palette');
-  const colorBtn = $('#color-btn');
+  const palette = $('#color-strip');
   const setColor = (c) => {
     state.tool.color = c;
     $('#toolbar').style.setProperty('--brush', c);
@@ -1543,19 +1541,11 @@
       state.tool.eraser = false;
       $('#eraser-btn').classList.remove('active');
       canvas.classList.remove('erasing');
-      palette.classList.add('hidden');
-      colorBtn.setAttribute('aria-expanded', 'false');
       vibrate(8);
     });
     palette.append(b);
   });
   setColor(state.tool.color);
-  colorBtn.addEventListener('click', () => {
-    const open = palette.classList.toggle('hidden') === false;
-    colorBtn.setAttribute('aria-expanded', String(open));
-    vibrate(8);
-  });
-  canvas.addEventListener('pointerdown', () => { palette.classList.add('hidden'); colorBtn.setAttribute('aria-expanded', 'false'); });
 
   $('#eraser-btn').addEventListener('click', (e) => {
     state.tool.eraser = !state.tool.eraser;

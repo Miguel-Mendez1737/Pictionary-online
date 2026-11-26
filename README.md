@@ -2,7 +2,7 @@
 
 Juego interactivo multijugador: dibuja, adivina y suma puntos con tus amigos en tiempo real, cada quien desde su celular.
 
-**by Miguel Mendez** · versión 1.31.2 (la versión se toma de `package.json`)
+**by Miguel Mendez** · versión 1.32.0 (la versión se toma de `package.json`)
 
 Juego de dibujar y adivinar multijugador en tiempo real con **Node.js + Express + Socket.io** y frontend en **HTML5 / CSS / JavaScript vanilla**.
 
@@ -471,3 +471,6 @@ En el lobby, el anfitrión elige **¿A qué jugamos?**: 🎨 Garabato, ✋ Basta
 ## v1.31.2: el ícono instalado se actualiza solo
 - Las direcciones de los íconos llevan una marca de versión. Así el celular detecta el logo nuevo y cambia el ícono de la app instalada sin tener que reinstalarla.
 - La barra superior y la pantalla de carga de la app instalada usan el tono oscuro del logo.
+
+## v1.32.0: colores a la vista en Garabato
+- **🎨 Colores con un solo toque:** los 20 colores quedan siempre visibles en dos filas encima de las herramientas de dibujo, con los fuertes arriba y los claros abajo. Antes había que abrir una ventana con el botón 🎨. El color elegido se marca con un aro y los puntos de grosor se pintan de ese color.
